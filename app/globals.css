@@ -1,0 +1,114 @@
+@import "tailwindcss";
+
+/* Local fonts */
+@font-face {
+  font-family: "Biro Script US Plus";
+  src: url("/fonts/BiroScriptUSPlus-Regular.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Arial MT Std";
+  src: url("/fonts/ARIALMTEXTRABOLD.ttf") format("truetype");
+  font-weight: 800;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "LTC Garamont Display OT";
+  src: url("/fonts/ltc-garamont-display-ot.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "LTC Garamont Display OT";
+  src: url("/fonts/ltc-garamont-display-ot-italic.otf") format("opentype");
+  font-weight: 400;
+  font-style: italic;
+}
+
+:root {
+  --background: #eeece4;
+  --foreground: #000000;
+  --cream: #eeece4;
+  /* Tailwind theme mapping (was @theme inline) */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  /* Tab colors from Photoshop (shape_1 through shape_7) */
+  --nav-green: #649859;    /* shape_1 - interactive + installation */
+  --nav-orange: #df7035;   /* shape_2 - graphic design */
+  --nav-yellow: #edd039;   /* shape_3 - selected works */
+  --nav-purple: #787aad;   /* shape_4 - film */
+  --nav-pink: #d887b6;     /* shape_5 - photos */
+  --nav-brown: #845a1b;    /* shape_6 - cv + press */
+  --nav-navy: #474a68;     /* shape_7 - contact */
+}
+
+/* Viewport reset – no 100vw/100vh (avoids scrollbar gap). Background on both html and body. */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+  background-color: #eeece4;
+}
+
+body {
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+img {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  user-drag: none;
+  pointer-events: auto;
+}
+
+/* Root app container – fixed + inset:0 pins to all four edges, no viewport units */
+#__next {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background-color: #eeece4;
+}
+
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+
+/* Biro Script US Plus - welcome text (matches Photoshop) */
+.font-handwritten {
+  font-family: "Biro Script US Plus", "Biro Script", cursive;
+}
+
+/* No hover effects on nav tabs - design sits as is */
+.nav-tab:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Single subtle wiggle for draggables on hover */
+@keyframes wiggle {
+  0%, 100% { transform: translateX(0); }
+  33% { transform: translateX(-2px); }
+  66% { transform: translateX(2px); }
+}
+
+/* Heat wave / sun distortion wavy effect */
+@keyframes heatWave {
+  0%, 100% { transform: scale(1); filter: blur(0); opacity: 0.95; }
+  25% { transform: scale(1.02) scaleX(1.015); filter: blur(0.4px); opacity: 1; }
+  50% { transform: scale(1); filter: blur(0); opacity: 0.95; }
+  75% { transform: scale(1.02) scaleX(0.985); filter: blur(0.4px); opacity: 1; }
+}
