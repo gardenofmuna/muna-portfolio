@@ -13,8 +13,31 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://munanzeribe.xyz"),
   title: "Muna | Portfolio",
   description: "Hi! Welcome to my Portfolio!",
+  openGraph: {
+    title: "Muna | Portfolio",
+    description: "Hi! Welcome to my Portfolio!",
+    url: "/",
+    siteName: "Muna | Portfolio",
+    locale: "en_US",
+    type: "website",
+    images: [
+      {
+        url: "/WEBSITE-IMAGE.webp",
+        width: 1200,
+        height: 630,
+        alt: "Muna — portfolio",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Muna | Portfolio",
+    description: "Hi! Welcome to my Portfolio!",
+    images: ["/WEBSITE-IMAGE.webp"],
+  },
 };
 
 export default function RootLayout({
