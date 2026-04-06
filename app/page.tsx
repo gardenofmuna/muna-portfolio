@@ -6,6 +6,7 @@ import { CircularNavWheel } from "@/components/CircularNavWheel";
 import { AboutBio } from "@/components/AboutBio";
 import { ContactTopLinks } from "@/components/ContactTopLinks";
 import { DesignCluster } from "@/components/DesignCluster";
+import { InstallationLottie } from "@/components/InstallationLottie";
 
 /** Layout baseline: image frames 544×659, inset 100, at this viewport height */
 const REF_PAGE_HEIGHT = 1624;
@@ -43,6 +44,7 @@ export default function HomePage() {
         onActiveLabelChange={setActiveLabel}
       />
       <DesignCluster visible={activeLabel === "design"} />
+      <InstallationLottie visible={activeLabel === "installation"} />
       <ContactTopLinks visible={isContact} top={inset} right={aboutBioRight} />
       <AboutBio
         visible={showAboutBio}
