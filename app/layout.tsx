@@ -16,6 +16,10 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://munanzeribe.xyz"),
   title: "Muna | Portfolio",
   description: "Hi! Welcome to my Portfolio!",
+  icons: {
+    icon: "/m-icon.jpg",
+    apple: "/m-icon.jpg",
+  },
   openGraph: {
     title: "Muna | Portfolio",
     description: "Hi! Welcome to my Portfolio!",
