@@ -10,7 +10,7 @@
 
 @font-face {
   font-family: "Arial MT Std";
-  src: url("/fonts/ARIALMTEXTRABOLD.ttf") format("truetype");
+  src: url("/fonts/ARIALMTEXTRABOLD.TTF") format("truetype");
   font-weight: 800;
   font-style: normal;
 }

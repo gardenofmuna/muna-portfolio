@@ -7,6 +7,8 @@ type Props = {
   visible: boolean;
 };
 
+/** Visual size vs prior baseline (0.9 = 10% smaller). */
+const LOTTIE_DISPLAY_SCALE = 0.9;
 /** Pixels of cursor travel → one frame of the animation (tune feel). */
 const FRAME_SENSITIVITY = 0.42;
 /** Horizontal drag drives forward/back; small vertical blend for diagonal moves. */
@@ -149,8 +151,8 @@ export function InstallationLottie({ visible }: Props) {
         width: "min(1153px, 111vw)",
         maxWidth: "100%",
         transform: visible
-          ? "translateY(-50%) rotate(-8deg)"
-          : "translateY(calc(-50% + 12px)) scale(0.97) rotate(-8deg)",
+          ? `translateY(-50%) rotate(-8deg) scale(${LOTTIE_DISPLAY_SCALE})`
+          : `translateY(calc(-50% + 12px)) rotate(-8deg) scale(${LOTTIE_DISPLAY_SCALE * 0.97})`,
         transformOrigin: "center center",
         opacity: visible && animationData ? 1 : 0,
         transition: reduceMotion
