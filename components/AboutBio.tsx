@@ -92,6 +92,11 @@ type Props = {
    * (inset + image column + gap), `width` is auto, and `left` uses the nav-safe minimum.
    */
   alignRight?: string;
+  /**
+   * When true, sits in a parent flex row (e.g. with Nzeribe): no fixed positioning; parent handles placement
+   * and opacity. Omit `alignBottom` / `alignRight`.
+   */
+  embedded?: boolean;
 };
 
 /**
@@ -102,6 +107,7 @@ export function AboutBio({
   whiteBodyText,
   alignBottom,
   alignRight,
+  embedded = false,
 }: Props) {
   const [reduceMotion, setReduceMotion] = useState(false);
   const [layout, setLayout] = useState<Layout>(SSR_LAYOUT);
@@ -134,8 +140,9 @@ export function AboutBio({
 
   const fadeMs = reduceMotion ? 80 : 520;
   const { fontSize, lineHeight, width, height, left, leftMin, top } = layout;
-  const pinBottom = Boolean(alignBottom);
-  const pinchRight = Boolean(alignRight);
+  const pinBottom = Boolean(alignBottom && !embedded);
+  const pinchRight = Boolean(alignRight && !embedded);
+  const bottomAnchored = pinBottom || embedded;
 
   const bodyInk = whiteBodyText ? "#fff" : "#000";
 
@@ -153,33 +160,53 @@ export function AboutBio({
 
   return (
     <div
-      className="fixed z-[30] cursor-text select-text"
+      className={
+        embedded
+          ? `relative z-auto min-h-0 min-w-0 flex-1 cursor-text select-text ${visible ? "pointer-events-auto" : "pointer-events-none"}`
+          : "fixed z-[30] cursor-text select-text"
+      }
       aria-hidden={!visible}
       style={{
-        left: pinchRight ? leftMin : left,
-        ...(pinchRight
-          ? { right: alignRight, width: "auto" }
-          : { width }),
-        ...(pinBottom
-          ? { bottom: alignBottom, top: "auto", height: "auto" }
-          : { top, height }),
-        WebkitUserSelect: "text",
-        userSelect: "text",
-        opacity: visible ? 1 : 0,
-        transition: reduceMotion
-          ? "none"
-          : `opacity ${fadeMs}ms cubic-bezier(0.22, 1, 0.36, 1), transform ${fadeMs}ms cubic-bezier(0.22, 1, 0.56, 1)`,
-        transform: `translate(${ABOUT_BIO_PIN_OFFSET_X}px, ${ABOUT_BIO_PIN_OFFSET_Y + fadeTranslateY}px)`,
-        boxSizing: "border-box",
+        ...(embedded
+          ? {
+              WebkitUserSelect: "text",
+              userSelect: "text",
+              boxSizing: "border-box",
+              height: "auto",
+            }
+          : {
+              left: pinchRight ? leftMin : left,
+              ...(pinchRight
+                ? { right: alignRight, width: "auto" }
+                : { width }),
+              ...(pinBottom
+                ? { bottom: alignBottom, top: "auto", height: "auto" }
+                : { top, height }),
+              WebkitUserSelect: "text",
+              userSelect: "text",
+              opacity: visible ? 1 : 0,
+              transition: reduceMotion
+                ? "none"
+                : `opacity ${fadeMs}ms cubic-bezier(0.22, 1, 0.36, 1), transform ${fadeMs}ms cubic-bezier(0.22, 1, 0.56, 1)`,
+              boxSizing: "border-box",
+            }),
+        ...(!embedded
+          ? {}
+          : {
+              transition: reduceMotion
+                ? "none"
+                : `transform ${fadeMs}ms cubic-bezier(0.22, 1, 0.56, 1)`,
+            }),
+        transform: `translate(${ABOUT_BIO_PIN_OFFSET_X}px, ${(bottomAnchored ? 0 : ABOUT_BIO_PIN_OFFSET_Y) + fadeTranslateY}px)`,
       }}
     >
       <div
         style={{
           width: "100%",
-          height: pinBottom ? "auto" : "100%",
+          height: bottomAnchored ? "auto" : "100%",
           display: "flex",
           flexDirection: "column",
-          justifyContent: "flex-start",
+          justifyContent: bottomAnchored ? "flex-end" : "flex-start",
         }}
       >
         <p style={{ ...textStyle, textAlign: "left" }}>
