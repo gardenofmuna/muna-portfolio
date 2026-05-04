@@ -91,12 +91,15 @@ const WHEEL_SNAP_MS = 140;
 
 export type CircularNavWheelProps = {
   onActiveLabelChange?: (label: string) => void;
+  /** Fired when a nav item is hovered/focus-hovered (`null` when hover ends). Label is lowercase e.g. `"photos"`. */
+  onHoverLabelChange?: (label: string | null) => void;
   /** Section selected on first paint (wheel angle + focus). Default: first label (`about`). */
   initialActiveLabel?: (typeof LABELS)[number];
 };
 
 export function CircularNavWheel({
   onActiveLabelChange,
+  onHoverLabelChange,
   initialActiveLabel,
 }: CircularNavWheelProps = {}) {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -118,6 +121,8 @@ export function CircularNavWheel({
   isDraggingRef.current = isDragging;
   const onLabelRef = useRef(onActiveLabelChange);
   onLabelRef.current = onActiveLabelChange;
+  const onHoverLabelRef = useRef(onHoverLabelChange);
+  onHoverLabelRef.current = onHoverLabelChange;
 
   const dragRef = useRef({
     pointerId: -1,
@@ -249,6 +254,12 @@ export function CircularNavWheel({
     const label = items[focusedIndex]?.label ?? "";
     onLabelRef.current?.(label);
   }, [focusedIndex, items]);
+
+  useEffect(() => {
+    const label =
+      hoveredIndex != null ? (items[hoveredIndex]?.label ?? null) : null;
+    onHoverLabelRef.current?.(label);
+  }, [hoveredIndex, items]);
 
   useEffect(() => {
     setRotation((prev) =>

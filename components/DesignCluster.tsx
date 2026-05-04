@@ -43,7 +43,7 @@ export function DesignCluster({ visible }: Props) {
 
   return (
     <div
-      className="pointer-events-none fixed inset-0 z-[2] select-none"
+      className="pointer-events-none fixed inset-0 z-[40] select-none"
       aria-hidden={!visible}
       style={{
         opacity: visible ? 1 : 0,

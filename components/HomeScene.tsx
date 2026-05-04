@@ -9,27 +9,22 @@ import { DesignCluster } from "@/components/DesignCluster";
 import { InstallationLottie } from "@/components/InstallationLottie";
 import { PhotosHoverCluster } from "@/components/PhotosHoverCluster";
 
-/** Layout baseline: image frames 544×659, inset 100, on 1624-tall artboard */
+/** Layout baseline: image frames 544×659, inset 100, at this viewport height */
 const REF_PAGE_HEIGHT = 1624;
-/** Stage for unified scale (matches AboutBio / nav); bridge1624-tall assets with this height. */
-const REF_STAGE_W = 1440;
-const REF_STAGE_H = 811.5;
 const REF_INSET = 100;
 const IMG_W = 544;
 const IMG_H = 659;
-/** Intrinsic /nzeribe1.webp size — wrapper matches aspect at same vh scale (no polaroid letterbox). */
 const NZERIBE_IMG_W = 546;
 const NZERIBE_IMG_H = 117;
-/** Space between about bio text block and Nzeribe frame (horizontal). */
 const ABOUT_GAP_FROM_WEBP_PX = 20;
-/** One scale for the whole shell: narrowest of width / height stage fits. */
-const U_STAGE = `min(100vw / ${REF_STAGE_W}, 100vh / ${REF_STAGE_H})`;
-/**1624-normalized distances × this match old `* (100vh/1624)` at811.5px-tall viewport. */
-const U_1624 = `(${U_STAGE}) * (${REF_STAGE_H} / ${REF_PAGE_HEIGHT})`;
-/** Matches AboutBio `MIN_LEFT_REF` (392) in 1440-wide space. */
-const BIO_GROUP_LEFT = `calc(392 * ${U_STAGE})`;
+const U_BIO = "min(100vw / 1440, 100vh / 811.5)";
+const BIO_GROUP_LEFT = `calc(392 * ${U_BIO})`;
 
-export default function HomePage() {
+/**
+ * Full home composition. Intended to run inside an iframe sized 1440×1624 so `vw`/`vh`
+ * match that artboard (same behavior as before the static-canvas experiments).
+ */
+export function HomeScene() {
   const [activeLabel, setActiveLabel] = useState("contact");
   const [hoverNavLabel, setHoverNavLabel] = useState<string | null>(null);
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -41,16 +36,14 @@ export default function HomePage() {
     return () => mq.removeEventListener("change", u);
   }, []);
 
-  const inset = `calc(${REF_INSET} * ${U_1624})`;
-  const frameW = `calc(${IMG_W} * ${U_1624})`;
-  const frameH = `calc(${IMG_H} * ${U_1624})`;
-  const nzeribeW = `calc(${NZERIBE_IMG_W} * ${U_1624})`;
-  const nzeribeH = `calc(${NZERIBE_IMG_H} * ${U_1624})`;
-  const gapScaled = `calc(${ABOUT_GAP_FROM_WEBP_PX} * ${U_1624})`;
-  /** Bio stops before Nzeribe + gap (fixed geometry vs stage scale). */
-  const bioRightClearOfNzeribe = `calc(${REF_INSET} * ${U_1624} + ${NZERIBE_IMG_W} * ${U_1624} + ${gapScaled})`;
-  /** Right edge of contact links: inset + polaroid column + gap. */
-  const aboutBioRight = `calc(${REF_INSET} * ${U_1624} + ${IMG_W} * ${U_1624} + ${ABOUT_GAP_FROM_WEBP_PX}px)`;
+  const scale = `100vh / ${REF_PAGE_HEIGHT}`;
+  const inset = `calc(${REF_INSET} * ${scale})`;
+  const frameW = `calc(${IMG_W} * ${scale})`;
+  const frameH = `calc(${IMG_H} * ${scale})`;
+  const nzeribeW = `calc(${NZERIBE_IMG_W} * ${scale})`;
+  const nzeribeH = `calc(${NZERIBE_IMG_H} * ${scale})`;
+  const gapBioNzeribe = `calc(${ABOUT_GAP_FROM_WEBP_PX} * (${scale}))`;
+  const aboutBioRight = `calc(${REF_INSET} * ${scale} + ${IMG_W} * ${scale} + ${ABOUT_GAP_FROM_WEBP_PX}px)`;
 
   const isContact = activeLabel === "contact";
   const showAboutBio = activeLabel === "about" || isContact;
@@ -74,8 +67,9 @@ export default function HomePage() {
         className="pointer-events-none fixed z-[30] flex flex-row items-end"
         style={{
           left: BIO_GROUP_LEFT,
-          right: bioRightClearOfNzeribe,
+          right: inset,
           bottom: inset,
+          gap: gapBioNzeribe,
           opacity: showAboutBio ? 1 : 0,
           transition: reduceMotion
             ? "none"
@@ -87,24 +81,22 @@ export default function HomePage() {
           embedded
           whiteBodyText={isContact}
         />
-      </div>
-      <div
-        className="pointer-events-none fixed z-[30] shrink-0 select-none"
-        style={{
-          bottom: inset,
-          right: inset,
-          width: nzeribeW,
-          height: nzeribeH,
-        }}
-      >
-        <Image
-          src="/nzeribe1.webp"
-          alt="Nzeribe"
-          width={NZERIBE_IMG_W}
-          height={NZERIBE_IMG_H}
-          className="block h-full w-full object-contain object-right object-bottom"
-          sizes={`${NZERIBE_IMG_W}px`}
-        />
+        <div
+          className="pointer-events-none shrink-0 select-none"
+          style={{
+            width: nzeribeW,
+            height: nzeribeH,
+          }}
+        >
+          <Image
+            src="/nzeribe1.webp"
+            alt="Nzeribe"
+            width={NZERIBE_IMG_W}
+            height={NZERIBE_IMG_H}
+            className="block h-full w-full object-contain object-right object-bottom"
+            sizes={`${NZERIBE_IMG_W}px`}
+          />
+        </div>
       </div>
       <div
         className="fixed z-[2] select-none"

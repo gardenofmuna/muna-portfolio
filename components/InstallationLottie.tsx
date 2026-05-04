@@ -143,7 +143,7 @@ export function InstallationLottie({ visible }: Props) {
 
   return (
     <div
-      className="pointer-events-none fixed z-[2] select-none"
+      className="pointer-events-none fixed z-[40] select-none"
       aria-hidden={!visible}
       style={{
         top: "50%",

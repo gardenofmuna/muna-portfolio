@@ -61,9 +61,16 @@ type Layout = {
   lineHeight: number;
 };
 
-function layoutForViewport(vw: number, vh: number): Layout {
+function layoutForViewport(
+  vw: number,
+  vh: number,
+  options?: { fixedAspectBlock?: boolean },
+): Layout {
   const u = Math.min(vw / REF_W, vh / REF_H);
-  const width = Math.max(280, Math.round(PNG_W * u));
+  /** Embedded bio: exact1024×526×u — no min-width clamp so lines never reflow like a scaled image. */
+  const width = options?.fixedAspectBlock
+    ? Math.round(PNG_W * u)
+    : Math.max(280, Math.round(PNG_W * u));
   const height = Math.round(PNG_H * u);
   const top = Math.round(BOX_TOP_REF * u);
   const centeredLeft = Math.round((vw - width) / 2);
@@ -76,8 +83,6 @@ function layoutForViewport(vw: number, vh: number): Layout {
     ) / 100;
   return { left, leftMin: minLeft, top, width, height, fontSize, lineHeight };
 }
-
-const SSR_LAYOUT: Layout = layoutForViewport(1440, 900);
 
 type Props = {
   visible: boolean;
@@ -110,7 +115,13 @@ export function AboutBio({
   embedded = false,
 }: Props) {
   const [reduceMotion, setReduceMotion] = useState(false);
-  const [layout, setLayout] = useState<Layout>(SSR_LAYOUT);
+  const [layout, setLayout] = useState<Layout>(() =>
+    layoutForViewport(
+      1440,
+      900,
+      embedded ? { fixedAspectBlock: true } : undefined,
+    ),
+  );
 
   useLayoutEffect(() => {
     const read = () =>
@@ -118,6 +129,7 @@ export function AboutBio({
         layoutForViewport(
           document.documentElement.clientWidth,
           document.documentElement.clientHeight,
+          embedded ? { fixedAspectBlock: true } : undefined,
         ),
       );
     read();
@@ -128,7 +140,7 @@ export function AboutBio({
       ro.disconnect();
       window.removeEventListener("resize", read);
     };
-  }, []);
+  }, [embedded]);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -162,7 +174,7 @@ export function AboutBio({
     <div
       className={
         embedded
-          ? `relative z-auto min-h-0 min-w-0 flex-1 cursor-text select-text ${visible ? "pointer-events-auto" : "pointer-events-none"}`
+          ? `relative z-auto shrink-0 cursor-text select-text ${visible ? "pointer-events-auto" : "pointer-events-none"}`
           : "fixed z-[30] cursor-text select-text"
       }
       aria-hidden={!visible}
@@ -172,7 +184,12 @@ export function AboutBio({
               WebkitUserSelect: "text",
               userSelect: "text",
               boxSizing: "border-box",
-              height: "auto",
+              width: width,
+              height: height,
+              maxWidth: width,
+              flexShrink: 0,
+              alignSelf: "flex-end",
+              aspectRatio: `${PNG_W} / ${PNG_H}`,
             }
           : {
               left: pinchRight ? leftMin : left,
@@ -203,48 +220,55 @@ export function AboutBio({
       <div
         style={{
           width: "100%",
-          height: bottomAnchored ? "auto" : "100%",
+          height: "100%",
           display: "flex",
           flexDirection: "column",
           justifyContent: bottomAnchored ? "flex-end" : "flex-start",
         }}
       >
-        <p style={{ ...textStyle, textAlign: "left" }}>
+        <p style={{ ...textStyle, textAlign: "left", whiteSpace: "nowrap" }}>
           Muna Nzeribe (b. 2001) is a designer and artist born in
         </p>
-        <p style={{ ...textStyle, textAlign: "left" }}>
+        <p style={{ ...textStyle, textAlign: "left", whiteSpace: "nowrap" }}>
           <span style={fauxBold(COL.lagos)}>Lagos,</span> Nigeria and currently
           living and working on
         </p>
-        <p style={{ ...textStyle, textAlign: "left" }}>
+        <p style={{ ...textStyle, textAlign: "left", whiteSpace: "nowrap" }}>
           <span style={fauxBold(COL.toronto)}>Toronto,</span> Canada. With a
           Bsc. in Mass Communication
         </p>
-        <p style={{ ...textStyle, textAlign: "left" }}>
+        <p style={{ ...textStyle, textAlign: "left", whiteSpace: "nowrap" }}>
           (2022) and an MFA in Documentary Media (2025), she sees
         </p>
-        <p style={{ ...textStyle, textAlign: "left" }}>
+        <p style={{ ...textStyle, textAlign: "left", whiteSpace: "nowrap" }}>
           her practice as an embodiment of Marshall McLuhan&rsquo;s theory
         </p>
-        <p style={{ ...textStyle, textAlign: "left" }}>
+        <p style={{ ...textStyle, textAlign: "left", whiteSpace: "nowrap" }}>
           that{" "}
           <span style={fauxBold(COL.medium)}>
             &lsquo;the medium is the message.&rsquo;
           </span>{" "}
           With an inherently
         </p>
-        <p style={{ ...textStyle, textAlign: "left" }}>
+        <p style={{ ...textStyle, textAlign: "left", whiteSpace: "nowrap" }}>
           <span style={fauxBold(COL.interdisciplinary)}>
             interdisciplinary
           </span>{" "}
           approach and{" "}
           <span style={fauxBold(COL.afro)}>Afro-modernist</span> lens, she
         </p>
-        <p style={{ ...textStyle, textAlign: "left" }}>
+        <p style={{ ...textStyle, textAlign: "left", whiteSpace: "nowrap" }}>
           waves her creative wand excited to reveal the{" "}
           <span style={fauxBold(COL.blue)}>hidden</span>
         </p>
-        <p style={{ ...textStyle, textAlign: "left", ...fauxBold(COL.blue) }}>
+        <p
+          style={{
+            ...textStyle,
+            textAlign: "left",
+            whiteSpace: "nowrap",
+            ...fauxBold(COL.blue),
+          }}
+        >
           correspondence embedded in emerging technology.
         </p>
       </div>
