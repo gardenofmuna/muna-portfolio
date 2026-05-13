@@ -248,7 +248,7 @@ export function AboutBio({
           <span style={fauxBold(COL.medium)}>
             &lsquo;the medium is the message.&rsquo;
           </span>{" "}
-          With an inherently
+          Utilizing an inherently
         </p>
         <p style={{ ...textStyle, textAlign: "left", whiteSpace: "nowrap" }}>
           <span style={fauxBold(COL.interdisciplinary)}>
