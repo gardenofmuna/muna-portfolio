@@ -231,7 +231,7 @@ export function AboutBio({
         </p>
         <p style={{ ...textStyle, textAlign: "left", whiteSpace: "nowrap" }}>
           <span style={fauxBold(COL.lagos)}>Lagos,</span> Nigeria and currently
-          living and working on
+          living and working in
         </p>
         <p style={{ ...textStyle, textAlign: "left", whiteSpace: "nowrap" }}>
           <span style={fauxBold(COL.toronto)}>Toronto,</span> Canada. With a
