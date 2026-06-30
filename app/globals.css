@@ -92,7 +92,17 @@ img {
   font-family: "Biro Script US Plus", "Biro Script", cursive;
 }
 
-/* No hover effects on nav tabs - design sits as is */
+/* Circular nav — no iOS tap/focus box on ring labels */
+.narrow-nav-ring .narrow-nav-label {
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.narrow-nav-ring .narrow-nav-label:focus,
+.narrow-nav-ring .narrow-nav-label:focus-visible {
+  outline: none;
+}
+
 .nav-tab:hover {
   transform: none !important;
   box-shadow: none !important;

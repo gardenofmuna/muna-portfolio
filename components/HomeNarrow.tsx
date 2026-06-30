@@ -28,8 +28,8 @@ export function HomeNarrow() {
     return () => mq.removeEventListener("change", u);
   }, []);
 
-  const isContact = activeLabel === "contact";
-  const showAboutBio = activeLabel === "about" || isContact;
+  const navPreview = hoverNavLabel ?? activeLabel;
+  const showAboutBio = navPreview === "about" || navPreview === "contact";
   const showPhotos =
     activeLabel === "photos" || hoverNavLabel === "photos";
   const showDesign =
@@ -65,7 +65,7 @@ export function HomeNarrow() {
             embedded
             narrowStage
             hubCentered
-            whiteBodyText={isContact}
+            whiteBodyText={navPreview === "contact"}
           />
         </NarrowCenterPopup>
       </NarrowArtboard>

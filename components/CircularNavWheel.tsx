@@ -105,8 +105,30 @@ function snapRotationForIndexNarrow(θ: number, current: number) {
   return target + k * 2 * Math.PI;
 }
 
-const DRAG_MOVE_RAD = 0.04;
-const TAP_MOVE_PX = 14;
+/** Narrow touch: lower threshold so drag starts sooner on phones. */
+const NARROW_TAP_MOVE_PX = 6;
+const NARROW_DRAG_MOVE_RAD = 0.02;
+/** Extra rotation gain for touch drags. */
+const NARROW_TOUCH_DRAG_GAIN = 1.18;
+const NARROW_SNAP_MS = 340;
+
+function nearestSnapIndex(
+  φ: number,
+  snapFn: (i: number, current: number) => number,
+  count: number,
+): number {
+  let bestI = 0;
+  let bestCost = Infinity;
+  for (let i = 0; i < count; i++) {
+    const snap = snapFn(i, φ);
+    const cost = Math.abs(snap - φ);
+    if (cost < bestCost) {
+      bestCost = cost;
+      bestI = i;
+    }
+  }
+  return bestI;
+}
 /** Wheel / trackpad → radians per delta unit */
 const WHEEL_ROT_SCALE = 0.0022;
 /** Idle after wheel before snapping to nearest slot */
@@ -373,6 +395,7 @@ export function CircularNavWheel({
       cumMovePx: 0,
       moved: false,
     };
+    if (isNarrow) setHoveredIndex(null);
     setIsDragging(true);
     el.setPointerCapture(e.pointerId);
   };
@@ -388,15 +411,27 @@ export function CircularNavWheel({
     if (delta < -Math.PI) delta += Math.PI * 2;
     dragRef.current.lastAngle = angle;
 
+    const tapSlop = isNarrow ? NARROW_TAP_MOVE_PX : 14;
+    const dragRad = isNarrow ? NARROW_DRAG_MOVE_RAD : 0.04;
+    const touchGain =
+      isNarrow && e.pointerType === "touch" ? NARROW_TOUCH_DRAG_GAIN : 1;
+
     if (
-      dragRef.current.cumMovePx > TAP_MOVE_PX ||
-      Math.abs(delta) > DRAG_MOVE_RAD
+      dragRef.current.cumMovePx > tapSlop ||
+      Math.abs(delta) > dragRad
     ) {
       dragRef.current.moved = true;
     }
 
     if (dragRef.current.moved) {
-      setRotation((prev) => prev + delta);
+      setRotation((prev) => {
+        const next = prev + delta * touchGain;
+        if (isNarrow) {
+          const preview = nearestSnapIndex(next, snapRotationForIndex, N);
+          setHoveredIndex(preview);
+        }
+        return next;
+      });
     }
   };
 
@@ -423,25 +458,18 @@ export function CircularNavWheel({
       setFocusedIndex(i);
       setRotation((prev) => snapRotationForIndex(i, prev));
     } else {
-      let bestI = 0;
-      let bestCost = Infinity;
-      for (let i = 0; i < N; i++) {
-        const snap = snapRotationForIndex(i, φ);
-        const cost = Math.abs(snap - φ);
-        if (cost < bestCost) {
-          bestCost = cost;
-          bestI = i;
-        }
-      }
+      const bestI = nearestSnapIndex(φ, snapRotationForIndex, N);
       setFocusedIndex(bestI);
       setRotation(snapRotationForIndex(bestI, φ));
     }
+
+    if (isNarrow) setHoveredIndex(null);
 
     dragRef.current.moved = false;
     dragRef.current.cumMovePx = 0;
   };
 
-  const transitionMs = reduceMotion ? 60 : 520;
+  const transitionMs = reduceMotion ? 60 : isNarrow ? NARROW_SNAP_MS : 520;
 
   const ox = layoutRound(originX);
   const oy = layoutRound(originY);
@@ -461,7 +489,7 @@ export function CircularNavWheel({
     >
       {isNarrow ? (
         <svg
-          className="absolute inset-0 overflow-visible"
+          className="narrow-nav-ring absolute inset-0 overflow-visible"
           width={NARROW_W}
           height={NARROW_H}
           viewBox={`0 0 ${NARROW_W} ${NARROW_H}`}
@@ -507,23 +535,18 @@ export function CircularNavWheel({
                         id={`circular-nav-item-${i}`}
                         fill={isHot ? NARROW_LABEL_ACTIVE : NARROW_LABEL_INACTIVE}
                         fontWeight={800}
-                        className="cursor-pointer"
+                        className="narrow-nav-label cursor-pointer"
                         style={{
                           transition: reduceMotion ? "none" : "fill 0.18s ease",
+                          outline: "none",
+                          WebkitTapHighlightColor: "transparent",
                         }}
                         onMouseEnter={() => onItemEnter(i)}
                         onMouseLeave={onItemLeave}
-                        onFocus={() => {
-                          setFocusedIndex(i);
-                          setHoveredIndex(i);
-                          if (!isDragging) {
-                            setRotation((prev) => snapRotationForIndex(i, prev));
-                          }
+                        onClick={(e) => {
+                          e.preventDefault();
+                          onItemEnter(i);
                         }}
-                        onBlur={() => setHoveredIndex(null)}
-                        onClick={() => onItemEnter(i)}
-                        tabIndex={0}
-                        role="button"
                       >
                         {ringWordText(i)}
                       </tspan>

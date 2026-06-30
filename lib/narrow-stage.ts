@@ -29,10 +29,10 @@ export const NARROW_WHEEL_CENTER = {
   y: NARROW_H / 2,
 } as const;
 /**
- * Pixels of ring arc clipped past each artboard edge — keep a thin sliver only.
+ * Pixels of ring arc clipped past each artboard edge — edge-to-edge on phone.
  * radius = NARROW_W / 2 + this value.
  */
-export const NARROW_WHEEL_EDGE_OVERFLOW = 12;
+export const NARROW_WHEEL_EDGE_OVERFLOW = 56;
 /** Fallback radius before font metrics load (≈ clip target). */
 export const NARROW_WHEEL_R = NARROW_W / 2 + NARROW_WHEEL_EDGE_OVERFLOW;
 
