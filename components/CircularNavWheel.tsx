@@ -493,6 +493,7 @@ export function CircularNavWheel({
             >
               <textPath
                 href="#narrow-nav-ring"
+                xlinkHref="#narrow-nav-ring"
                 startOffset={0}
                 xmlSpace="preserve"
               >

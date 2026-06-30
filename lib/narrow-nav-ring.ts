@@ -156,8 +156,25 @@ function fallbackLayout(): NarrowRingLayout {
     pathLength,
     naturalLength: pathLength * 0.97,
     arcCenters: LABELS.map((_, i) => (i + 0.5) / LABELS.length),
-    ready: false,
+    ready: true,
   };
+}
+
+const FONT_LOAD_TIMEOUT_MS = 2000;
+
+async function waitForRingFonts(): Promise<void> {
+  const load = document.fonts.load(
+    `800 ${ptToPx(MAX_FONT_PT * NARROW_RING_FONT_SCALE)}px "Arial MT Std"`,
+  );
+  const timeout = new Promise<void>((resolve) => {
+    window.setTimeout(resolve, FONT_LOAD_TIMEOUT_MS);
+  });
+  try {
+    await Promise.race([load, timeout]);
+    await Promise.race([document.fonts.ready, timeout]);
+  } catch {
+    /* Arial MT Std may be unavailable — measure with fallback stack */
+  }
 }
 
 export function measureNarrowRingLayout(): NarrowRingLayout {
@@ -193,16 +210,13 @@ export function useNarrowRingLayout(enabled: boolean): NarrowRingLayout {
     let cancelled = false;
 
     const run = async () => {
-      try {
-        await document.fonts.load(
-          `800 ${ptToPx(MAX_FONT_PT * NARROW_RING_FONT_SCALE)}px "Arial MT Std"`,
-        );
-        await document.fonts.ready;
-      } catch {
-        /* fall through */
-      }
+      await waitForRingFonts();
       if (cancelled) return;
-      setLayout(measureNarrowRingLayout());
+      try {
+        setLayout(measureNarrowRingLayout());
+      } catch {
+        if (!cancelled) setLayout(fallbackLayout());
+      }
     };
 
     run();
