@@ -3,8 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import Lottie, { type LottieRefCurrentProps } from "lottie-react";
 
+import { NarrowCenterPopup } from "@/components/NarrowCenterPopup";
+import {
+  NARROW_INSTALLATION_POPUP_SCALE,
+  NARROW_INSTALLATION_POPUP_W,
+} from "@/lib/narrow-stage";
+
 type Props = {
   visible: boolean;
+  layout?: "desktop" | "narrow";
 };
 
 /** Visual size vs prior baseline (0.9 = 10% smaller). */
@@ -25,7 +32,10 @@ function lastFrameIndex(api: LottieRefCurrentProps): number | null {
  * Lottie beside the circular nav arc when “installation” is active.
  * Playback is driven only by pointer *movement*: moving right advances, left rewinds.
  */
-export function InstallationLottie({ visible }: Props) {
+export function InstallationLottie({
+  visible,
+  layout = "desktop",
+}: Props) {
   const [animationData, setAnimationData] = useState<object | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -136,9 +146,48 @@ export function InstallationLottie({ visible }: Props) {
   }, [reduceMotion]);
 
   const fadeMs = reduceMotion ? 80 : 480;
+  const isNarrow = layout === "narrow";
 
   if (loadError) {
     return null;
+  }
+
+  const lottieInner = animationData ? (
+    <Lottie
+      lottieRef={lottieRef}
+      animationData={animationData}
+      loop={false}
+      autoplay={false}
+      className="h-auto w-full"
+    />
+  ) : null;
+
+  const fadeStyle = {
+    opacity: visible && animationData ? 1 : 0,
+    transition: reduceMotion
+      ? "none"
+      : `opacity ${fadeMs}ms cubic-bezier(0.22, 1, 0.36, 1), transform ${fadeMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+    transform: visible
+      ? "translateY(0)"
+      : "translateY(12px)",
+  } as const;
+
+  if (isNarrow) {
+    return (
+      <NarrowCenterPopup visible={visible} style={fadeStyle}>
+        <div
+          className="pointer-events-none"
+          style={{
+            width: NARROW_INSTALLATION_POPUP_W,
+            maxWidth: "100%",
+            transform: `rotate(-8deg) scale(${NARROW_INSTALLATION_POPUP_SCALE})`,
+            transformOrigin: "center center",
+          }}
+        >
+          {lottieInner}
+        </div>
+      </NarrowCenterPopup>
+    );
   }
 
   return (
@@ -160,15 +209,7 @@ export function InstallationLottie({ visible }: Props) {
           : `opacity ${fadeMs}ms cubic-bezier(0.22, 1, 0.36, 1), transform ${fadeMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
       }}
     >
-      {animationData ? (
-        <Lottie
-          lottieRef={lottieRef}
-          animationData={animationData}
-          loop={false}
-          autoplay={false}
-          className="h-auto w-full"
-        />
-      ) : null}
+      {lottieInner}
     </div>
   );
 }

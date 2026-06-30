@@ -1,6 +1,22 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, Fragment } from "react";
+
+import {
+  narrowLabelAngle,
+  narrowRingPathD,
+  NARROW_NAV_LABELS,
+  ringWordText,
+  useNarrowRingLayout,
+} from "@/lib/narrow-nav-ring";
+import {
+  NARROW_H,
+  NARROW_LABEL_ACTIVE,
+  NARROW_LABEL_INACTIVE,
+  NARROW_LABEL_TRACKING_EM,
+  NARROW_W,
+  NARROW_WHEEL_CENTER,
+} from "@/lib/narrow-stage";
 
 const LABELS = [
   "about",
@@ -82,6 +98,13 @@ function snapRotationForIndexContinuous(
   return best;
 }
 
+/** Narrow: snap focused label to 12 o'clock on the hub (Artboard_2). */
+function snapRotationForIndexNarrow(θ: number, current: number) {
+  const target = -Math.PI / 2 - θ;
+  const k = Math.round((current - target) / (2 * Math.PI));
+  return target + k * 2 * Math.PI;
+}
+
 const DRAG_MOVE_RAD = 0.04;
 const TAP_MOVE_PX = 14;
 /** Wheel / trackpad → radians per delta unit */
@@ -95,13 +118,19 @@ export type CircularNavWheelProps = {
   onHoverLabelChange?: (label: string | null) => void;
   /** Section selected on first paint (wheel angle + focus). Default: first label (`about`). */
   initialActiveLabel?: (typeof LABELS)[number];
+  /** Artboard_2: centered full circle; desktop: arc off left edge. */
+  layout?: "desktop" | "narrow";
 };
 
 export function CircularNavWheel({
   onActiveLabelChange,
   onHoverLabelChange,
   initialActiveLabel,
+  layout = "desktop",
 }: CircularNavWheelProps = {}) {
+  const isNarrow = layout === "narrow";
+  const ringLayout = useNarrowRingLayout(isNarrow);
+  const arcCenters = ringLayout.arcCenters;
   const wrapRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 1200, h: 800 });
   const [rotation, setRotation] = useState(0);
@@ -140,6 +169,10 @@ export function CircularNavWheel({
   }, []);
 
   useEffect(() => {
+    if (isNarrow) {
+      setSize({ w: NARROW_W, h: NARROW_H });
+      return;
+    }
     const el = wrapRef.current;
     if (!el) return;
     const read = () => {
@@ -157,35 +190,45 @@ export function CircularNavWheel({
       ro.disconnect();
       window.removeEventListener("resize", read);
     };
-  }, []);
+  }, [isNarrow]);
 
   const { w, h } = size;
-  const originX = -0.22 * w - ARC_OFFSET_BACK_PX;
-  const originY = h / 2;
-  const r = Math.min(w, h) * 0.88;
+  const arcSpacing = TARGET_ARC_SPACING_PX;
+  const originX = isNarrow
+    ? NARROW_WHEEL_CENTER.x
+    : -0.22 * w - ARC_OFFSET_BACK_PX;
+  const originY = isNarrow ? NARROW_WHEEL_CENTER.y : h / 2;
+  const r = isNarrow ? ringLayout.radius : Math.min(w, h) * 0.88;
 
-  /* Evenly fill 360° with ~TARGET_ARC_SPACING_PX between neighbours: Δθ ≈ s/r, N ≈ 2πr/s */
-  const repeats = Math.max(
-    1,
-    Math.round(
-      (2 * Math.PI * r) /
-        (TARGET_ARC_SPACING_PX * LABELS.length)
-    )
-  );
+  /* Narrow: one label per slot on the ring; desktop: tile repeats for arc density. */
+  const repeats = isNarrow
+    ? 1
+    : Math.max(
+        1,
+        Math.round((2 * Math.PI * r) / (arcSpacing * LABELS.length)),
+      );
   const items = useMemo(() => buildItems(repeats), [repeats]);
   const N = items.length;
 
   const baseAngle = useCallback(
-    (i: number) => -Math.PI / 2 + (2 * Math.PI * i) / N,
-    [N]
+    (i: number) => {
+      if (isNarrow) {
+        return narrowLabelAngle(i, arcCenters);
+      }
+      return -Math.PI / 2 + (2 * Math.PI * i) / N;
+    },
+    [N, arcCenters, isNarrow],
   );
 
   const snapRotationForIndex = useCallback(
     (i: number, current: number) => {
       const θ = baseAngle(i);
+      if (isNarrow) {
+        return snapRotationForIndexNarrow(θ, current);
+      }
       return snapRotationForIndexContinuous(θ, current, w / 2, originX, r);
     },
-    [baseAngle, originX, r, w]
+    [baseAngle, isNarrow, originX, r, w],
   );
 
   const nearestIndexToPointer = useCallback(
@@ -265,7 +308,7 @@ export function CircularNavWheel({
     setRotation((prev) =>
       snapRotationForIndex(focusedRef.current, prev)
     );
-  }, [w, h, snapRotationForIndex]);
+  }, [w, h, snapRotationForIndex, arcCenters, ringLayout.radius]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -305,13 +348,28 @@ export function CircularNavWheel({
 
   const onItemLeave = () => setHoveredIndex(null);
 
+  const pointerLocal = (clientX: number, clientY: number) => {
+    if (!isNarrow) return { x: clientX, y: clientY };
+    const el = wrapRef.current;
+    if (!el) return { x: clientX, y: clientY };
+    const rect = el.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) {
+      return { x: clientX, y: clientY };
+    }
+    return {
+      x: ((clientX - rect.left) / rect.width) * NARROW_W,
+      y: ((clientY - rect.top) / rect.height) * NARROW_H,
+    };
+  };
+
   const onPointerDownCapture = (e: React.PointerEvent) => {
     if (e.pointerType === "mouse" && e.button !== 0) return;
     const el = wrapRef.current;
     if (!el) return;
+    const p = pointerLocal(e.clientX, e.clientY);
     dragRef.current = {
       pointerId: e.pointerId,
-      lastAngle: Math.atan2(e.clientY - originY, e.clientX - originX),
+      lastAngle: Math.atan2(p.y - originY, p.x - originX),
       cumMovePx: 0,
       moved: false,
     };
@@ -323,7 +381,8 @@ export function CircularNavWheel({
     if (dragRef.current.pointerId !== e.pointerId) return;
     dragRef.current.cumMovePx += Math.hypot(e.movementX, e.movementY);
 
-    const angle = Math.atan2(e.clientY - originY, e.clientX - originX);
+    const p = pointerLocal(e.clientX, e.clientY);
+    const angle = Math.atan2(p.y - originY, p.x - originX);
     let delta = angle - dragRef.current.lastAngle;
     if (delta > Math.PI) delta -= Math.PI * 2;
     if (delta < -Math.PI) delta += Math.PI * 2;
@@ -359,7 +418,8 @@ export function CircularNavWheel({
     const φ = rotationRef.current;
 
     if (!wasMoved) {
-      const i = nearestIndexToPointer(e.clientX, e.clientY, φ);
+      const p = pointerLocal(e.clientX, e.clientY);
+      const i = nearestIndexToPointer(p.x, p.y, φ);
       setFocusedIndex(i);
       setRotation((prev) => snapRotationForIndex(i, prev));
     } else {
@@ -385,93 +445,172 @@ export function CircularNavWheel({
 
   const ox = layoutRound(originX);
   const oy = layoutRound(originY);
+  const rotDeg = layoutRound((rotation * 180) / Math.PI);
+
+  const narrowRingPath = narrowRingPathD(r);
 
   return (
     <div
       ref={wrapRef}
-      className="fixed inset-0 touch-none bg-white select-none"
-      style={{ zIndex: 1 }}
+      className={`${isNarrow ? "absolute inset-0" : "fixed inset-0"} touch-none select-none ${isNarrow ? "bg-transparent" : "bg-white"}`}
+      style={{ zIndex: isNarrow ? 10 : 1 }}
       onPointerDownCapture={onPointerDownCapture}
       onPointerMove={onPointerMove}
       onPointerUp={endPointer}
       onPointerCancel={endPointer}
     >
-      <div
-        className="absolute inset-0 overflow-visible"
-        style={{
-          transform: `rotate(${layoutRound(rotation)}rad)`,
-          transformOrigin: `${ox}px ${oy}px`,
-          transition:
-            isDragging || reduceMotion
-              ? "none"
-              : `transform ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
-        }}
-        aria-label="Portfolio sections"
-      >
-        {items.map((item) => {
-          const θ = baseAngle(item.index);
-          const x = layoutRound(originX + r * Math.cos(θ));
-          const y = layoutRound(originY + r * Math.sin(θ));
-          /* Straight type aligned with the radial (center → label); like sun rays, not tangent / ribbon */
-          const rotDeg = layoutRound((θ * 180) / Math.PI);
-
-          const isHot =
-            hoveredIndex === item.index ||
-            (hoveredIndex === null && focusedIndex === item.index);
-
-          return (
-            <span
-              key={`${repeats}-${item.index}`}
-              className="pointer-events-none absolute"
+      {isNarrow ? (
+        <svg
+          className="absolute inset-0 overflow-visible"
+          width={NARROW_W}
+          height={NARROW_H}
+          viewBox={`0 0 ${NARROW_W} ${NARROW_H}`}
+          aria-label="Portfolio sections"
+        >
+          <defs>
+            <path id="narrow-nav-ring" d={narrowRingPath} fill="none" />
+          </defs>
+          <g
+            style={{
+              transform: `rotate(${rotDeg}deg)`,
+              transformOrigin: `${ox}px ${oy}px`,
+              opacity: ringLayout.ready ? 1 : 0,
+              transition:
+                isDragging || reduceMotion
+                  ? "none"
+                  : `transform ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1), opacity 0.15s ease`,
+            }}
+          >
+            <text
+              fontFamily='"Arial MT Std", Arial, Helvetica, sans-serif'
+              fontSize={`${ringLayout.fontSizePt}pt`}
+              fontWeight={800}
+              xmlSpace="preserve"
               style={{
-                left: x,
-                top: y,
-                transform: "translateY(-50%)",
+                textTransform: "lowercase",
+                letterSpacing: `${NARROW_LABEL_TRACKING_EM}em`,
               }}
             >
-              <button
-                id={`circular-nav-item-${item.index}`}
-                type="button"
-                className="pointer-events-auto block cursor-pointer whitespace-nowrap border-none bg-transparent p-0 outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-neutral-400"
+              <textPath
+                href="#narrow-nav-ring"
+                startOffset={0}
+                xmlSpace="preserve"
+              >
+                {NARROW_NAV_LABELS.map((label, i) => {
+                  const isHot =
+                    hoveredIndex === i ||
+                    (hoveredIndex === null && focusedIndex === i);
+                  return (
+                    <Fragment key={label}>
+                      <tspan
+                        id={`circular-nav-item-${i}`}
+                        fill={isHot ? NARROW_LABEL_ACTIVE : NARROW_LABEL_INACTIVE}
+                        fontWeight={800}
+                        className="cursor-pointer"
+                        style={{
+                          transition: reduceMotion ? "none" : "fill 0.18s ease",
+                        }}
+                        onMouseEnter={() => onItemEnter(i)}
+                        onMouseLeave={onItemLeave}
+                        onFocus={() => {
+                          setFocusedIndex(i);
+                          setHoveredIndex(i);
+                          if (!isDragging) {
+                            setRotation((prev) => snapRotationForIndex(i, prev));
+                          }
+                        }}
+                        onBlur={() => setHoveredIndex(null)}
+                        onClick={() => onItemEnter(i)}
+                        tabIndex={0}
+                        role="button"
+                      >
+                        {ringWordText(i)}
+                      </tspan>
+                      {" "}
+                    </Fragment>
+                  );
+                })}
+              </textPath>
+            </text>
+          </g>
+        </svg>
+      ) : (
+        <div
+          className="absolute inset-0 overflow-visible"
+          style={{
+            transform: `rotate(${layoutRound(rotation)}rad)`,
+            transformOrigin: `${ox}px ${oy}px`,
+            transition:
+              isDragging || reduceMotion
+                ? "none"
+                : `transform ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+          }}
+          aria-label="Portfolio sections"
+        >
+          {items.map((item) => {
+            const θ = baseAngle(item.index);
+            const x = layoutRound(originX + r * Math.cos(θ));
+            const y = layoutRound(originY + r * Math.sin(θ));
+            const itemRotDeg = layoutRound((θ * 180) / Math.PI);
+
+            const isHot =
+              hoveredIndex === item.index ||
+              (hoveredIndex === null && focusedIndex === item.index);
+
+            return (
+              <span
+                key={`${repeats}-${item.index}`}
+                className="pointer-events-none absolute"
                 style={{
-                  transform: `rotate(${rotDeg}deg)`,
-                  transformOrigin: "left center",
-                  fontFamily: '"Arial MT Std", Arial, Helvetica, sans-serif',
-                  fontWeight: 800,
-                  fontSize: "clamp(1.62rem, 4.32vw, 2.88rem)",
-                  letterSpacing: "-0.06em",
-                  textTransform: "lowercase",
-                  color: isHot ? "#000000" : "#a3a3a3",
-                  transition: reduceMotion ? "none" : "color 0.18s ease",
-                }}
-                onMouseEnter={() => onItemEnter(item.index)}
-                onMouseLeave={onItemLeave}
-                onFocus={() => {
-                  setFocusedIndex(item.index);
-                  setHoveredIndex(item.index);
-                  if (!isDragging) {
-                    setRotation((prev) =>
-                      snapRotationForIndex(item.index, prev)
-                    );
-                  }
-                }}
-                onBlur={() => setHoveredIndex(null)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    onItemEnter(item.index);
-                  }
-                  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-                    e.preventDefault();
-                  }
+                  left: x,
+                  top: y,
+                  transform: "translateY(-50%)",
                 }}
               >
-                {item.label}
-              </button>
-            </span>
-          );
-        })}
-      </div>
+                <button
+                  id={`circular-nav-item-${item.index}`}
+                  type="button"
+                  className="pointer-events-auto block cursor-pointer whitespace-nowrap border-none bg-transparent p-0 outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-neutral-400"
+                  style={{
+                    transform: `rotate(${itemRotDeg}deg)`,
+                    transformOrigin: "left center",
+                    fontFamily: '"Arial MT Std", Arial, Helvetica, sans-serif',
+                    fontWeight: 800,
+                    fontSize: "clamp(1.62rem, 4.32vw, 2.88rem)",
+                    letterSpacing: "-0.06em",
+                    textTransform: "lowercase",
+                    color: isHot ? "#000000" : "#a3a3a3",
+                    transition: reduceMotion ? "none" : "color 0.18s ease",
+                  }}
+                  onMouseEnter={() => onItemEnter(item.index)}
+                  onMouseLeave={onItemLeave}
+                  onFocus={() => {
+                    setFocusedIndex(item.index);
+                    setHoveredIndex(item.index);
+                    if (!isDragging) {
+                      setRotation((prev) =>
+                        snapRotationForIndex(item.index, prev),
+                      );
+                    }
+                  }}
+                  onBlur={() => setHoveredIndex(null)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      onItemEnter(item.index);
+                    }
+                    if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                      e.preventDefault();
+                    }
+                  }}
+                >
+                  {item.label}
+                </button>
+              </span>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

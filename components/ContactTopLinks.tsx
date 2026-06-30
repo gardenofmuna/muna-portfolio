@@ -2,23 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-const LINKS = [
-  {
-    label: "linkedin.",
-    href: "https://www.linkedin.com/in/munachiso-nzeribe-b7a45a200?utm_source=share_via&utm_content=profile&utm_medium=member_ios",
-    external: true,
-  },
-  {
-    label: "insta.",
-    href: "https://www.instagram.com/gardenofmuna/",
-    external: true,
-  },
-  {
-    label: "email.",
-    href: "mailto:munachinzeribe@gmail.com",
-    external: false,
-  },
-] as const;
+import { CONTACT_LINKS } from "@/lib/contact-links";
 
 /** Matches AboutBio `layoutForViewport` scale u */
 const U = "min(100vw / 1440, 100vh / 811.5)";
@@ -84,7 +68,7 @@ export function ContactTopLinks({ visible, top, right }: Props) {
         pointerEvents: visible ? "auto" : "none",
       }}
     >
-      {LINKS.map(({ label, href, external }) => (
+      {CONTACT_LINKS.map(({ label, href, external }) => (
         <button
           key={href}
           type="button"

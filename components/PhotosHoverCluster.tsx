@@ -3,6 +3,13 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
+import { NarrowCenterPopup } from "@/components/NarrowCenterPopup";
+import {
+  NARROW_CENTER_POPUP_MAX,
+  NARROW_PHOTOS_NUDGE_UP_PX,
+  NARROW_PHOTOS_POPUP_SCALE,
+} from "@/lib/narrow-stage";
+
 const REF_STAGE_W = 1440;
 const REF_STAGE_H = 811.5;
 const U_STAGE = `min(100vw / ${REF_STAGE_W}, 100vh / ${REF_STAGE_H})`;
@@ -26,7 +33,7 @@ const HOVER_FAN_MS = 420;
 const LEFT_ROT = -17;
 const RIGHT_ROT = 17;
 
-/** Move cluster up from viewport center (px). */
+/** Move cluster up from viewport center (px) — desktop only. */
 const CLUSTER_NUDGE_UP_PX = 100;
 
 /** Lift & depth (stacked shadows read as seated prints). */
@@ -38,13 +45,19 @@ const SHADOW_FRONT =
 const SRC_W = 3600;
 const SRC_H = 2387;
 
-type Props = { visible: boolean };
+type Props = {
+  visible: boolean;
+  variant?: "desktop" | "narrow";
+};
 
 /**
  * When the nav lands on photos: wings ease from a stacked center into the fan; then
  * hover fan-out works as before. Skipped when prefers-reduced-motion.
  */
-export function PhotosHoverCluster({ visible }: Props) {
+export function PhotosHoverCluster({
+  visible,
+  variant = "desktop",
+}: Props) {
   const [reduceMotion, setReduceMotion] = useState(false);
   const [fanOut, setFanOut] = useState(false);
   /** True until intro spread runs (wings start at 0 lateral offset). */
@@ -103,11 +116,17 @@ export function PhotosHoverCluster({ visible }: Props) {
   }, [visible, reduceMotion, introPending]);
 
   const fadeMs = reduceMotion ? 80 : 520;
+  const isNarrow = variant === "narrow";
+  const clusterScale = isNarrow ? NARROW_PHOTOS_POPUP_SCALE : CLUSTER_SCALE;
+  const cardWRef = Math.round(300 * clusterScale);
+  const clusterWRef = Math.round(860 * clusterScale);
+  const clusterHRef = Math.round(300 * 2.2 * clusterScale);
+  const fanOffsetRef = Math.round(cardWRef * 0.46);
 
   const wingEase = "cubic-bezier(0.22, 1, 0.56, 1)";
 
   const spreadRefPx = fanOut ? FAN_OUT_EXTRA_REF_PX : 0;
-  const baseOffsetPx = introPending ? 0 : FAN_OFFSET_REF_PX;
+  const baseOffsetPx = introPending ? 0 : fanOffsetRef;
   const wingOffsetPx = baseOffsetPx + spreadRefPx;
 
   const wingMoveMs = reduceMotion
@@ -123,7 +142,8 @@ export function PhotosHoverCluster({ visible }: Props) {
     : introPending
       ? "none"
       : `transform ${wingMoveMs}ms ${wingEase}, opacity ${wingMoveMs}ms cubic-bezier(0.22, 1, 0.36, 1)`;
-  const imgW = `calc(${CARD_W_REF_PX} * (${U_STAGE}))`;
+  const imgW = isNarrow ? `${cardWRef}px` : `calc(${cardWRef} * ${U_STAGE})`;
+  const dim = (n: number) => (isNarrow ? `${n}px` : `calc(${n} * ${U_STAGE})`);
 
   const photo = (src: string, alt: string, sizes: string) => (
     <Image
@@ -138,39 +158,23 @@ export function PhotosHoverCluster({ visible }: Props) {
     />
   );
 
-  return (
+  const clusterInner = (
     <div
-      className="pointer-events-none fixed inset-0 z-[40] select-none"
-      aria-hidden={!visible}
+      className={`relative ${visible ? "pointer-events-auto" : "pointer-events-none"}`}
       style={{
-        opacity: visible ? 1 : 0,
-        transition: reduceMotion
-          ? "none"
-          : `opacity ${fadeMs}ms cubic-bezier(0.22, 1, 0.36, 1), transform ${fadeMs}ms cubic-bezier(0.22, 1, 0.56, 1)`,
-        transform: visible ? "translateY(0)" : "translateY(12px)",
+        width: dim(clusterWRef),
+        height: dim(clusterHRef),
+        maxWidth: isNarrow ? NARROW_CENTER_POPUP_MAX : "92vw",
       }}
+      onMouseEnter={() => setFanOut(true)}
+      onMouseLeave={() => setFanOut(false)}
     >
-      <div
-        className={`absolute left-1/2 top-1/2 ${visible ? "pointer-events-auto" : "pointer-events-none"}`}
-        style={{
-          transform: `translate(-50%, calc(-50% - ${CLUSTER_NUDGE_UP_PX}px))`,
-        }}
-        aria-label="Photos preview"
-      >
-        <div
-          className="relative"
-          style={{
-            width: `calc(${CLUSTER_W_REF_PX} * (${U_STAGE}))`,
-            height: `calc(${CLUSTER_H_REF_PX} * (${U_STAGE}))`,
-            maxWidth: "92vw",
-          }}
-          onMouseEnter={() => setFanOut(true)}
-          onMouseLeave={() => setFanOut(false)}
-        >
         <div
           className="absolute bottom-0 left-1/2 z-[1]"
           style={{
-            transform: `translateX(calc(-50% - ${wingOffsetPx} * (${U_STAGE}))) rotate(${LEFT_ROT}deg)`,
+            transform: isNarrow
+              ? `translateX(calc(-50% - ${wingOffsetPx}px)) rotate(${LEFT_ROT}deg)`
+              : `translateX(calc(-50% - ${wingOffsetPx} * ${U_STAGE})) rotate(${LEFT_ROT}deg)`,
             transformOrigin: "center bottom",
             boxShadow: SHADOW_BACK,
             transition: wingTransition,
@@ -185,7 +189,9 @@ export function PhotosHoverCluster({ visible }: Props) {
         <div
           className="absolute bottom-0 left-1/2 z-[2]"
           style={{
-            transform: `translateX(calc(-50% + ${wingOffsetPx} * (${U_STAGE}))) rotate(${RIGHT_ROT}deg)`,
+            transform: isNarrow
+              ? `translateX(calc(-50% + ${wingOffsetPx}px)) rotate(${RIGHT_ROT}deg)`
+              : `translateX(calc(-50% + ${wingOffsetPx} * ${U_STAGE})) rotate(${RIGHT_ROT}deg)`,
             transformOrigin: "center bottom",
             boxShadow: SHADOW_BACK,
             transition: wingTransition,
@@ -203,7 +209,9 @@ export function PhotosHoverCluster({ visible }: Props) {
             transform: `translateX(-50%) translateY(${introPending ? 12 : 0}px)`,
             transformOrigin: "center bottom",
             opacity: introPending ? 0.72 : 1,
-            marginBottom: `calc(${Math.round(12 * CLUSTER_SCALE)} * (${U_STAGE}))`,
+            marginBottom: isNarrow
+              ? `${Math.round(12 * clusterScale)}px`
+              : `calc(${Math.round(12 * clusterScale)} * ${U_STAGE})`,
             boxShadow: SHADOW_FRONT,
             transition: wingTransition,
           }}
@@ -214,7 +222,45 @@ export function PhotosHoverCluster({ visible }: Props) {
             "(max-width: 768px) 40vw, 320px",
           )}
         </div>
-        </div>
+    </div>
+  );
+
+  const fadeStyle = {
+    opacity: visible ? 1 : 0,
+    transition: reduceMotion
+      ? "none"
+      : `opacity ${fadeMs}ms cubic-bezier(0.22, 1, 0.36, 1), transform ${fadeMs}ms cubic-bezier(0.22, 1, 0.56, 1)`,
+    transform: visible
+      ? isNarrow
+        ? `translateY(-${NARROW_PHOTOS_NUDGE_UP_PX}px)`
+        : "translateY(0)"
+      : isNarrow
+        ? `translateY(${12 - NARROW_PHOTOS_NUDGE_UP_PX}px)`
+        : "translateY(12px)",
+  } as const;
+
+  if (isNarrow) {
+    return (
+      <NarrowCenterPopup visible={visible} style={fadeStyle}>
+        <div aria-label="Photos preview">{clusterInner}</div>
+      </NarrowCenterPopup>
+    );
+  }
+
+  return (
+    <div
+      className="pointer-events-none fixed inset-0 z-[40] select-none"
+      aria-hidden={!visible}
+      style={fadeStyle}
+    >
+      <div
+        className={`absolute left-1/2 top-1/2 ${visible ? "pointer-events-auto" : "pointer-events-none"}`}
+        style={{
+          transform: `translate(-50%, calc(-50% - ${CLUSTER_NUDGE_UP_PX}px))`,
+        }}
+        aria-label="Photos preview"
+      >
+        {clusterInner}
       </div>
     </div>
   );

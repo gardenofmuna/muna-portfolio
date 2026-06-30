@@ -1,7 +1,14 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
+
+import {
+  NARROW_BIO_FONT_SCALE,
+  NARROW_BIO_POPUP_W,
+  NARROW_H,
+  NARROW_W,
+} from "@/lib/narrow-stage";
 
 /** Homepage comp (for scale u) */
 const REF_W = 1440;
@@ -64,22 +71,41 @@ type Layout = {
 function layoutForViewport(
   vw: number,
   vh: number,
-  options?: { fixedAspectBlock?: boolean },
+  options?: {
+    fixedAspectBlock?: boolean;
+    refW?: number;
+    refH?: number;
+    maxWidth?: number;
+    /** Hub bio: target width (artboard px), capped to viewport width. */
+    hubWidth?: number;
+    textScale?: number;
+  },
 ): Layout {
-  const u = Math.min(vw / REF_W, vh / REF_H);
+  const refW = options?.refW ?? REF_W;
+  const refH = options?.refH ?? REF_H;
+  const u = Math.min(vw / refW, vh / refH);
   /** Embedded bio: exact1024×526×u — no min-width clamp so lines never reflow like a scaled image. */
-  const width = options?.fixedAspectBlock
+  let width = options?.fixedAspectBlock
     ? Math.round(PNG_W * u)
     : Math.max(280, Math.round(PNG_W * u));
-  const height = Math.round(PNG_H * u);
+  if (options?.hubWidth) {
+    width = Math.min(options.hubWidth, vw);
+  } else if (options?.maxWidth) {
+    width = Math.min(width, options.maxWidth);
+  }
+  const height = Math.round(width * (PNG_H / PNG_W));
   const top = Math.round(BOX_TOP_REF * u);
   const centeredLeft = Math.round((vw - width) / 2);
   const minLeft = Math.round(MIN_LEFT_REF * u);
   const left = Math.max(minLeft, centeredLeft);
   const lineHeight = PHOTOSHOP_AUTO_LEADING;
+  const textScale = options?.textScale ?? 1;
   const fontSize =
     Math.round(
-      (height / (9 * PHOTOSHOP_AUTO_LEADING)) * BIO_TEXT_SCALE * 100,
+      (height / (9 * PHOTOSHOP_AUTO_LEADING)) *
+        BIO_TEXT_SCALE *
+        textScale *
+        100,
     ) / 100;
   return { left, leftMin: minLeft, top, width, height, fontSize, lineHeight };
 }
@@ -102,6 +128,10 @@ type Props = {
    * and opacity. Omit `alignBottom` / `alignRight`.
    */
   embedded?: boolean;
+  /** Use Artboard_2 (859×1623) scale for typography on narrow layout. */
+  narrowStage?: boolean;
+  /** Centre bio inside the narrow wheel hub (about / contact). */
+  hubCentered?: boolean;
 };
 
 /**
@@ -113,25 +143,46 @@ export function AboutBio({
   alignBottom,
   alignRight,
   embedded = false,
+  narrowStage = false,
+  hubCentered = false,
 }: Props) {
+  const stageOpts = narrowStage
+    ? { refW: NARROW_W, refH: NARROW_H }
+    : undefined;
+  const layoutOpts = useMemo(
+    () =>
+      embedded
+        ? {
+            fixedAspectBlock: true,
+            ...stageOpts,
+            ...(hubCentered
+              ? {
+                  hubWidth: NARROW_BIO_POPUP_W,
+                  textScale: NARROW_BIO_FONT_SCALE,
+                }
+              : {}),
+          }
+        : stageOpts,
+    [embedded, narrowStage, hubCentered],
+  );
+
   const [reduceMotion, setReduceMotion] = useState(false);
   const [layout, setLayout] = useState<Layout>(() =>
-    layoutForViewport(
-      1440,
-      900,
-      embedded ? { fixedAspectBlock: true } : undefined,
-    ),
+    layoutForViewport(1440, 900, layoutOpts),
   );
 
   useLayoutEffect(() => {
-    const read = () =>
-      setLayout(
-        layoutForViewport(
-          document.documentElement.clientWidth,
-          document.documentElement.clientHeight,
-          embedded ? { fixedAspectBlock: true } : undefined,
-        ),
-      );
+    const read = () => {
+      const vw =
+        narrowStage && embedded
+          ? NARROW_W
+          : document.documentElement.clientWidth;
+      const vh =
+        narrowStage && embedded
+          ? NARROW_H
+          : document.documentElement.clientHeight;
+      setLayout(layoutForViewport(vw, vh, layoutOpts));
+    };
     read();
     const ro = new ResizeObserver(read);
     ro.observe(document.documentElement);
@@ -140,7 +191,7 @@ export function AboutBio({
       ro.disconnect();
       window.removeEventListener("resize", read);
     };
-  }, [embedded]);
+  }, [embedded, narrowStage, layoutOpts]);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -154,7 +205,12 @@ export function AboutBio({
   const { fontSize, lineHeight, width, height, left, leftMin, top } = layout;
   const pinBottom = Boolean(alignBottom && !embedded);
   const pinchRight = Boolean(alignRight && !embedded);
-  const bottomAnchored = pinBottom || embedded;
+  const bottomAnchored = (pinBottom || embedded) && !hubCentered;
+  const contentJustify = hubCentered
+    ? "center"
+    : bottomAnchored
+      ? "flex-end"
+      : "flex-start";
 
   const bodyInk = whiteBodyText ? "#fff" : "#000";
 
@@ -166,9 +222,19 @@ export function AboutBio({
     lineHeight,
     fontFamily: '"LTC Garamont Display OT", "Times New Roman", serif',
     color: bodyInk,
+    textAlign: (hubCentered ? "center" : "left") as "center" | "left",
+    whiteSpace: hubCentered ? "normal" : "nowrap",
+    ...(hubCentered ? { width: "100%" } : {}),
   } as const;
 
   const fadeTranslateY = visible ? 0 : 10;
+  const pinOffsetX = narrowStage && embedded ? 0 : ABOUT_BIO_PIN_OFFSET_X;
+  const pinOffsetY =
+    (narrowStage && embedded
+      ? 0
+      : bottomAnchored
+        ? 0
+        : ABOUT_BIO_PIN_OFFSET_Y) + fadeTranslateY;
 
   return (
     <div
@@ -185,11 +251,13 @@ export function AboutBio({
               userSelect: "text",
               boxSizing: "border-box",
               width: width,
-              height: height,
+              height: hubCentered ? "auto" : height,
               maxWidth: width,
               flexShrink: 0,
-              alignSelf: "flex-end",
-              aspectRatio: `${PNG_W} / ${PNG_H}`,
+              alignSelf: hubCentered ? "center" : "flex-end",
+              ...(hubCentered
+                ? {}
+                : { aspectRatio: `${PNG_W} / ${PNG_H}` }),
             }
           : {
               left: pinchRight ? leftMin : left,
@@ -214,61 +282,55 @@ export function AboutBio({
                 ? "none"
                 : `transform ${fadeMs}ms cubic-bezier(0.22, 1, 0.56, 1)`,
             }),
-        transform: `translate(${ABOUT_BIO_PIN_OFFSET_X}px, ${(bottomAnchored ? 0 : ABOUT_BIO_PIN_OFFSET_Y) + fadeTranslateY}px)`,
+        transform: `translate(${pinOffsetX}px, ${pinOffsetY}px)`,
       }}
     >
       <div
         style={{
           width: "100%",
-          height: "100%",
+          height: hubCentered ? "auto" : "100%",
           display: "flex",
           flexDirection: "column",
-          justifyContent: bottomAnchored ? "flex-end" : "flex-start",
+          justifyContent: contentJustify,
+          alignItems: hubCentered ? "center" : "stretch",
         }}
       >
-        <p style={{ ...textStyle, textAlign: "left", whiteSpace: "nowrap" }}>
+        <p style={textStyle}>
           Muna Nzeribe (b. 2001) is a designer and artist born in
         </p>
-        <p style={{ ...textStyle, textAlign: "left", whiteSpace: "nowrap" }}>
+        <p style={textStyle}>
           <span style={fauxBold(COL.lagos)}>Lagos,</span> Nigeria and currently
           living and working in
         </p>
-        <p style={{ ...textStyle, textAlign: "left", whiteSpace: "nowrap" }}>
+        <p style={textStyle}>
           <span style={fauxBold(COL.toronto)}>Toronto,</span> Canada. With a
           Bsc. in Mass Communication
         </p>
-        <p style={{ ...textStyle, textAlign: "left", whiteSpace: "nowrap" }}>
+        <p style={textStyle}>
           (2022) and an MFA in Documentary Media (2025), she sees
         </p>
-        <p style={{ ...textStyle, textAlign: "left", whiteSpace: "nowrap" }}>
+        <p style={textStyle}>
           her practice as an embodiment of Marshall McLuhan&rsquo;s theory
         </p>
-        <p style={{ ...textStyle, textAlign: "left", whiteSpace: "nowrap" }}>
+        <p style={textStyle}>
           that{" "}
           <span style={fauxBold(COL.medium)}>
             &lsquo;the medium is the message.&rsquo;
           </span>{" "}
           Utilizing an inherently
         </p>
-        <p style={{ ...textStyle, textAlign: "left", whiteSpace: "nowrap" }}>
+        <p style={textStyle}>
           <span style={fauxBold(COL.interdisciplinary)}>
             interdisciplinary
           </span>{" "}
           approach and{" "}
           <span style={fauxBold(COL.afro)}>Afro-modernist</span> lens, she
         </p>
-        <p style={{ ...textStyle, textAlign: "left", whiteSpace: "nowrap" }}>
+        <p style={textStyle}>
           waves her creative wand excited to reveal the{" "}
           <span style={fauxBold(COL.blue)}>hidden</span>
         </p>
-        <p
-          style={{
-            ...textStyle,
-            textAlign: "left",
-            whiteSpace: "nowrap",
-            ...fauxBold(COL.blue),
-          }}
-        >
+        <p style={{ ...textStyle, ...fauxBold(COL.blue) }}>
           correspondence embedded in emerging technology.
         </p>
       </div>
