@@ -240,7 +240,7 @@ export function AboutBio({
     <div
       className={
         embedded
-          ? `relative z-auto shrink-0 cursor-text select-text ${visible ? "pointer-events-auto" : "pointer-events-none"}`
+          ? "relative z-auto shrink-0 select-none pointer-events-none"
           : "fixed z-[30] cursor-text select-text"
       }
       aria-hidden={!visible}

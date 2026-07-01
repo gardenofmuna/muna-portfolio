@@ -4,12 +4,11 @@ import { useEffect, useState } from "react";
 
 import {
   NARROW_H,
-  NARROW_LABEL_FONT_PT,
   NARROW_LABEL_TRACKING_EM,
-  NARROW_RING_FONT_SCALE,
+  NARROW_RING_FONT_SIZE_PT,
   NARROW_W,
   NARROW_WHEEL_CENTER,
-  NARROW_WHEEL_EDGE_OVERFLOW,
+  NARROW_WHEEL_R,
 } from "@/lib/narrow-stage";
 
 const LABELS = [
@@ -22,12 +21,6 @@ const LABELS = [
   "cv + press",
   "contact",
 ] as const;
-
-/** Headroom so contact + trailing space never clip at path end. */
-const RING_CLIP_MARGIN_PX = 4;
-
-const MAX_FONT_PT = NARROW_LABEL_FONT_PT * 1.5;
-const MIN_FONT_PT = NARROW_LABEL_FONT_PT * 0.72;
 
 export type NarrowArcCenters = number[];
 
@@ -57,6 +50,23 @@ export function ringWordText(index: number): string {
 /** Trailing space after every word — closure gap matches all others. */
 export function ringFullText(): string {
   return LABELS.map((label) => `${label} `).join("");
+}
+
+function equalArcCenters(): NarrowArcCenters {
+  return LABELS.map((_, i) => (i + 0.5) / LABELS.length);
+}
+
+function staticRingLayout(): NarrowRingLayout {
+  const radius = NARROW_WHEEL_R;
+  const pathLength = 2 * Math.PI * radius;
+  return {
+    radius,
+    fontSizePt: NARROW_RING_FONT_SIZE_PT,
+    pathLength,
+    naturalLength: pathLength,
+    arcCenters: equalArcCenters(),
+    ready: true,
+  };
 }
 
 function createMeasureSvg(fontSizePt: number, radius: number) {
@@ -94,7 +104,8 @@ function createMeasureSvg(fontSizePt: number, radius: number) {
   return { svg, tp: tp as SVGTextPathElement };
 }
 
-function measureRing(
+/** Measure word centres at the locked font size (arc positions only). */
+function measureArcCenters(
   fontSizePt: number,
   radius: number,
 ): { naturalLength: number; arcCenters: NarrowArcCenters } {
@@ -115,56 +126,11 @@ function measureRing(
   }
 }
 
-/** Largest pt where the full string (incl. contact + space) fits inside the ring. */
-function fontSizePtForRing(pathLength: number, radius: number): number {
-  const targetMax = pathLength - RING_CLIP_MARGIN_PX;
-  let lo = MIN_FONT_PT;
-  let hi = MAX_FONT_PT;
-  let best = MIN_FONT_PT;
-
-  for (let i = 0; i < 28; i++) {
-    const mid = (lo + hi) / 2;
-    const { naturalLength } = measureRing(mid, radius);
-    if (naturalLength <= 0) {
-      hi = mid;
-      continue;
-    }
-    if (naturalLength <= targetMax) {
-      best = mid;
-      lo = mid;
-    } else {
-      hi = mid;
-    }
-  }
-
-  let pt = best;
-  let { naturalLength, arcCenters } = measureRing(pt, radius);
-  while (naturalLength > targetMax && pt > MIN_FONT_PT) {
-    pt *= 0.985;
-    ({ naturalLength, arcCenters } = measureRing(pt, radius));
-  }
-
-  return pt;
-}
-
-function fallbackLayout(): NarrowRingLayout {
-  const radius = NARROW_W / 2 + NARROW_WHEEL_EDGE_OVERFLOW;
-  const pathLength = 2 * Math.PI * radius;
-  return {
-    radius,
-    fontSizePt: NARROW_LABEL_FONT_PT * 1.15 * NARROW_RING_FONT_SCALE,
-    pathLength,
-    naturalLength: pathLength * 0.97,
-    arcCenters: LABELS.map((_, i) => (i + 0.5) / LABELS.length),
-    ready: true,
-  };
-}
-
 const FONT_LOAD_TIMEOUT_MS = 2000;
 
 async function waitForRingFonts(): Promise<void> {
   const load = document.fonts.load(
-    `800 ${ptToPx(MAX_FONT_PT * NARROW_RING_FONT_SCALE)}px "Arial MT Std"`,
+    `800 ${ptToPx(NARROW_RING_FONT_SIZE_PT)}px "Arial MT Std"`,
   );
   const timeout = new Promise<void>((resolve) => {
     window.setTimeout(resolve, FONT_LOAD_TIMEOUT_MS);
@@ -173,24 +139,23 @@ async function waitForRingFonts(): Promise<void> {
     await Promise.race([load, timeout]);
     await Promise.race([document.fonts.ready, timeout]);
   } catch {
-    /* Arial MT Std may be unavailable — measure with fallback stack */
+    /* fall through */
   }
 }
 
+/**
+ * Locked smart-object ring — fixed radius + font; only arc centres are measured once.
+ */
 export function measureNarrowRingLayout(): NarrowRingLayout {
+  const radius = NARROW_WHEEL_R;
+  const fontSizePt = NARROW_RING_FONT_SIZE_PT;
+  const pathLength = 2 * Math.PI * radius;
+
   if (typeof document === "undefined") {
-    return fallbackLayout();
+    return staticRingLayout();
   }
 
-  const radius = NARROW_W / 2 + NARROW_WHEEL_EDGE_OVERFLOW;
-  const pathLength = 2 * Math.PI * radius;
-  const targetMax = pathLength - RING_CLIP_MARGIN_PX;
-  let fontSizePt = fontSizePtForRing(pathLength, radius) * NARROW_RING_FONT_SCALE;
-  let { naturalLength, arcCenters } = measureRing(fontSizePt, radius);
-  while (naturalLength > targetMax && fontSizePt > MIN_FONT_PT) {
-    fontSizePt *= 0.985;
-    ({ naturalLength, arcCenters } = measureRing(fontSizePt, radius));
-  }
+  const { naturalLength, arcCenters } = measureArcCenters(fontSizePt, radius);
 
   return {
     radius,
@@ -203,7 +168,7 @@ export function measureNarrowRingLayout(): NarrowRingLayout {
 }
 
 export function useNarrowRingLayout(enabled: boolean): NarrowRingLayout {
-  const [layout, setLayout] = useState<NarrowRingLayout>(fallbackLayout);
+  const [layout, setLayout] = useState<NarrowRingLayout>(staticRingLayout);
 
   useEffect(() => {
     if (!enabled) return;
@@ -215,7 +180,7 @@ export function useNarrowRingLayout(enabled: boolean): NarrowRingLayout {
       try {
         setLayout(measureNarrowRingLayout());
       } catch {
-        if (!cancelled) setLayout(fallbackLayout());
+        if (!cancelled) setLayout(staticRingLayout());
       }
     };
 

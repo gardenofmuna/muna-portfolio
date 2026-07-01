@@ -17,9 +17,8 @@ function readLayoutMode(): LayoutMode {
 
 /** Desktop 1440 layout vs Artboard_2 narrow (859×1623). */
 export function useLayoutMode(): LayoutMode {
-  const [mode, setMode] = useState<LayoutMode>(() =>
-    typeof window === "undefined" ? "desktop" : readLayoutMode(),
-  );
+  /** Match SSR — sync real mode after mount to avoid hydration mismatch. */
+  const [mode, setMode] = useState<LayoutMode>("desktop");
 
   useEffect(() => {
     const mq = window.matchMedia(NARROW_MQ);

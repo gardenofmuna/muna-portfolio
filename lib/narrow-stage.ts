@@ -20,7 +20,7 @@ export const NARROW_FOOTER_LINK_GAP_PX = 120;
 /** Gap above footer reserved for bio bottom edge. */
 export const NARROW_BIO_FOOTER_GAP = 20;
 
-/** Uniform scale for narrow wheel ring + hub previews (−20%). */
+/** Uniform scale for narrow hub previews (−20%). Ring uses fixed NARROW_RING_FONT_SIZE_PT. */
 export const NARROW_WHEEL_UI_SCALE = 0.8;
 
 /** Wheel hub — centre of circular nav + popup anchor (middle of artboard). */
@@ -28,30 +28,31 @@ export const NARROW_WHEEL_CENTER = {
   x: NARROW_W / 2,
   y: NARROW_H / 2,
 } as const;
+
 /**
- * Pixels of ring arc clipped past each artboard edge — edge-to-edge on phone.
- * radius = NARROW_W / 2 + this value.
+ * Smart-object ring (Artboard_2 / PS) — locked geometry + type.
+ * Side arcs clip past the artboard edge on purpose.
  */
 export const NARROW_WHEEL_EDGE_OVERFLOW = 56;
-/** Fallback radius before font metrics load (≈ clip target). */
 export const NARROW_WHEEL_R = NARROW_W / 2 + NARROW_WHEEL_EDGE_OVERFLOW;
 
-/** Circular nav label typography (Artboard_2 / PS mock): 48pt Arial MT Std Extra Bold. */
+/** PS mock: 48pt Arial MT Std Extra Bold — locked render size (smart object). */
 export const NARROW_LABEL_FONT_PT = 48;
-/** Display scale for narrow ring labels (+50%, then wheel UI scale). */
+/** Display scale reference (Vercel) — band math uses NARROW_RING_FONT_SIZE_PT. */
 const NARROW_RING_FONT_SCALE_BASE = 1.81;
 export const NARROW_RING_FONT_SCALE =
   NARROW_RING_FONT_SCALE_BASE * NARROW_WHEEL_UI_SCALE;
-/** Photoshop tracking VA −100 → −100/1000 em. Do not stretch via textPath lengthAdjust. */
+export const NARROW_RING_FONT_SIZE_PT = 77.61;
+/** Photoshop tracking VA −100 → −100/1000 em. Do not use textPath lengthAdjust. */
 export const NARROW_LABEL_TRACKING_EM = -0.1;
-/** @deprecated use NARROW_LABEL_FONT_PT — kept for imports */
+/** @deprecated use NARROW_LABEL_FONT_PT */
 export const NARROW_LABEL_FONT_REF = NARROW_LABEL_FONT_PT;
 export const NARROW_LABEL_INACTIVE = "#a3a3a3";
 export const NARROW_LABEL_ACTIVE = "#000000";
 
 /** Radial depth of label text on the ring (artboard px). */
 export const NARROW_LABEL_BAND_PX =
-  NARROW_LABEL_FONT_PT * NARROW_RING_FONT_SCALE * (96 / 72);
+  NARROW_RING_FONT_SIZE_PT * (96 / 72);
 
 /** Interior diameter inside the label ring (artboard px). */
 export const NARROW_HUB_DIAMETER = Math.round(

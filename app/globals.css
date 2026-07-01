@@ -92,7 +92,7 @@ img {
   font-family: "Biro Script US Plus", "Biro Script", cursive;
 }
 
-/* Circular nav — no iOS tap/focus box on ring labels */
+/* Circular nav — Vercel label styling; touch spin handled on wheel shell */
 .narrow-nav-ring .narrow-nav-label {
   outline: none;
   -webkit-tap-highlight-color: transparent;

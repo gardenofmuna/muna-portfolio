@@ -50,12 +50,6 @@ export function HomeNarrow() {
       <NarrowArtboard>
         <SiteWordmark />
         <MobileFooterLinks />
-        <CircularNavWheel
-          layout="narrow"
-          initialActiveLabel="contact"
-          onActiveLabelChange={setActiveLabel}
-          onHoverLabelChange={setHoverNavLabel}
-        />
         <DesignCluster visible={showDesign} variant="narrow" />
         <InstallationLottie visible={showInstallation} layout="narrow" />
         <PhotosHoverCluster visible={showPhotos} variant="narrow" />
@@ -68,6 +62,12 @@ export function HomeNarrow() {
             whiteBodyText={navPreview === "contact"}
           />
         </NarrowCenterPopup>
+        <CircularNavWheel
+          layout="narrow"
+          initialActiveLabel="contact"
+          onActiveLabelChange={setActiveLabel}
+          onHoverLabelChange={setHoverNavLabel}
+        />
       </NarrowArtboard>
     </div>
   );

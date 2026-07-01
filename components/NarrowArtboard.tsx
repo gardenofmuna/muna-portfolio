@@ -13,7 +13,7 @@ export function useNarrowArtboardMetrics(): Metrics {
     const read = () => {
       const vw = window.innerWidth;
       const vh = window.innerHeight;
-      /** Phones: scale to viewport width so the ring clips edge-to-edge. */
+      /** Phones: full-width scale (Vercel). Desktop preview: letterboxed smart-object. */
       const fillWidth = window.matchMedia("(pointer: coarse)").matches;
       const u = fillWidth
         ? vw / NARROW_W
