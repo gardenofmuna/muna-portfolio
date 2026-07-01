@@ -28,8 +28,8 @@ export function HomeNarrow() {
     return () => mq.removeEventListener("change", u);
   }, []);
 
-  const navPreview = hoverNavLabel ?? activeLabel;
-  const showAboutBio = navPreview === "about" || navPreview === "contact";
+  const isContact = activeLabel === "contact";
+  const showAboutBio = activeLabel === "about" || isContact;
   const showPhotos =
     activeLabel === "photos" || hoverNavLabel === "photos";
   const showDesign =
@@ -50,6 +50,12 @@ export function HomeNarrow() {
       <NarrowArtboard>
         <SiteWordmark />
         <MobileFooterLinks />
+        <CircularNavWheel
+          layout="narrow"
+          initialActiveLabel="contact"
+          onActiveLabelChange={setActiveLabel}
+          onHoverLabelChange={setHoverNavLabel}
+        />
         <DesignCluster visible={showDesign} variant="narrow" />
         <InstallationLottie visible={showInstallation} layout="narrow" />
         <PhotosHoverCluster visible={showPhotos} variant="narrow" />
@@ -59,15 +65,9 @@ export function HomeNarrow() {
             embedded
             narrowStage
             hubCentered
-            whiteBodyText={navPreview === "contact"}
+            whiteBodyText={isContact}
           />
         </NarrowCenterPopup>
-        <CircularNavWheel
-          layout="narrow"
-          initialActiveLabel="contact"
-          onActiveLabelChange={setActiveLabel}
-          onHoverLabelChange={setHoverNavLabel}
-        />
       </NarrowArtboard>
     </div>
   );

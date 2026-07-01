@@ -13,11 +13,7 @@ export function useNarrowArtboardMetrics(): Metrics {
     const read = () => {
       const vw = window.innerWidth;
       const vh = window.innerHeight;
-      /** Phones: full-width scale (Vercel). Desktop preview: letterboxed smart-object. */
-      const fillWidth = window.matchMedia("(pointer: coarse)").matches;
-      const u = fillWidth
-        ? vw / NARROW_W
-        : Math.min(vw / NARROW_W, vh / NARROW_H);
+      const u = Math.min(vw / NARROW_W, vh / NARROW_H);
       setM({
         u,
         ox: (vw - NARROW_W * u) / 2,

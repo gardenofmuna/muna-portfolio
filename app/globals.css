@@ -92,17 +92,7 @@ img {
   font-family: "Biro Script US Plus", "Biro Script", cursive;
 }
 
-/* Circular nav — Vercel label styling; touch spin handled on wheel shell */
-.narrow-nav-ring .narrow-nav-label {
-  outline: none;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.narrow-nav-ring .narrow-nav-label:focus,
-.narrow-nav-ring .narrow-nav-label:focus-visible {
-  outline: none;
-}
-
+/* No hover effects on nav tabs - design sits as is */
 .nav-tab:hover {
   transform: none !important;
   box-shadow: none !important;
