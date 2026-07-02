@@ -126,11 +126,11 @@ export const NARROW_PHOTOS_NUDGE_UP_PX = Math.round(
     NARROW_WHEEL_FIT_SCALE,
 );
 export const NARROW_INSTALLATION_POPUP_W = Math.round(
-  NARROW_CENTER_POPUP_MAX * 1.5 * 1.3,
+  NARROW_CENTER_POPUP_MAX * 1.5 * 1.3 * 1.18,
 );
 /** Narrow installation Lottie scale (width + scale combined). */
 export const NARROW_INSTALLATION_POPUP_SCALE =
-  1.08 * 1.5 * NARROW_WHEEL_UI_SCALE * 1.15 * NARROW_WHEEL_FIT_SCALE;
+  1.08 * 1.5 * NARROW_WHEEL_UI_SCALE * 1.15 * NARROW_WHEEL_FIT_SCALE * 1.22;
 
 /** @deprecated use cluster-specific scales above */
 export const NARROW_CENTER_POPUP_SCALE = NARROW_DESIGN_POPUP_SCALE;

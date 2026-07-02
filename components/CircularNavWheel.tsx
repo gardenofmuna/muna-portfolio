@@ -4,6 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, Fra
 
 import {
   narrowIndexAtTop,
+  narrowIndexFromPointer,
   narrowLabelAngle,
   narrowRingPathD,
   narrowSnapRotation,
@@ -306,12 +307,22 @@ export function CircularNavWheel({
     }
   }, []);
 
+  const syncNarrowTopHover = useCallback((φ: number) => {
+    const top = narrowIndexAtTop(φ, labelAnglesRef.current);
+    setHoveredIndex((prev) => (prev === top ? prev : top));
+  }, []);
+
   const finishNarrowSpin = useCallback(() => {
     stopSpin();
     const φ = rotationRef.current;
     const bestI = narrowIndexAtTop(φ, labelAnglesRef.current);
-    setFocusedIndex(bestI);
-  }, [stopSpin]);
+    setHoveredIndex(null);
+    if (bestI !== focusedRef.current) {
+      setFocusedIndex(bestI);
+    } else {
+      snapNarrowToIndex(bestI, φ);
+    }
+  }, [snapNarrowToIndex, stopSpin]);
 
   const runSpinMomentum = useCallback(() => {
     stopSpin();
@@ -325,13 +336,16 @@ export function CircularNavWheel({
       setRotation((prev) => {
         const next = prev + v;
         rotationRef.current = next;
+        if (isNarrowRef.current) {
+          syncNarrowTopHover(next);
+        }
         return next;
       });
       dragRef.current.velocity *= SPIN_FRICTION;
       spinRafRef.current = requestAnimationFrame(step);
     };
     spinRafRef.current = requestAnimationFrame(step);
-  }, [finishNarrowSpin, stopSpin]);
+  }, [finishNarrowSpin, stopSpin, syncNarrowTopHover]);
 
   useEffect(() => {
     const el = wrapRef.current;
@@ -508,6 +522,9 @@ export function CircularNavWheel({
     setRotation((prev) => {
       const next = prev + delta;
       rotationRef.current = next;
+      if (isNarrow) {
+        syncNarrowTopHover(next);
+      }
       return next;
     });
   };
@@ -531,9 +548,22 @@ export function CircularNavWheel({
 
     if (!wasMoved) {
       const p = pointerLocal(e.clientX, e.clientY);
-      const i = nearestIndexToPointer(p.x, p.y, φ);
-      setFocusedIndex(i);
-      if (!isNarrow) {
+      if (isNarrow) {
+        const i = narrowIndexFromPointer(
+          p.x,
+          p.y,
+          φ,
+          labelAnglesRef.current,
+        );
+        setHoveredIndex(null);
+        if (i !== focusedRef.current) {
+          setFocusedIndex(i);
+        } else {
+          snapNarrowToIndex(i, φ);
+        }
+      } else {
+        const i = nearestIndexToPointer(p.x, p.y, φ);
+        setFocusedIndex(i);
         setRotation((prev) => snapRotationForIndex(i, prev));
       }
     } else if (isNarrow) {

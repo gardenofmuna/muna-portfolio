@@ -288,6 +288,32 @@ export function narrowIndexAtTop(
   return best;
 }
 
+/** Label index nearest a pointer position on the ring (narrow tap target). */
+export function narrowIndexFromPointer(
+  px: number,
+  py: number,
+  rotation: number,
+  labelAngles: NarrowLabelAngles,
+): number {
+  const dx = px - NARROW_WHEEL_CENTER.x;
+  const dy = py - NARROW_WHEEL_CENTER.y;
+  const pointerAngle = Math.atan2(dy, dx);
+  let best = 0;
+  let bestDist = Infinity;
+  for (let i = 0; i < LABELS.length; i++) {
+    const labelPos = narrowLabelAngle(i, labelAngles) + rotation;
+    let d = pointerAngle - labelPos;
+    while (d > Math.PI) d -= 2 * Math.PI;
+    while (d < -Math.PI) d += 2 * Math.PI;
+    const dist = Math.abs(d);
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = i;
+    }
+  }
+  return best;
+}
+
 /**
  * Rotation delta (rad) so the focused label centre sits on the vertical axis.
  */
