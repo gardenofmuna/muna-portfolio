@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import {
   NARROW_H,
+  NARROW_LABEL_BAND_PX,
   NARROW_LABEL_TRACKING_EM,
   NARROW_RING_FONT_SIZE_PT,
   NARROW_RING_TEXT_SPAN,
@@ -149,9 +150,106 @@ function normalizeAngle(a: number): number {
   return x;
 }
 
-/** Wheel-local angle (rad) → distance along the ring path. */
-function angleToPathDist(angle: number, pathLength: number): number {
-  return (normalizeAngle(angle + Math.PI / 2) / TWO_PI) * pathLength;
+function pathOrderMidpoint(from: number, to: number): number {
+  let span = to - from;
+  if (span <= 0) span += TWO_PI;
+  return normalizeAngle(from + span / 2);
+}
+
+function angleInClockwiseWedge(
+  angle: number,
+  start: number,
+  end: number,
+): boolean {
+  const a = normalizeAngle(angle);
+  const s = normalizeAngle(start);
+  const e = normalizeAngle(end);
+  if (s <= e) return a >= s && a <= e;
+  return a >= s || a <= e;
+}
+
+function nearestLabelByCenter(
+  localAngle: number,
+  labelArcs: NarrowLabelArc[],
+): number {
+  let best = 0;
+  let bestDist = Infinity;
+  for (let i = 0; i < labelArcs.length; i++) {
+    const center = labelArcs[i]!.center;
+    let d = Math.abs(normalizeAngle(localAngle - center));
+    if (d > Math.PI) d = TWO_PI - d;
+    if (d < bestDist) {
+      bestDist = d;
+      best = i;
+    }
+  }
+  return best;
+}
+
+export type NarrowLabelWedge = {
+  index: number;
+  start: number;
+  end: number;
+  center: number;
+};
+
+/** Non-overlapping tap wedges — midpoints between neighbours in path order. */
+export function buildNarrowLabelWedges(
+  labelArcs: NarrowLabelArc[],
+): NarrowLabelWedge[] {
+  const centers = labelArcs.map((a) => a.center);
+  const n = centers.length;
+  return centers.map((center, i) => {
+    const prev = centers[(i + n - 1) % n]!;
+    const next = centers[(i + 1) % n]!;
+    return {
+      index: i,
+      center,
+      start: pathOrderMidpoint(prev, center),
+      end: pathOrderMidpoint(center, next),
+    };
+  });
+}
+
+/** SVG arc segment for an invisible stroke hit target on the ring. */
+export function narrowWedgeArcPath(
+  cx: number,
+  cy: number,
+  radius: number,
+  startRad: number,
+  endRad: number,
+): string {
+  const x0 = cx + radius * Math.cos(startRad);
+  const y0 = cy + radius * Math.sin(startRad);
+  const x1 = cx + radius * Math.cos(endRad);
+  const y1 = cy + radius * Math.sin(endRad);
+  let span = endRad - startRad;
+  if (span <= 0) span += TWO_PI;
+  const largeArc = span > Math.PI ? 1 : 0;
+  return `M ${x0} ${y0} A ${radius} ${radius} 0 ${largeArc} 1 ${x1} ${y1}`;
+}
+
+/** Topmost painted element under a screen tap (hit paths or label glyphs). */
+export function narrowIndexFromTapStack(
+  clientX: number,
+  clientY: number,
+): number | null {
+  if (typeof document === "undefined") return null;
+  const stack = document.elementsFromPoint(clientX, clientY);
+  for (const el of stack) {
+    if (!(el instanceof Element)) continue;
+    const attr = el.getAttribute("data-nav-hit-index");
+    if (attr != null) {
+      const i = Number.parseInt(attr, 10);
+      if (i >= 0 && i < LABELS.length) return i;
+    }
+    const idMatch = el.id?.match(/^(?:circular-nav-item|narrow-nav-hit)-(\d+)$/);
+    if (idMatch) {
+      const i = Number.parseInt(idMatch[1]!, 10);
+      if (i >= 0 && i < LABELS.length) return i;
+    }
+  }
+  return null;
 }
 
 export function narrowRingPathD(radius: number): string {
@@ -368,50 +466,36 @@ export function narrowIndexAtTop(
 }
 
 /**
- * Label under a tap — hit test on path distance (avoids angle wrap bugs).
+ * Label under a tap — wheel-local angular wedges (path order, no wrap overlap).
  */
 export function narrowIndexFromRingTap(
   px: number,
   py: number,
   rotation: number,
   labelArcs: NarrowLabelArc[],
-  pathLength = 2 * Math.PI * NARROW_WHEEL_R,
+  _pathLength = 2 * Math.PI * NARROW_WHEEL_R,
 ): number {
   const cx = NARROW_WHEEL_CENTER.x;
   const cy = NARROW_WHEEL_CENTER.y;
   const dx = px - cx;
   const dy = py - cy;
   const dist = Math.hypot(dx, dy);
-  const band = NARROW_RING_FONT_SIZE_PT * (96 / 72);
   const r = NARROW_WHEEL_R;
 
-  if (dist < r - band * 1.35 || dist > r + band * 1.35) {
-    return narrowIndexAtTop(rotation, labelArcs.map((a) => a.center));
-  }
-
   const tapAngle = Math.atan2(dy, dx);
-  const pathDist = angleToPathDist(tapAngle - rotation, pathLength);
-  const pad = band * 0.4;
+  const localAngle = normalizeAngle(tapAngle - rotation);
 
-  for (let i = 0; i < labelArcs.length; i++) {
-    const arc = labelArcs[i]!;
-    if (pathDist >= arc.pathStart - pad && pathDist <= arc.pathEnd + pad) {
-      return i;
-    }
+  if (dist < r - NARROW_LABEL_BAND_PX * 1.5 || dist > r + NARROW_LABEL_BAND_PX * 1.5) {
+    return nearestLabelByCenter(localAngle, labelArcs);
   }
 
-  let best = 0;
-  let bestDist = Infinity;
-  for (let i = 0; i < labelArcs.length; i++) {
-    const arc = labelArcs[i]!;
-    const mid = (arc.pathStart + arc.pathEnd) * 0.5;
-    const d = Math.abs(pathDist - mid);
-    if (d < bestDist) {
-      bestDist = d;
-      best = i;
+  const wedges = buildNarrowLabelWedges(labelArcs);
+  for (const wedge of wedges) {
+    if (angleInClockwiseWedge(localAngle, wedge.start, wedge.end)) {
+      return wedge.index;
     }
   }
-  return best;
+  return nearestLabelByCenter(localAngle, labelArcs);
 }
 
 /** @deprecated use narrowIndexFromRingTap */

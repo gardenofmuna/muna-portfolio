@@ -3,12 +3,15 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, Fragment } from "react";
 
 import {
+  buildNarrowLabelWedges,
   narrowIndexAtTop,
   narrowIndexFromRingTap,
+  narrowIndexFromTapStack,
   narrowLabelAngle,
   narrowRingPathD,
   narrowSnapRotation,
   narrowVisualSnapDelta,
+  narrowWedgeArcPath,
   NARROW_BAKED_LABEL_ANGLES,
   NARROW_NAV_LABELS,
   ringWordText,
@@ -17,6 +20,7 @@ import {
 import {
   NARROW_H,
   NARROW_LABEL_ACTIVE,
+  NARROW_LABEL_BAND_PX,
   NARROW_LABEL_INACTIVE,
   NARROW_LABEL_TRACKING_EM,
   NARROW_W,
@@ -153,6 +157,10 @@ export function CircularNavWheel({
   const labelAngles = ringLayout.labelAngles;
   const labelArcs = ringLayout.labelArcs;
   const pathLength = ringLayout.pathLength;
+  const narrowHitWedges = useMemo(
+    () => (isNarrow ? buildNarrowLabelWedges(labelArcs) : []),
+    [isNarrow, labelArcs],
+  );
   const wrapRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 1200, h: 800 });
   const [rotation, setRotation] = useState(() =>
@@ -583,13 +591,16 @@ export function CircularNavWheel({
     if (!wasMoved) {
       const p = pointerLocal(e.clientX, e.clientY);
       if (isNarrow) {
-        const i = narrowIndexFromRingTap(
-          p.x,
-          p.y,
-          φ,
-          labelArcsRef.current,
-          pathLengthRef.current,
-        );
+        const fromStack = narrowIndexFromTapStack(e.clientX, e.clientY);
+        const i =
+          fromStack ??
+          narrowIndexFromRingTap(
+            p.x,
+            p.y,
+            φ,
+            labelArcsRef.current,
+            pathLengthRef.current,
+          );
         selectNarrowIndex(i, φ);
         setWheelInteracting(false);
       } else {
@@ -672,7 +683,6 @@ export function CircularNavWheel({
               style={{
                 textTransform: "lowercase",
                 letterSpacing: `${NARROW_LABEL_TRACKING_EM}em`,
-                pointerEvents: "none",
               }}
             >
               <textPath
@@ -693,7 +703,7 @@ export function CircularNavWheel({
                         fontWeight={800}
                         style={{
                           transition: reduceMotion ? "none" : "fill 0.18s ease",
-                          pointerEvents: "none",
+                          pointerEvents: "visiblePainted",
                         }}
                       >
                         {ringWordText(i)}
@@ -704,6 +714,18 @@ export function CircularNavWheel({
                 })}
               </textPath>
             </text>
+            {narrowHitWedges.map((wedge) => (
+              <path
+                key={wedge.index}
+                id={`narrow-nav-hit-${wedge.index}`}
+                data-nav-hit-index={wedge.index}
+                d={narrowWedgeArcPath(ox, oy, r, wedge.start, wedge.end)}
+                fill="none"
+                stroke="transparent"
+                strokeWidth={NARROW_LABEL_BAND_PX * 1.45}
+                pointerEvents="stroke"
+              />
+            ))}
           </g>
         </svg>
       ) : (
