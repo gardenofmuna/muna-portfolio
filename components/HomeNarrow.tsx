@@ -18,6 +18,7 @@ import { SiteWordmark } from "@/components/SiteWordmark";
 export function HomeNarrow() {
   const [activeLabel, setActiveLabel] = useState("contact");
   const [hoverNavLabel, setHoverNavLabel] = useState<string | null>(null);
+  const [wheelInteracting, setWheelInteracting] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
 
   useEffect(() => {
@@ -28,20 +29,20 @@ export function HomeNarrow() {
     return () => mq.removeEventListener("change", u);
   }, []);
 
-  const isContact = activeLabel === "contact";
-  const showAboutBio = activeLabel === "about" || isContact;
-  const showPhotos =
-    activeLabel === "photos" || hoverNavLabel === "photos";
-  const showDesign =
-    activeLabel === "design" || hoverNavLabel === "design";
-  const showInstallation =
-    activeLabel === "installation" || hoverNavLabel === "installation";
-  const fadeMs = reduceMotion ? 80 : 520;
+  /** While spinning, only the label at 12 o'clock previews — no stacked hovers. */
+  const previewLabel =
+    wheelInteracting && hoverNavLabel ? hoverNavLabel : activeLabel;
+  const showAboutBio =
+    previewLabel === "about" || previewLabel === "contact";
+  const showPhotos = previewLabel === "photos";
+  const showDesign = previewLabel === "design";
+  const showInstallation = previewLabel === "installation";
+  const fadeMs = wheelInteracting ? 120 : reduceMotion ? 80 : 520;
   const bioFadeStyle = {
     opacity: showAboutBio ? 1 : 0,
     transition: reduceMotion
       ? "none"
-      : `opacity ${fadeMs}ms cubic-bezier(0.22, 1, 0.36, 1), transform ${fadeMs}ms cubic-bezier(0.22, 1, 0.56, 1)`,
+      : `opacity ${fadeMs}ms cubic-bezier(0.22, 1, 0.36, 1), transform ${fadeMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
     transform: showAboutBio ? "translateY(0)" : "translateY(12px)",
   } as const;
 
@@ -55,6 +56,7 @@ export function HomeNarrow() {
           initialActiveLabel="contact"
           onActiveLabelChange={setActiveLabel}
           onHoverLabelChange={setHoverNavLabel}
+          onWheelInteractingChange={setWheelInteracting}
         />
         <DesignCluster visible={showDesign} variant="narrow" />
         <InstallationLottie visible={showInstallation} layout="narrow" />
@@ -65,7 +67,7 @@ export function HomeNarrow() {
             embedded
             narrowStage
             hubCentered
-            whiteBodyText={isContact}
+            whiteBodyText={previewLabel === "contact"}
           />
         </NarrowCenterPopup>
       </NarrowArtboard>

@@ -277,9 +277,8 @@ export function narrowIndexAtTop(
   let best = 0;
   let bestDist = Infinity;
   for (let i = 0; i < LABELS.length; i++) {
-    const pos = narrowLabelAngle(i, labelAngles) + rotation;
-    const d = Math.atan2(Math.sin(pos + Math.PI / 2), Math.cos(pos + Math.PI / 2));
-    const dist = Math.abs(d);
+    const snap = narrowSnapRotation(i, labelAngles, rotation);
+    const dist = Math.abs(snap - rotation);
     if (dist < bestDist) {
       bestDist = dist;
       best = i;
@@ -288,15 +287,31 @@ export function narrowIndexAtTop(
   return best;
 }
 
-/** Label index nearest a pointer position on the ring (narrow tap target). */
+/**
+ * Label index under a screen point — uses rendered tspan bounds (accurate taps).
+ * Falls back to ring angle when nothing is measurable yet.
+ */
 export function narrowIndexFromPointer(
   px: number,
   py: number,
   rotation: number,
   labelAngles: NarrowLabelAngles,
+  clientX?: number,
+  clientY?: number,
 ): number {
+  if (clientX != null && clientY != null) {
+    const fromDom = narrowIndexFromDomPoint(clientX, clientY);
+    if (fromDom != null) return fromDom;
+  }
+
   const dx = px - NARROW_WHEEL_CENTER.x;
   const dy = py - NARROW_WHEEL_CENTER.y;
+  const distFromHub = Math.hypot(dx, dy);
+  const r = NARROW_WHEEL_R;
+  if (distFromHub < r * 0.55 || distFromHub > r * 1.45) {
+    return narrowIndexAtTop(rotation, labelAngles);
+  }
+
   const pointerAngle = Math.atan2(dy, dx);
   let best = 0;
   let bestDist = Infinity;
@@ -312,6 +327,44 @@ export function narrowIndexFromPointer(
     }
   }
   return best;
+}
+
+/** Screen coords → label index via live tspan bounding boxes. */
+export function narrowIndexFromDomPoint(
+  clientX: number,
+  clientY: number,
+): number | null {
+  if (typeof document === "undefined") return null;
+
+  let hit: number | null = null;
+  let bestDist = Infinity;
+
+  for (let i = 0; i < LABELS.length; i++) {
+    const el = document.getElementById(`circular-nav-item-${i}`);
+    if (!el) continue;
+    const rect = el.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) continue;
+
+    const pad = 14;
+    if (
+      clientX >= rect.left - pad &&
+      clientX <= rect.right + pad &&
+      clientY >= rect.top - pad &&
+      clientY <= rect.bottom + pad
+    ) {
+      return i;
+    }
+
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const d = Math.hypot(clientX - cx, clientY - cy);
+    if (d < bestDist) {
+      bestDist = d;
+      hit = i;
+    }
+  }
+
+  return bestDist < 120 ? hit : null;
 }
 
 /**
