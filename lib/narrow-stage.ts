@@ -2,7 +2,18 @@
 export const NARROW_W = 859;
 export const NARROW_H = 1623;
 
-export const U_NARROW = `min(100vw / ${NARROW_W}, 100vh / ${NARROW_H})`;
+/**
+ * Uniform zoom on the whole Artboard_2 comp (wordmark, wheel, footer, hub).
+ * 1 = letterbox fit; >1 scales up from center like a Photoshop group transform.
+ */
+export const NARROW_PAGE_SCALE = 1.03;
+
+export const U_NARROW = `(min(100vw / ${NARROW_W}, 100vh / ${NARROW_H})) * ${NARROW_PAGE_SCALE}`;
+
+/** Viewport scale factor for Artboard_2 (px). */
+export function narrowArtboardScale(vw: number, vh: number): number {
+  return Math.min(vw / NARROW_W, vh / NARROW_H) * NARROW_PAGE_SCALE;
+}
 
 /** Bridge 1624-tall desktop assets onto this artboard height. */
 export const U_NARROW_1624 = `(${U_NARROW}) * (${NARROW_H} / 1624)`;
@@ -10,10 +21,10 @@ export const U_NARROW_1624 = `(${U_NARROW}) * (${NARROW_H} / 1624)`;
 export const NARROW_SIDE_INSET = 32;
 
 /** Top-left nzeribe1.webp on Artboard_2 (Figma). */
-export const NARROW_NZERIBE = { x: 32, y: 40, w: 328, h: 70 } as const;
+export const NARROW_NZERIBE = { x: 32, y: 56, w: 328, h: 70 } as const;
 
 /** Top of footer link row (from artboard top). */
-export const NARROW_FOOTER_TOP = 1512;
+export const NARROW_FOOTER_TOP = 1492;
 /** Footer link typography + cluster spacing (Artboard_2). */
 export const NARROW_FOOTER_FONT_PX = 56;
 export const NARROW_FOOTER_LINK_GAP_PX = 120;
@@ -39,7 +50,7 @@ const NARROW_LABEL_OUTSET_RATIO = 0.42;
 const NARROW_WHEEL_OUTER_R =
   NARROW_WHEEL_DESIGN_R + NARROW_LABEL_BAND_DESIGN_PX * NARROW_LABEL_OUTSET_RATIO;
 /** Per-side inset so bold labels are not clipped on real devices (artboard px). */
-const NARROW_WHEEL_FIT_INSET_PX = 12;
+const NARROW_WHEEL_FIT_INSET_PX = 22;
 
 /**
  * Scales wheel ring + hub previews to fit artboard width edge-to-edge
@@ -88,10 +99,10 @@ export const NARROW_CENTER_POPUP_MAX = Math.round(NARROW_HUB_DIAMETER * 0.78);
 
 /** About/contact bio width inside the wheel hub (artboard px). */
 export const NARROW_BIO_POPUP_W = Math.round(
-  NARROW_CENTER_POPUP_MAX * 0.88 * 1.5 * 1.2 * 1.4 * 1.5,
+  NARROW_CENTER_POPUP_MAX * 0.88 * 1.5 * 1.2 * 1.4 * 1.5 * 0.94,
 );
-/** Hub bio type scale (+40%). */
-export const NARROW_BIO_FONT_SCALE = 1.4;
+/** Hub bio type scale (+40%, tuned down for hub fit). */
+export const NARROW_BIO_FONT_SCALE = 1.28;
 
 /** Per-preview fit scales (desktop reference spans → hub max). */
 export const NARROW_DESIGN_CLUSTER_REF_SPAN = 1180;

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 
-import { NARROW_H, NARROW_W } from "@/lib/narrow-stage";
+import { NARROW_H, NARROW_W, narrowArtboardScale } from "@/lib/narrow-stage";
 
 type Metrics = { u: number; ox: number; oy: number };
 
@@ -13,7 +13,7 @@ export function useNarrowArtboardMetrics(): Metrics {
     const read = () => {
       const vw = window.innerWidth;
       const vh = window.innerHeight;
-      const u = Math.min(vw / NARROW_W, vh / NARROW_H);
+      const u = narrowArtboardScale(vw, vh);
       setM({
         u,
         ox: (vw - NARROW_W * u) / 2,
