@@ -28,6 +28,9 @@ export type NarrowLabelAngles = number[];
 
 /** Angular span of one label on the ring (wheel rotation 0). */
 export type NarrowLabelArc = {
+  /** Distance along the ring path (px) — always pathStart < pathEnd. */
+  pathStart: number;
+  pathEnd: number;
   start: number;
   end: number;
   center: number;
@@ -95,15 +98,19 @@ export function measureLabelArcsFromTextPath(
       const startLen = textPath.getSubStringLength(0, charIndex);
       const wordLen = textPath.getSubStringLength(charIndex, label.length);
       charIndex += label.length + 1;
-      const start = angleFromPathPoint(path, pathOffset + startLen);
-      const end = angleFromPathPoint(path, pathOffset + startLen + wordLen);
-      const center = angleFromPathPoint(path, pathOffset + startLen + wordLen / 2);
-      return { start, end, center };
+      const pathStart = pathOffset + startLen;
+      const pathEnd = pathOffset + startLen + wordLen;
+      const start = angleFromPathPoint(path, pathStart);
+      const end = angleFromPathPoint(path, pathEnd);
+      const center = angleFromPathPoint(path, pathStart + wordLen / 2);
+      return { pathStart, pathEnd, start, end, center };
     });
-    return arcs.every((a) =>
-      Number.isFinite(a.start) &&
-      Number.isFinite(a.end) &&
-      Number.isFinite(a.center),
+    return arcs.every(
+      (a) =>
+        Number.isFinite(a.pathStart) &&
+        Number.isFinite(a.pathEnd) &&
+        a.pathEnd > a.pathStart &&
+        Number.isFinite(a.center),
     )
       ? arcs
       : null;
@@ -112,41 +119,39 @@ export function measureLabelArcsFromTextPath(
   }
 }
 
-/** Slot boundaries between measured / baked label centres (path order). */
+/** Fallback slots — proportional to label length along the path (path order). */
 export function buildLabelArcsFromAngles(
   labelAngles: NarrowLabelAngles,
+  pathLength = 2 * Math.PI * NARROW_WHEEL_R,
 ): NarrowLabelArc[] {
-  const n = LABELS.length;
-  const pathMid = (from: number, to: number) => {
-    let diff = to - from;
-    while (diff < -Math.PI) diff += 2 * Math.PI;
-    while (diff > Math.PI) diff -= 2 * Math.PI;
-    return from + diff * 0.5;
-  };
-  return Array.from({ length: n }, (_, i) => {
-    const center = narrowLabelAngle(i, labelAngles);
-    const prev = narrowLabelAngle((i - 1 + n) % n, labelAngles);
-    const next = narrowLabelAngle((i + 1) % n, labelAngles);
+  const totalChars = LABELS.reduce((acc, label) => acc + label.length + 1, 0);
+  let charIndex = 0;
+  return LABELS.map((label, i) => {
+    const pathStart = (charIndex / totalChars) * pathLength;
+    charIndex += label.length + 1;
+    const pathEnd = (charIndex / totalChars) * pathLength;
+    const center = labelAngles[i] ?? -Math.PI / 2 + ((i + 0.5) / LABELS.length) * 2 * Math.PI;
     return {
-      start: pathMid(prev, center),
-      end: pathMid(center, next),
+      pathStart,
+      pathEnd,
+      start: center,
+      end: center,
       center,
     };
   });
 }
 
+const TWO_PI = 2 * Math.PI;
+
 function normalizeAngle(a: number): number {
-  let x = a % (2 * Math.PI);
-  if (x < 0) x += 2 * Math.PI;
+  let x = a % TWO_PI;
+  if (x < 0) x += TWO_PI;
   return x;
 }
 
-function angleInArc(tap: number, start: number, end: number): boolean {
-  const t = normalizeAngle(tap);
-  const a = normalizeAngle(start);
-  const b = normalizeAngle(end);
-  if (a <= b) return t >= a && t <= b;
-  return t >= a || t <= b;
+/** Wheel-local angle (rad) → distance along the ring path. */
+function angleToPathDist(angle: number, pathLength: number): number {
+  return (normalizeAngle(angle + Math.PI / 2) / TWO_PI) * pathLength;
 }
 
 export function narrowRingPathD(radius: number): string {
@@ -219,7 +224,7 @@ function measureLabelAngles(
   const fallback = {
     naturalLength: pathLength * NARROW_RING_TEXT_SPAN,
     labelAngles: fallbackAngles,
-    labelArcs: buildLabelArcsFromAngles(fallbackAngles),
+    labelArcs: buildLabelArcsFromAngles(fallbackAngles, pathLength),
   };
   const { svg, path, tp } = createMeasureSvg(fontSizePt, radius);
   try {
@@ -235,7 +240,7 @@ function measureLabelAngles(
     return {
       naturalLength: fallback.naturalLength,
       labelAngles: NARROW_BAKED_LABEL_ANGLES,
-      labelArcs: buildLabelArcsFromAngles(NARROW_BAKED_LABEL_ANGLES),
+      labelArcs: buildLabelArcsFromAngles(NARROW_BAKED_LABEL_ANGLES, pathLength),
     };
   } finally {
     document.body.removeChild(svg);
@@ -253,7 +258,7 @@ function staticRingLayout(): NarrowRingLayout {
     pathLength,
     naturalLength: pathLength,
     labelAngles: NARROW_BAKED_LABEL_ANGLES,
-    labelArcs: buildLabelArcsFromAngles(NARROW_BAKED_LABEL_ANGLES),
+    labelArcs: buildLabelArcsFromAngles(NARROW_BAKED_LABEL_ANGLES, pathLength),
     ready: true,
   };
 }
@@ -363,13 +368,14 @@ export function narrowIndexAtTop(
 }
 
 /**
- * Label under a tap — hit test against each word's angular span on the rotated ring.
+ * Label under a tap — hit test on path distance (avoids angle wrap bugs).
  */
 export function narrowIndexFromRingTap(
   px: number,
   py: number,
   rotation: number,
   labelArcs: NarrowLabelArc[],
+  pathLength = 2 * Math.PI * NARROW_WHEEL_R,
 ): number {
   const cx = NARROW_WHEEL_CENTER.x;
   const cy = NARROW_WHEEL_CENTER.y;
@@ -383,10 +389,13 @@ export function narrowIndexFromRingTap(
     return narrowIndexAtTop(rotation, labelArcs.map((a) => a.center));
   }
 
-  const tap = Math.atan2(dy, dx);
+  const tapAngle = Math.atan2(dy, dx);
+  const pathDist = angleToPathDist(tapAngle - rotation, pathLength);
+  const pad = band * 0.4;
+
   for (let i = 0; i < labelArcs.length; i++) {
     const arc = labelArcs[i]!;
-    if (angleInArc(tap, arc.start + rotation, arc.end + rotation)) {
+    if (pathDist >= arc.pathStart - pad && pathDist <= arc.pathEnd + pad) {
       return i;
     }
   }
@@ -394,13 +403,11 @@ export function narrowIndexFromRingTap(
   let best = 0;
   let bestDist = Infinity;
   for (let i = 0; i < labelArcs.length; i++) {
-    const center = labelArcs[i]!.center + rotation;
-    let d = tap - center;
-    while (d > Math.PI) d -= 2 * Math.PI;
-    while (d < -Math.PI) d += 2 * Math.PI;
-    const ad = Math.abs(d);
-    if (ad < bestDist) {
-      bestDist = ad;
+    const arc = labelArcs[i]!;
+    const mid = (arc.pathStart + arc.pathEnd) * 0.5;
+    const d = Math.abs(pathDist - mid);
+    if (d < bestDist) {
+      bestDist = d;
       best = i;
     }
   }

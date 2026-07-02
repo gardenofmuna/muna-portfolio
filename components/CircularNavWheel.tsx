@@ -152,6 +152,7 @@ export function CircularNavWheel({
   const ringLayout = useNarrowRingLayout(isNarrow);
   const labelAngles = ringLayout.labelAngles;
   const labelArcs = ringLayout.labelArcs;
+  const pathLength = ringLayout.pathLength;
   const wrapRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 1200, h: 800 });
   const [rotation, setRotation] = useState(() =>
@@ -178,6 +179,8 @@ export function CircularNavWheel({
   labelAnglesRef.current = labelAngles;
   const labelArcsRef = useRef(labelArcs);
   labelArcsRef.current = labelArcs;
+  const pathLengthRef = useRef(pathLength);
+  pathLengthRef.current = pathLength;
   const onLabelRef = useRef(onActiveLabelChange);
   onLabelRef.current = onActiveLabelChange;
   const onHoverLabelRef = useRef(onHoverLabelChange);
@@ -585,6 +588,7 @@ export function CircularNavWheel({
           p.y,
           φ,
           labelArcsRef.current,
+          pathLengthRef.current,
         );
         selectNarrowIndex(i, φ);
         setWheelInteracting(false);
