@@ -1,17 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, Fragment } from "react";
 
-import { narrowRingPathD } from "@/lib/narrow-nav-ring";
+import {
+  narrowIndexAtTop,
+  narrowLabelAngle,
+  narrowRingPathD,
+  narrowSnapRotation,
+  narrowVisualSnapDelta,
+  NARROW_BAKED_LABEL_ANGLES,
+  NARROW_NAV_LABELS,
+  ringWordText,
+  useNarrowRingLayout,
+} from "@/lib/narrow-nav-ring";
 import {
   NARROW_H,
   NARROW_LABEL_ACTIVE,
   NARROW_LABEL_INACTIVE,
   NARROW_LABEL_TRACKING_EM,
-  NARROW_RING_FONT_SIZE_PT,
   NARROW_W,
   NARROW_WHEEL_CENTER,
-  NARROW_WHEEL_R,
 } from "@/lib/narrow-stage";
 
 const LABELS = [
@@ -101,55 +109,71 @@ function snapRotationForIndexNarrow(θ: number, current: number) {
   return target + k * 2 * Math.PI;
 }
 
-const DRAG_MOVE_RAD = 0.04;
-const TAP_MOVE_PX = 10;
+/** Tap if total finger travel from touchstart stays under this (px). */
+const TAP_MOVE_PX = 8;
 /** Wheel / trackpad → radians per delta unit */
 const WHEEL_ROT_SCALE = 0.0022;
 /** Idle after wheel before snapping to nearest slot */
 const WHEEL_SNAP_MS = 140;
+const NARROW_SNAP_MS = 380;
 
-const NARROW_LABEL_COUNT = LABELS.length;
-const NARROW_STEP_RAD = (2 * Math.PI) / NARROW_LABEL_COUNT;
-const NARROW_TAP_THRESHOLD_PX = 8;
-const NARROW_SNAP_MS = 350;
+/** Which label tspan sits under a screen tap (elementFromPoint + stack walk). */
+function narrowIndexFromElementAtPoint(
+  clientX: number,
+  clientY: number,
+): number | null {
+  if (typeof document === "undefined") return null;
 
-/** Rotation (rad) that places label `index` at 12 o'clock — even 360/N slots. */
-function narrowRotationForIndex(index: number): number {
-  return -(index * NARROW_STEP_RAD);
-}
+  const parseId = (el: Element | null): number | null => {
+    if (!el) return null;
+    const byClosest = el.closest('[id^="circular-nav-item-"]');
+    const target = byClosest ?? el;
+    const m = target.id?.match(/^circular-nav-item-(\d+)$/);
+    if (!m) return null;
+    const i = Number.parseInt(m[1]!, 10);
+    return i >= 0 && i < LABELS.length ? i : null;
+  };
 
-/** Which label sits nearest the top marker at `rotationRad`. */
-function narrowIndexAtRotation(rotationRad: number): number {
-  const raw = Math.round(-rotationRad / NARROW_STEP_RAD);
-  return ((raw % NARROW_LABEL_COUNT) + NARROW_LABEL_COUNT) % NARROW_LABEL_COUNT;
+  const direct = parseId(document.elementFromPoint(clientX, clientY));
+  if (direct != null) return direct;
+
+  const stack = document.elementsFromPoint(clientX, clientY);
+  for (const el of stack) {
+    const i = parseId(el);
+    if (i != null) return i;
+  }
+
+  let best: number | null = null;
+  let bestDist = Infinity;
+  for (let i = 0; i < LABELS.length; i++) {
+    const tspan = document.getElementById(`circular-nav-item-${i}`);
+    if (!tspan) continue;
+    const r = tspan.getBoundingClientRect();
+    if (
+      clientX < r.left ||
+      clientX > r.right ||
+      clientY < r.top ||
+      clientY > r.bottom
+    ) {
+      continue;
+    }
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height / 2;
+    const d = Math.hypot(clientX - cx, clientY - cy);
+    if (d < bestDist) {
+      bestDist = d;
+      best = i;
+    }
+  }
+  return best;
 }
 
 function initialNarrowRotation(
   initialActiveLabel: (typeof LABELS)[number] | undefined,
 ): number {
   const i = initialActiveLabel ? LABELS.indexOf(initialActiveLabel) : 0;
-  return narrowRotationForIndex(i >= 0 ? i : 0);
-}
-
-function narrowTapIndex(clientX: number, clientY: number): number | null {
-  if (typeof document === "undefined") return null;
-  const el = document.elementFromPoint(clientX, clientY);
-  if (!el || !(el instanceof Element)) return null;
-  const hit = el.closest("[data-nav-index]");
-  if (!hit) return null;
-  const i = Number.parseInt(hit.getAttribute("data-nav-index") ?? "", 10);
-  return i >= 0 && i < NARROW_LABEL_COUNT ? i : null;
-}
-
-function angleDegFromWrapCenter(
-  clientX: number,
-  clientY: number,
-  wrap: HTMLElement,
-): number {
-  const rect = wrap.getBoundingClientRect();
-  const cx = rect.left + rect.width / 2;
-  const cy = rect.top + rect.height / 2;
-  return (Math.atan2(clientY - cy, clientX - cx) * 180) / Math.PI;
+  const idx = i >= 0 ? i : 0;
+  return narrowSnapRotation(idx, NARROW_BAKED_LABEL_ANGLES, 0);
 }
 
 export type CircularNavWheelProps = {
@@ -172,6 +196,8 @@ export function CircularNavWheel({
   layout = "desktop",
 }: CircularNavWheelProps = {}) {
   const isNarrow = layout === "narrow";
+  const ringLayout = useNarrowRingLayout(isNarrow);
+  const labelAngles = ringLayout.labelAngles;
   const wrapRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 1200, h: 800 });
   const [rotation, setRotation] = useState(() =>
@@ -194,6 +220,8 @@ export function CircularNavWheel({
   isDraggingRef.current = isDragging;
   const isNarrowRef = useRef(isNarrow);
   isNarrowRef.current = isNarrow;
+  const labelAnglesRef = useRef(labelAngles);
+  labelAnglesRef.current = labelAngles;
   const onLabelRef = useRef(onActiveLabelChange);
   onLabelRef.current = onActiveLabelChange;
   const onHoverLabelRef = useRef(onHoverLabelChange);
@@ -210,13 +238,10 @@ export function CircularNavWheel({
 
   const dragRef = useRef({
     pointerId: -1,
-    downX: 0,
-    downY: 0,
-    moved: false,
-    dragStartAngleDeg: 0,
-    rotationAtDragStart: 0,
+    startX: 0,
+    startY: 0,
     lastAngle: 0,
-    cumMovePx: 0,
+    moved: false,
   });
 
   useEffect(() => {
@@ -257,7 +282,7 @@ export function CircularNavWheel({
     ? NARROW_WHEEL_CENTER.x
     : -0.22 * w - ARC_OFFSET_BACK_PX;
   const originY = isNarrow ? NARROW_WHEEL_CENTER.y : h / 2;
-  const r = isNarrow ? NARROW_WHEEL_R : Math.min(w, h) * 0.88;
+  const r = isNarrow ? ringLayout.radius : Math.min(w, h) * 0.88;
 
   /* Narrow: one label per slot on the ring; desktop: tile repeats for arc density. */
   const repeats = isNarrow
@@ -272,11 +297,11 @@ export function CircularNavWheel({
   const baseAngle = useCallback(
     (i: number) => {
       if (isNarrow) {
-        return -Math.PI / 2 + (2 * Math.PI * i) / NARROW_LABEL_COUNT;
+        return narrowLabelAngle(i, labelAngles);
       }
       return -Math.PI / 2 + (2 * Math.PI * i) / N;
     },
-    [N, isNarrow],
+    [N, labelAngles, isNarrow],
   );
 
   const snapRotationForIndex = useCallback(
@@ -313,22 +338,47 @@ export function CircularNavWheel({
   const snapRotationForIndexRef = useRef(snapRotationForIndex);
   snapRotationForIndexRef.current = snapRotationForIndex;
 
-  const snapNarrowToIndex = useCallback((index: number) => {
-    setHoveredIndex(null);
-    setFocusedIndex(index);
-    setIsSnapping(true);
-    const next = narrowRotationForIndex(index);
-    setRotation(next);
-    rotationRef.current = next;
-    window.setTimeout(() => setIsSnapping(false), NARROW_SNAP_MS);
-  }, []);
+  const snapNarrowToIndex = useCallback(
+    (index: number, current = rotationRef.current) => {
+      let next = snapRotationForIndex(index, current);
+      setIsSnapping(true);
+      setRotation(next);
+      rotationRef.current = next;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const delta = narrowVisualSnapDelta(index, wrapRef.current);
+          if (Math.abs(delta) >= 0.0004) {
+            next += delta;
+            setRotation(next);
+            rotationRef.current = next;
+          }
+          window.setTimeout(() => setIsSnapping(false), NARROW_SNAP_MS);
+        });
+      });
+    },
+    [snapRotationForIndex],
+  );
 
   const selectNarrowIndex = useCallback(
-    (index: number) => {
-      snapNarrowToIndex(index);
+    (index: number, current = rotationRef.current) => {
+      setHoveredIndex(null);
+      setFocusedIndex(index);
+      snapNarrowToIndex(index, current);
     },
     [snapNarrowToIndex],
   );
+
+  const syncNarrowTopHover = useCallback((φ: number) => {
+    const top = narrowIndexAtTop(φ, labelAnglesRef.current);
+    setHoveredIndex((prev) => (prev === top ? prev : top));
+  }, []);
+
+  const finishNarrowSpin = useCallback(() => {
+    const φ = rotationRef.current;
+    const bestI = narrowIndexAtTop(φ, labelAnglesRef.current);
+    selectNarrowIndex(bestI, φ);
+    setWheelInteracting(false);
+  }, [selectNarrowIndex, setWheelInteracting]);
 
   useEffect(() => {
     const el = wrapRef.current;
@@ -345,9 +395,8 @@ export function CircularNavWheel({
         const snapFn = snapRotationForIndexRef.current;
         const n = NRef.current;
         if (isNarrowRef.current) {
-          const bestI = narrowIndexAtRotation(φ);
+          const bestI = narrowIndexAtTop(φ, labelAnglesRef.current);
           setFocusedIndex(bestI);
-          setRotation(narrowRotationForIndex(bestI));
           return;
         }
         let bestI = 0;
@@ -386,12 +435,10 @@ export function CircularNavWheel({
     onHoverLabelRef.current?.(label);
   }, [hoveredIndex, items]);
 
-  useEffect(() => {
-    if (isNarrow) return;
-    setRotation((prev) =>
-      snapRotationForIndex(focusedRef.current, prev),
-    );
-  }, [isNarrow, w, h, snapRotationForIndex]);
+  useLayoutEffect(() => {
+    if (!isNarrow || isDraggingRef.current || !ringLayout.ready) return;
+    snapNarrowToIndex(focusedRef.current, rotationRef.current);
+  }, [isNarrow, snapNarrowToIndex, labelAngles, ringLayout.ready]);
 
   useEffect(
     () => () => {
@@ -399,6 +446,13 @@ export function CircularNavWheel({
     },
     [setWheelInteracting],
   );
+
+  useEffect(() => {
+    if (isNarrow) return;
+    setRotation((prev) =>
+      snapRotationForIndex(focusedRef.current, prev),
+    );
+  }, [isNarrow, w, h, snapRotationForIndex, labelAngles, ringLayout.radius]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -417,7 +471,7 @@ export function CircularNavWheel({
       const next = (((focusedRef.current + delta) % n) + n) % n;
       setHoveredIndex(null);
       if (isNarrow) {
-        selectNarrowIndex(next);
+        selectNarrowIndex(next, rotationRef.current);
       } else {
         setFocusedIndex(next);
         setRotation((prev) => snapRotationForIndex(next, prev));
@@ -442,33 +496,34 @@ export function CircularNavWheel({
 
   const onItemLeave = () => setHoveredIndex(null);
 
+  const pointerLocal = (clientX: number, clientY: number) => {
+    if (!isNarrow) return { x: clientX, y: clientY };
+    const el = wrapRef.current;
+    if (!el) return { x: clientX, y: clientY };
+    const rect = el.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) {
+      return { x: clientX, y: clientY };
+    }
+    return {
+      x: ((clientX - rect.left) / rect.width) * NARROW_W,
+      y: ((clientY - rect.top) / rect.height) * NARROW_H,
+    };
+  };
+
   const onPointerDownCapture = (e: React.PointerEvent) => {
     if (e.pointerType === "mouse" && e.button !== 0) return;
     const el = wrapRef.current;
     if (!el) return;
     setIsSnapping(false);
     setWheelInteracting(true);
-
-    if (isNarrow) {
-      dragRef.current = {
-        ...dragRef.current,
-        pointerId: e.pointerId,
-        downX: e.clientX,
-        downY: e.clientY,
-        moved: false,
-        dragStartAngleDeg: angleDegFromWrapCenter(e.clientX, e.clientY, el),
-        rotationAtDragStart: rotationRef.current,
-      };
-    } else {
-      dragRef.current = {
-        ...dragRef.current,
-        pointerId: e.pointerId,
-        lastAngle: Math.atan2(e.clientY - originY, e.clientX - originX),
-        cumMovePx: 0,
-        moved: false,
-      };
-    }
-
+    const p = pointerLocal(e.clientX, e.clientY);
+    dragRef.current = {
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      lastAngle: Math.atan2(p.y - originY, p.x - originX),
+      moved: false,
+    };
     setIsDragging(true);
     el.setPointerCapture(e.pointerId);
   };
@@ -476,57 +531,35 @@ export function CircularNavWheel({
   const onPointerMove = (e: React.PointerEvent) => {
     if (dragRef.current.pointerId !== e.pointerId) return;
 
-    if (isNarrow) {
-      const el = wrapRef.current;
-      if (!el) return;
-
-      if (!dragRef.current.moved) {
-        const dist = Math.hypot(
-          e.clientX - dragRef.current.downX,
-          e.clientY - dragRef.current.downY,
-        );
-        if (dist <= NARROW_TAP_THRESHOLD_PX) return;
-        dragRef.current.moved = true;
-      }
-
-      const currentAngleDeg = angleDegFromWrapCenter(
-        e.clientX,
-        e.clientY,
-        el,
-      );
-      const deltaDeg = currentAngleDeg - dragRef.current.dragStartAngleDeg;
-      const next =
-        dragRef.current.rotationAtDragStart + (deltaDeg * Math.PI) / 180;
-      setRotation(next);
-      rotationRef.current = next;
-      setHoveredIndex(narrowIndexAtRotation(next));
-      return;
-    }
-
-    const angle = Math.atan2(e.clientY - originY, e.clientX - originX);
+    const p = pointerLocal(e.clientX, e.clientY);
+    const angle = Math.atan2(p.y - originY, p.x - originX);
     let delta = angle - dragRef.current.lastAngle;
     if (delta > Math.PI) delta -= Math.PI * 2;
     if (delta < -Math.PI) delta += Math.PI * 2;
     dragRef.current.lastAngle = angle;
 
     if (!dragRef.current.moved) {
-      dragRef.current.cumMovePx += Math.hypot(e.movementX, e.movementY);
-      if (
-        dragRef.current.cumMovePx <= TAP_MOVE_PX &&
-        Math.abs(delta) <= DRAG_MOVE_RAD
-      ) {
-        return;
-      }
+      const travel = Math.hypot(
+        e.clientX - dragRef.current.startX,
+        e.clientY - dragRef.current.startY,
+      );
+      if (travel < TAP_MOVE_PX) return;
       dragRef.current.moved = true;
     }
 
-    setRotation((prev) => prev + delta);
+    setRotation((prev) => {
+      const next = prev + delta;
+      rotationRef.current = next;
+      if (isNarrow) {
+        syncNarrowTopHover(next);
+      }
+      return next;
+    });
   };
 
   const endPointer = (e: React.PointerEvent) => {
     if (dragRef.current.pointerId !== e.pointerId) return;
 
-    const wasMoved = dragRef.current.moved;
     const pid = e.pointerId;
 
     try {
@@ -538,22 +571,30 @@ export function CircularNavWheel({
     dragRef.current.pointerId = -1;
     setIsDragging(false);
 
-    if (isNarrow) {
-      if (!wasMoved) {
-        const tapped = narrowTapIndex(e.clientX, e.clientY);
-        if (tapped != null) {
-          snapNarrowToIndex(tapped);
+    const φ = rotationRef.current;
+
+    const travel = Math.hypot(
+      e.clientX - dragRef.current.startX,
+      e.clientY - dragRef.current.startY,
+    );
+    const isTap = travel < TAP_MOVE_PX;
+
+    if (isTap) {
+      if (isNarrow) {
+        const i = narrowIndexFromElementAtPoint(e.clientX, e.clientY);
+        if (i != null) {
+          selectNarrowIndex(i, φ);
         }
+        setWheelInteracting(false);
       } else {
-        snapNarrowToIndex(narrowIndexAtRotation(rotationRef.current));
+        const p = pointerLocal(e.clientX, e.clientY);
+        const i = nearestIndexToPointer(p.x, p.y, φ);
+        setFocusedIndex(i);
+        setRotation((prev) => snapRotationForIndex(i, prev));
       }
-      setWheelInteracting(false);
-    } else if (!wasMoved) {
-      const i = nearestIndexToPointer(e.clientX, e.clientY, rotationRef.current);
-      setFocusedIndex(i);
-      setRotation((prev) => snapRotationForIndex(i, prev));
+    } else if (isNarrow) {
+      finishNarrowSpin();
     } else {
-      const φ = rotationRef.current;
       let bestI = 0;
       let bestCost = Infinity;
       for (let i = 0; i < N; i++) {
@@ -569,7 +610,6 @@ export function CircularNavWheel({
     }
 
     dragRef.current.moved = false;
-    dragRef.current.cumMovePx = 0;
   };
 
   const transitionMs = reduceMotion ? 60 : 520;
@@ -578,7 +618,7 @@ export function CircularNavWheel({
   const oy = layoutRound(originY);
   const rotDeg = layoutRound((rotation * 180) / Math.PI);
 
-  const narrowRingPath = narrowRingPathD(NARROW_WHEEL_R);
+  const narrowRingPath = narrowRingPathD(r);
 
   return (
     <div
@@ -605,45 +645,55 @@ export function CircularNavWheel({
             style={{
               transform: `rotate(${rotDeg}deg)`,
               transformOrigin: `${ox}px ${oy}px`,
+              opacity: ringLayout.ready ? 1 : 0,
               transition:
                 isDragging || reduceMotion
                   ? "none"
                   : isSnapping
-                    ? `transform ${NARROW_SNAP_MS}ms cubic-bezier(0.2, 0.8, 0.2, 1)`
-                    : "none",
+                    ? `transform ${NARROW_SNAP_MS}ms cubic-bezier(0.22, 1, 0.36, 1), opacity 0.15s ease`
+                    : "opacity 0.15s ease",
             }}
           >
-            {LABELS.map((label, i) => {
-              const isHot =
-                hoveredIndex === i ||
-                (hoveredIndex === null && focusedIndex === i);
-              return (
-                <text
-                  key={label}
-                  id={`circular-nav-item-${i}`}
-                  data-nav-index={i}
-                  fontFamily='"Arial MT Std", Arial, Helvetica, sans-serif'
-                  fontSize={`${NARROW_RING_FONT_SIZE_PT}pt`}
-                  fontWeight={800}
-                  fill={isHot ? NARROW_LABEL_ACTIVE : NARROW_LABEL_INACTIVE}
-                  style={{
-                    textTransform: "lowercase",
-                    letterSpacing: `${NARROW_LABEL_TRACKING_EM}em`,
-                    pointerEvents: "visiblePainted",
-                    transition: reduceMotion ? "none" : "fill 0.18s ease",
-                  }}
-                >
-                  <textPath
-                    href="#narrow-nav-ring"
-                    xlinkHref="#narrow-nav-ring"
-                    startOffset={`${(i / NARROW_LABEL_COUNT) * 100}%`}
-                    textAnchor="middle"
-                  >
-                    {label}
-                  </textPath>
-                </text>
-              );
-            })}
+            <text
+              fontFamily='"Arial MT Std", Arial, Helvetica, sans-serif'
+              fontSize={`${ringLayout.fontSizePt}pt`}
+              fontWeight={800}
+              xmlSpace="preserve"
+              style={{
+                textTransform: "lowercase",
+                letterSpacing: `${NARROW_LABEL_TRACKING_EM}em`,
+                pointerEvents: "none",
+              }}
+            >
+              <textPath
+                href="#narrow-nav-ring"
+                xlinkHref="#narrow-nav-ring"
+                startOffset={0}
+                xmlSpace="preserve"
+              >
+                {NARROW_NAV_LABELS.map((label, i) => {
+                  const isHot =
+                    hoveredIndex === i ||
+                    (hoveredIndex === null && focusedIndex === i);
+                  return (
+                    <Fragment key={label}>
+                      <tspan
+                        id={`circular-nav-item-${i}`}
+                        fill={isHot ? NARROW_LABEL_ACTIVE : NARROW_LABEL_INACTIVE}
+                        fontWeight={800}
+                        style={{
+                          transition: reduceMotion ? "none" : "fill 0.18s ease",
+                          pointerEvents: "none",
+                        }}
+                      >
+                        {ringWordText(i)}
+                      </tspan>
+                      {" "}
+                    </Fragment>
+                  );
+                })}
+              </textPath>
+            </text>
           </g>
         </svg>
       ) : (
