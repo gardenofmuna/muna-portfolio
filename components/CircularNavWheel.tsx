@@ -4,6 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, Fra
 
 import {
   narrowIndexAtTop,
+  narrowIndexFromRingTap,
   narrowLabelAngle,
   narrowRingPathD,
   narrowSnapRotation,
@@ -150,6 +151,7 @@ export function CircularNavWheel({
   const isNarrow = layout === "narrow";
   const ringLayout = useNarrowRingLayout(isNarrow);
   const labelAngles = ringLayout.labelAngles;
+  const labelArcs = ringLayout.labelArcs;
   const wrapRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 1200, h: 800 });
   const [rotation, setRotation] = useState(() =>
@@ -174,6 +176,8 @@ export function CircularNavWheel({
   isNarrowRef.current = isNarrow;
   const labelAnglesRef = useRef(labelAngles);
   labelAnglesRef.current = labelAngles;
+  const labelArcsRef = useRef(labelArcs);
+  labelArcsRef.current = labelArcs;
   const onLabelRef = useRef(onActiveLabelChange);
   onLabelRef.current = onActiveLabelChange;
   const onHoverLabelRef = useRef(onHoverLabelChange);
@@ -576,7 +580,12 @@ export function CircularNavWheel({
     if (!wasMoved) {
       const p = pointerLocal(e.clientX, e.clientY);
       if (isNarrow) {
-        const i = nearestIndexToPointer(p.x, p.y, φ);
+        const i = narrowIndexFromRingTap(
+          p.x,
+          p.y,
+          φ,
+          labelArcsRef.current,
+        );
         selectNarrowIndex(i, φ);
         setWheelInteracting(false);
       } else {

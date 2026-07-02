@@ -26,12 +26,20 @@ const LABELS = [
 /** Label centre angle (rad) on the ring at rotation 0 — from wheel hub. */
 export type NarrowLabelAngles = number[];
 
+/** Angular span of one label on the ring (wheel rotation 0). */
+export type NarrowLabelArc = {
+  start: number;
+  end: number;
+  center: number;
+};
+
 export type NarrowRingLayout = {
   radius: number;
   fontSizePt: number;
   pathLength: number;
   naturalLength: number;
   labelAngles: NarrowLabelAngles;
+  labelArcs: NarrowLabelArc[];
   ready: boolean;
 };
 
@@ -70,18 +78,75 @@ export function measureLabelAnglesFromTextPath(
   textPath: SVGTextPathElement,
   pathOffset = 0,
 ): NarrowLabelAngles | null {
+  const arcs = measureLabelArcsFromTextPath(path, textPath, pathOffset);
+  if (!arcs) return null;
+  return arcs.map((a) => a.center);
+}
+
+/** Per-word angular spans along the ring path (for tap hit testing). */
+export function measureLabelArcsFromTextPath(
+  path: SVGPathElement,
+  textPath: SVGTextPathElement,
+  pathOffset = 0,
+): NarrowLabelArc[] | null {
   try {
     let charIndex = 0;
-    const angles = LABELS.map((label) => {
-      const start = textPath.getSubStringLength(0, charIndex);
+    const arcs = LABELS.map((label) => {
+      const startLen = textPath.getSubStringLength(0, charIndex);
       const wordLen = textPath.getSubStringLength(charIndex, label.length);
       charIndex += label.length + 1;
-      return angleFromPathPoint(path, pathOffset + start + wordLen / 2);
+      const start = angleFromPathPoint(path, pathOffset + startLen);
+      const end = angleFromPathPoint(path, pathOffset + startLen + wordLen);
+      const center = angleFromPathPoint(path, pathOffset + startLen + wordLen / 2);
+      return { start, end, center };
     });
-    return angles.every((a) => Number.isFinite(a)) ? angles : null;
+    return arcs.every((a) =>
+      Number.isFinite(a.start) &&
+      Number.isFinite(a.end) &&
+      Number.isFinite(a.center),
+    )
+      ? arcs
+      : null;
   } catch {
     return null;
   }
+}
+
+/** Slot boundaries between measured / baked label centres (path order). */
+export function buildLabelArcsFromAngles(
+  labelAngles: NarrowLabelAngles,
+): NarrowLabelArc[] {
+  const n = LABELS.length;
+  const pathMid = (from: number, to: number) => {
+    let diff = to - from;
+    while (diff < -Math.PI) diff += 2 * Math.PI;
+    while (diff > Math.PI) diff -= 2 * Math.PI;
+    return from + diff * 0.5;
+  };
+  return Array.from({ length: n }, (_, i) => {
+    const center = narrowLabelAngle(i, labelAngles);
+    const prev = narrowLabelAngle((i - 1 + n) % n, labelAngles);
+    const next = narrowLabelAngle((i + 1) % n, labelAngles);
+    return {
+      start: pathMid(prev, center),
+      end: pathMid(center, next),
+      center,
+    };
+  });
+}
+
+function normalizeAngle(a: number): number {
+  let x = a % (2 * Math.PI);
+  if (x < 0) x += 2 * Math.PI;
+  return x;
+}
+
+function angleInArc(tap: number, start: number, end: number): boolean {
+  const t = normalizeAngle(tap);
+  const a = normalizeAngle(start);
+  const b = normalizeAngle(end);
+  if (a <= b) return t >= a && t <= b;
+  return t >= a || t <= b;
 }
 
 export function narrowRingPathD(radius: number): string {
@@ -144,25 +209,33 @@ function createMeasureSvg(fontSizePt: number, radius: number) {
 function measureLabelAngles(
   fontSizePt: number,
   radius: number,
-): { naturalLength: number; labelAngles: NarrowLabelAngles } {
+): {
+  naturalLength: number;
+  labelAngles: NarrowLabelAngles;
+  labelArcs: NarrowLabelArc[];
+} {
   const pathLength = 2 * Math.PI * radius;
+  const fallbackAngles = estimatedLabelAngles(NARROW_RING_TEXT_SPAN);
   const fallback = {
     naturalLength: pathLength * NARROW_RING_TEXT_SPAN,
-    labelAngles: estimatedLabelAngles(NARROW_RING_TEXT_SPAN),
+    labelAngles: fallbackAngles,
+    labelArcs: buildLabelArcsFromAngles(fallbackAngles),
   };
   const { svg, path, tp } = createMeasureSvg(fontSizePt, radius);
   try {
     const naturalLength = tp.getComputedTextLength?.() ?? 0;
-    const fromPath = measureLabelAnglesFromTextPath(path, tp);
-    if (fromPath) {
+    const fromArcs = measureLabelArcsFromTextPath(path, tp);
+    if (fromArcs) {
       return {
         naturalLength: naturalLength > 0 ? naturalLength : fallback.naturalLength,
-        labelAngles: fromPath,
+        labelAngles: fromArcs.map((a) => a.center),
+        labelArcs: fromArcs,
       };
     }
     return {
       naturalLength: fallback.naturalLength,
       labelAngles: NARROW_BAKED_LABEL_ANGLES,
+      labelArcs: buildLabelArcsFromAngles(NARROW_BAKED_LABEL_ANGLES),
     };
   } finally {
     document.body.removeChild(svg);
@@ -180,6 +253,7 @@ function staticRingLayout(): NarrowRingLayout {
     pathLength,
     naturalLength: pathLength,
     labelAngles: NARROW_BAKED_LABEL_ANGLES,
+    labelArcs: buildLabelArcsFromAngles(NARROW_BAKED_LABEL_ANGLES),
     ready: true,
   };
 }
@@ -208,7 +282,7 @@ export function measureNarrowRingLayout(): NarrowRingLayout {
     return base;
   }
 
-  const { naturalLength, labelAngles } = measureLabelAngles(
+  const { naturalLength, labelAngles, labelArcs } = measureLabelAngles(
     base.fontSizePt,
     base.radius,
   );
@@ -217,6 +291,7 @@ export function measureNarrowRingLayout(): NarrowRingLayout {
     ...base,
     naturalLength,
     labelAngles,
+    labelArcs,
     ready: true,
   };
 }
@@ -288,35 +363,63 @@ export function narrowIndexAtTop(
 }
 
 /**
- * Nearest label to a point — distance to each label's position on the rotated ring.
+ * Label under a tap — hit test against each word's angular span on the rotated ring.
  */
+export function narrowIndexFromRingTap(
+  px: number,
+  py: number,
+  rotation: number,
+  labelArcs: NarrowLabelArc[],
+): number {
+  const cx = NARROW_WHEEL_CENTER.x;
+  const cy = NARROW_WHEEL_CENTER.y;
+  const dx = px - cx;
+  const dy = py - cy;
+  const dist = Math.hypot(dx, dy);
+  const band = NARROW_RING_FONT_SIZE_PT * (96 / 72);
+  const r = NARROW_WHEEL_R;
+
+  if (dist < r - band * 1.35 || dist > r + band * 1.35) {
+    return narrowIndexAtTop(rotation, labelArcs.map((a) => a.center));
+  }
+
+  const tap = Math.atan2(dy, dx);
+  for (let i = 0; i < labelArcs.length; i++) {
+    const arc = labelArcs[i]!;
+    if (angleInArc(tap, arc.start + rotation, arc.end + rotation)) {
+      return i;
+    }
+  }
+
+  let best = 0;
+  let bestDist = Infinity;
+  for (let i = 0; i < labelArcs.length; i++) {
+    const center = labelArcs[i]!.center + rotation;
+    let d = tap - center;
+    while (d > Math.PI) d -= 2 * Math.PI;
+    while (d < -Math.PI) d += 2 * Math.PI;
+    const ad = Math.abs(d);
+    if (ad < bestDist) {
+      bestDist = ad;
+      best = i;
+    }
+  }
+  return best;
+}
+
+/** @deprecated use narrowIndexFromRingTap */
 export function narrowIndexNearestOnRing(
   px: number,
   py: number,
   rotation: number,
   labelAngles: NarrowLabelAngles,
 ): number {
-  const cx = NARROW_WHEEL_CENTER.x;
-  const cy = NARROW_WHEEL_CENTER.y;
-  const r = NARROW_WHEEL_R;
-  const c = Math.cos(rotation);
-  const s = Math.sin(rotation);
-  let best = 0;
-  let bestDist = Infinity;
-
-  for (let i = 0; i < LABELS.length; i++) {
-    const θ = narrowLabelAngle(i, labelAngles);
-    const dx = r * Math.cos(θ);
-    const dy = r * Math.sin(θ);
-    const x = cx + dx * c - dy * s;
-    const y = cy + dx * s + dy * c;
-    const d = Math.hypot(px - x, py - y);
-    if (d < bestDist) {
-      bestDist = d;
-      best = i;
-    }
-  }
-  return best;
+  return narrowIndexFromRingTap(
+    px,
+    py,
+    rotation,
+    buildLabelArcsFromAngles(labelAngles),
+  );
 }
 
 /**
