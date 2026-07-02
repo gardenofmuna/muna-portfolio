@@ -16,15 +16,19 @@ function readLayoutMode(): LayoutMode {
 }
 
 /** Desktop 1440 layout vs Artboard_2 narrow (859×1623). */
-export function useLayoutMode(): LayoutMode {
-  const [mode, setMode] = useState<LayoutMode>(() =>
-    typeof window === "undefined" ? "desktop" : readLayoutMode(),
-  );
+export function useLayoutMode(): {
+  mode: LayoutMode;
+  /** False until client has read matchMedia — keeps SSR and hydration aligned. */
+  ready: boolean;
+} {
+  const [mode, setMode] = useState<LayoutMode>("desktop");
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     const mq = window.matchMedia(NARROW_MQ);
     const sync = () => setMode(readLayoutMode());
     sync();
+    setReady(true);
     mq.addEventListener("change", sync);
     window.addEventListener("resize", sync);
     return () => {
@@ -33,7 +37,7 @@ export function useLayoutMode(): LayoutMode {
     };
   }, []);
 
-  return mode;
+  return { mode, ready };
 }
 
 export { readLayoutMode };

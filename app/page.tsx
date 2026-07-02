@@ -5,6 +5,11 @@ import { HomeNarrow } from "@/components/HomeNarrow";
 import { useLayoutMode } from "@/hooks/useLayoutMode";
 
 export default function HomePage() {
-  const mode = useLayoutMode();
+  const { mode, ready } = useLayoutMode();
+
+  if (!ready) {
+    return <div className="fixed inset-0 bg-white" aria-hidden />;
+  }
+
   return mode === "narrow" ? <HomeNarrow /> : <HomeDesktop />;
 }

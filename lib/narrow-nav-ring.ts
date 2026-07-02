@@ -4,12 +4,12 @@ import { useEffect, useState } from "react";
 
 import {
   NARROW_H,
-  NARROW_LABEL_FONT_PT,
   NARROW_LABEL_TRACKING_EM,
-  NARROW_RING_FONT_SCALE,
+  NARROW_RING_FONT_SIZE_PT,
+  NARROW_RING_TEXT_SPAN,
   NARROW_W,
   NARROW_WHEEL_CENTER,
-  NARROW_WHEEL_EDGE_OVERFLOW,
+  NARROW_WHEEL_R,
 } from "@/lib/narrow-stage";
 
 const LABELS = [
@@ -23,25 +23,65 @@ const LABELS = [
   "contact",
 ] as const;
 
-/** Headroom so contact + trailing space never clip at path end. */
-const RING_CLIP_MARGIN_PX = 4;
-
-const MAX_FONT_PT = NARROW_LABEL_FONT_PT * 1.5;
-const MIN_FONT_PT = NARROW_LABEL_FONT_PT * 0.72;
-
-export type NarrowArcCenters = number[];
+/** Label centre angle (rad) on the ring at rotation 0 — from wheel hub. */
+export type NarrowLabelAngles = number[];
 
 export type NarrowRingLayout = {
   radius: number;
   fontSizePt: number;
   pathLength: number;
   naturalLength: number;
-  arcCenters: NarrowArcCenters;
+  labelAngles: NarrowLabelAngles;
   ready: boolean;
 };
 
 function ptToPx(pt: number): number {
   return pt * (96 / 72);
+}
+
+/** Measured label-centre angles (Arial 800, 70.5pt, tracking −0.1) — fallback when DOM measure fails. */
+export const NARROW_BAKED_LABEL_ANGLES: NarrowLabelAngles = [
+  -1.334251379022796,
+  -0.7806318491929849,
+  -0.02934373891513474,
+  0.7336411676992275,
+  1.2091152343133267,
+  2.007979866877421,
+  3.077590146039743,
+  -2.4462575819525934,
+];
+
+function estimatedLabelAngles(_spanFraction: number): NarrowLabelAngles {
+  return NARROW_BAKED_LABEL_ANGLES;
+}
+
+function angleFromPathPoint(path: SVGPathElement, distance: number): number {
+  const pathLength = path.getTotalLength();
+  const pt = path.getPointAtLength(((distance % pathLength) + pathLength) % pathLength);
+  return Math.atan2(
+    pt.y - NARROW_WHEEL_CENTER.y,
+    pt.x - NARROW_WHEEL_CENTER.x,
+  );
+}
+
+/** Word-centre angles from textPath substring lengths + circle geometry. */
+export function measureLabelAnglesFromTextPath(
+  path: SVGPathElement,
+  textPath: SVGTextPathElement,
+  pathOffset = 0,
+): NarrowLabelAngles | null {
+  try {
+    let charIndex = 0;
+    const angles = LABELS.map((label) => {
+      const start = textPath.getSubStringLength(0, charIndex);
+      const wordLen = textPath.getSubStringLength(charIndex, label.length);
+      charIndex += label.length + 1;
+      return angleFromPathPoint(path, pathOffset + start + wordLen / 2);
+    });
+    return angles.every((a) => Number.isFinite(a)) ? angles : null;
+  } catch {
+    return null;
+  }
 }
 
 export function narrowRingPathD(radius: number): string {
@@ -85,77 +125,61 @@ function createMeasureSvg(fontSizePt: number, radius: number) {
 
   const tp = document.createElementNS(NS, "textPath");
   tp.setAttribute("href", "#ring-measure-path");
+  tp.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", "#ring-measure-path");
   tp.setAttribute("xml:space", "preserve");
-  tp.textContent = ringFullText();
+  for (const label of LABELS) {
+    const tspan = document.createElementNS(NS, "tspan");
+    tspan.textContent = label;
+    tp.appendChild(tspan);
+    tp.appendChild(document.createTextNode(" "));
+  }
   text.appendChild(tp);
   svg.appendChild(text);
   document.body.appendChild(svg);
 
-  return { svg, tp: tp as SVGTextPathElement };
+  return { svg, path, tp: tp as SVGTextPathElement };
 }
 
-function measureRing(
+/** Measure visual word centres at the locked font size (bbox on ring path). */
+function measureLabelAngles(
   fontSizePt: number,
   radius: number,
-): { naturalLength: number; arcCenters: NarrowArcCenters } {
+): { naturalLength: number; labelAngles: NarrowLabelAngles } {
   const pathLength = 2 * Math.PI * radius;
-  const { svg, tp } = createMeasureSvg(fontSizePt, radius);
+  const fallback = {
+    naturalLength: pathLength * NARROW_RING_TEXT_SPAN,
+    labelAngles: estimatedLabelAngles(NARROW_RING_TEXT_SPAN),
+  };
+  const { svg, path, tp } = createMeasureSvg(fontSizePt, radius);
   try {
     const naturalLength = tp.getComputedTextLength?.() ?? 0;
-    let charIndex = 0;
-    const arcCenters = LABELS.map((label) => {
-      const start = tp.getSubStringLength?.(0, charIndex) ?? 0;
-      const wordLen = tp.getSubStringLength?.(charIndex, label.length) ?? 0;
-      charIndex += label.length + 1;
-      return (start + wordLen / 2) / pathLength;
-    });
-    return { naturalLength, arcCenters };
+    const fromPath = measureLabelAnglesFromTextPath(path, tp);
+    if (fromPath) {
+      return {
+        naturalLength: naturalLength > 0 ? naturalLength : fallback.naturalLength,
+        labelAngles: fromPath,
+      };
+    }
+    return {
+      naturalLength: fallback.naturalLength,
+      labelAngles: NARROW_BAKED_LABEL_ANGLES,
+    };
   } finally {
     document.body.removeChild(svg);
   }
 }
 
-/** Largest pt where the full string (incl. contact + space) fits inside the ring. */
-function fontSizePtForRing(pathLength: number, radius: number): number {
-  const targetMax = pathLength - RING_CLIP_MARGIN_PX;
-  let lo = MIN_FONT_PT;
-  let hi = MAX_FONT_PT;
-  let best = MIN_FONT_PT;
-
-  for (let i = 0; i < 28; i++) {
-    const mid = (lo + hi) / 2;
-    const { naturalLength } = measureRing(mid, radius);
-    if (naturalLength <= 0) {
-      hi = mid;
-      continue;
-    }
-    if (naturalLength <= targetMax) {
-      best = mid;
-      lo = mid;
-    } else {
-      hi = mid;
-    }
-  }
-
-  let pt = best;
-  let { naturalLength, arcCenters } = measureRing(pt, radius);
-  while (naturalLength > targetMax && pt > MIN_FONT_PT) {
-    pt *= 0.985;
-    ({ naturalLength, arcCenters } = measureRing(pt, radius));
-  }
-
-  return pt;
-}
-
-function fallbackLayout(): NarrowRingLayout {
-  const radius = NARROW_W / 2 + NARROW_WHEEL_EDGE_OVERFLOW;
+/** Locked smart-object ring — fixed radius + type on every narrow screen. */
+function staticRingLayout(): NarrowRingLayout {
+  const radius = NARROW_WHEEL_R;
+  const fontSizePt = NARROW_RING_FONT_SIZE_PT;
   const pathLength = 2 * Math.PI * radius;
   return {
     radius,
-    fontSizePt: NARROW_LABEL_FONT_PT * 1.15 * NARROW_RING_FONT_SCALE,
+    fontSizePt,
     pathLength,
-    naturalLength: pathLength * 0.97,
-    arcCenters: LABELS.map((_, i) => (i + 0.5) / LABELS.length),
+    naturalLength: pathLength,
+    labelAngles: NARROW_BAKED_LABEL_ANGLES,
     ready: true,
   };
 }
@@ -164,7 +188,7 @@ const FONT_LOAD_TIMEOUT_MS = 2000;
 
 async function waitForRingFonts(): Promise<void> {
   const load = document.fonts.load(
-    `800 ${ptToPx(MAX_FONT_PT * NARROW_RING_FONT_SCALE)}px "Arial MT Std"`,
+    `800 ${ptToPx(NARROW_RING_FONT_SIZE_PT)}px "Arial MT Std"`,
   );
   const timeout = new Promise<void>((resolve) => {
     window.setTimeout(resolve, FONT_LOAD_TIMEOUT_MS);
@@ -173,37 +197,32 @@ async function waitForRingFonts(): Promise<void> {
     await Promise.race([load, timeout]);
     await Promise.race([document.fonts.ready, timeout]);
   } catch {
-    /* Arial MT Std may be unavailable — measure with fallback stack */
+    /* fall through — measure with fallback stack */
   }
 }
 
 export function measureNarrowRingLayout(): NarrowRingLayout {
+  const base = staticRingLayout();
+
   if (typeof document === "undefined") {
-    return fallbackLayout();
+    return base;
   }
 
-  const radius = NARROW_W / 2 + NARROW_WHEEL_EDGE_OVERFLOW;
-  const pathLength = 2 * Math.PI * radius;
-  const targetMax = pathLength - RING_CLIP_MARGIN_PX;
-  let fontSizePt = fontSizePtForRing(pathLength, radius) * NARROW_RING_FONT_SCALE;
-  let { naturalLength, arcCenters } = measureRing(fontSizePt, radius);
-  while (naturalLength > targetMax && fontSizePt > MIN_FONT_PT) {
-    fontSizePt *= 0.985;
-    ({ naturalLength, arcCenters } = measureRing(fontSizePt, radius));
-  }
+  const { naturalLength, labelAngles } = measureLabelAngles(
+    base.fontSizePt,
+    base.radius,
+  );
 
   return {
-    radius,
-    fontSizePt,
-    pathLength,
+    ...base,
     naturalLength,
-    arcCenters,
+    labelAngles,
     ready: true,
   };
 }
 
 export function useNarrowRingLayout(enabled: boolean): NarrowRingLayout {
-  const [layout, setLayout] = useState<NarrowRingLayout>(fallbackLayout);
+  const [layout, setLayout] = useState<NarrowRingLayout>(staticRingLayout);
 
   useEffect(() => {
     if (!enabled) return;
@@ -215,7 +234,7 @@ export function useNarrowRingLayout(enabled: boolean): NarrowRingLayout {
       try {
         setLayout(measureNarrowRingLayout());
       } catch {
-        if (!cancelled) setLayout(fallbackLayout());
+        if (!cancelled) setLayout(staticRingLayout());
       }
     };
 
@@ -230,10 +249,69 @@ export function useNarrowRingLayout(enabled: boolean): NarrowRingLayout {
 
 export function narrowLabelAngle(
   i: number,
-  arcCenters: NarrowArcCenters,
+  labelAngles: NarrowLabelAngles,
 ): number {
-  const frac = arcCenters[i] ?? (i + 0.5) / LABELS.length;
-  return -Math.PI / 2 + frac * 2 * Math.PI;
+  return (
+    labelAngles[i] ??
+    -Math.PI / 2 + ((i + 0.5) / LABELS.length) * 2 * Math.PI
+  );
+}
+
+/** Rotation (rad) that places label `index` at 12 o'clock. */
+export function narrowSnapRotation(
+  index: number,
+  labelAngles: NarrowLabelAngles = NARROW_BAKED_LABEL_ANGLES,
+  current = 0,
+): number {
+  const θ = narrowLabelAngle(index, labelAngles);
+  const target = -Math.PI / 2 - θ;
+  const k = Math.round((current - target) / (2 * Math.PI));
+  return target + k * 2 * Math.PI;
+}
+
+/** Which label sits closest to 12 o'clock at rotation φ. */
+export function narrowIndexAtTop(
+  rotation: number,
+  labelAngles: NarrowLabelAngles,
+): number {
+  let best = 0;
+  let bestDist = Infinity;
+  for (let i = 0; i < LABELS.length; i++) {
+    const pos = narrowLabelAngle(i, labelAngles) + rotation;
+    const d = Math.atan2(Math.sin(pos + Math.PI / 2), Math.cos(pos + Math.PI / 2));
+    const dist = Math.abs(d);
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = i;
+    }
+  }
+  return best;
+}
+
+/**
+ * Rotation delta (rad) so the focused label centre sits on the vertical axis.
+ */
+export function narrowVisualSnapDelta(
+  focusedIndex: number,
+  container: HTMLElement | null,
+): number {
+  if (!container || focusedIndex < 0 || focusedIndex >= LABELS.length) return 0;
+  const tspan = document.getElementById(`circular-nav-item-${focusedIndex}`);
+  if (!tspan) return 0;
+
+  const wrapRect = container.getBoundingClientRect();
+  if (wrapRect.width <= 0 || wrapRect.height <= 0) return 0;
+
+  const u = wrapRect.width / NARROW_W;
+  const trect = tspan.getBoundingClientRect();
+  const mx = (trect.left + trect.width / 2 - wrapRect.left) / u;
+  const dx = mx - NARROW_WHEEL_CENTER.x;
+
+  if (Math.abs(dx) < 0.35) return 0;
+
+  const r = NARROW_WHEEL_R;
+  const ratio = Math.max(-1, Math.min(1, dx / r));
+  return -Math.asin(ratio);
 }
 
 export { LABELS as NARROW_NAV_LABELS, NARROW_WHEEL_CENTER };

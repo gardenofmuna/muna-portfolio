@@ -20,7 +20,7 @@ export const NARROW_FOOTER_LINK_GAP_PX = 120;
 /** Gap above footer reserved for bio bottom edge. */
 export const NARROW_BIO_FOOTER_GAP = 20;
 
-/** Uniform scale for narrow wheel ring + hub previews (−20%). */
+/** Uniform scale for hub preview nudges / installation (relative to wheel interior). */
 export const NARROW_WHEEL_UI_SCALE = 0.8;
 
 /** Wheel hub — centre of circular nav + popup anchor (middle of artboard). */
@@ -28,20 +28,45 @@ export const NARROW_WHEEL_CENTER = {
   x: NARROW_W / 2,
   y: NARROW_H / 2,
 } as const;
+
+/** Legacy mock: ring path sat 12px past each artboard edge before fit. */
+const NARROW_WHEEL_DESIGN_OVERFLOW = 12;
+const NARROW_WHEEL_DESIGN_R = NARROW_W / 2 + NARROW_WHEEL_DESIGN_OVERFLOW;
+const NARROW_RING_FONT_SIZE_PT_DESIGN = 70.5;
+const NARROW_LABEL_BAND_DESIGN_PX = NARROW_RING_FONT_SIZE_PT_DESIGN * (96 / 72);
+/** Radial typographic overshoot past the path (outside edge of label band). */
+const NARROW_LABEL_OUTSET_RATIO = 0.42;
+const NARROW_WHEEL_OUTER_R =
+  NARROW_WHEEL_DESIGN_R + NARROW_LABEL_BAND_DESIGN_PX * NARROW_LABEL_OUTSET_RATIO;
+/** Per-side inset so bold labels are not clipped on real devices (artboard px). */
+const NARROW_WHEEL_FIT_INSET_PX = 12;
+
 /**
- * Pixels of ring arc clipped past each artboard edge — keep a thin sliver only.
- * radius = NARROW_W / 2 + this value.
+ * Scales wheel ring + hub previews to fit artboard width edge-to-edge
+ * (Photoshop-style uniform scale on the menu group).
  */
-export const NARROW_WHEEL_EDGE_OVERFLOW = 12;
-/** Fallback radius before font metrics load (≈ clip target). */
-export const NARROW_WHEEL_R = NARROW_W / 2 + NARROW_WHEEL_EDGE_OVERFLOW;
+export const NARROW_WHEEL_FIT_SCALE =
+  (NARROW_W - 2 * NARROW_WHEEL_FIT_INSET_PX) / (2 * NARROW_WHEEL_OUTER_R);
+
+/** @deprecated design overflow — use NARROW_WHEEL_FIT_SCALE; path no longer clips. */
+export const NARROW_WHEEL_EDGE_OVERFLOW = 0;
+export const NARROW_WHEEL_R = NARROW_WHEEL_DESIGN_R * NARROW_WHEEL_FIT_SCALE;
 
 /** Circular nav label typography (Artboard_2 / PS mock): 48pt Arial MT Std Extra Bold. */
 export const NARROW_LABEL_FONT_PT = 48;
-/** Display scale for narrow ring labels (+50%, then wheel UI scale). */
+/** Display scale reference — ring uses locked NARROW_RING_FONT_SIZE_PT instead. */
 const NARROW_RING_FONT_SCALE_BASE = 1.81;
 export const NARROW_RING_FONT_SCALE =
   NARROW_RING_FONT_SCALE_BASE * NARROW_WHEEL_UI_SCALE;
+
+/**
+ * Locked ring label size — scaled with NARROW_WHEEL_FIT_SCALE so the ring fits width.
+ * Design reference: 70.5pt at NARROW_WHEEL_DESIGN_R.
+ */
+export const NARROW_RING_FONT_SIZE_PT =
+  NARROW_RING_FONT_SIZE_PT_DESIGN * NARROW_WHEEL_FIT_SCALE;
+/** Locked font: labels span ~this fraction of the full ring path. */
+export const NARROW_RING_TEXT_SPAN = 0.965;
 /** Photoshop tracking VA −100 → −100/1000 em. Do not stretch via textPath lengthAdjust. */
 export const NARROW_LABEL_TRACKING_EM = -0.1;
 /** @deprecated use NARROW_LABEL_FONT_PT — kept for imports */
@@ -51,7 +76,7 @@ export const NARROW_LABEL_ACTIVE = "#000000";
 
 /** Radial depth of label text on the ring (artboard px). */
 export const NARROW_LABEL_BAND_PX =
-  NARROW_LABEL_FONT_PT * NARROW_RING_FONT_SCALE * (96 / 72);
+  NARROW_RING_FONT_SIZE_PT * (96 / 72);
 
 /** Interior diameter inside the label ring (artboard px). */
 export const NARROW_HUB_DIAMETER = Math.round(
@@ -76,21 +101,25 @@ export const NARROW_DESIGN_POPUP_SCALE =
 /** Shift design cluster slightly right of hub centre (artboard px). */
 const NARROW_DESIGN_NUDGE_RIGHT_BASE = 40;
 export const NARROW_DESIGN_NUDGE_RIGHT_PX = Math.round(
-  NARROW_DESIGN_NUDGE_RIGHT_BASE * NARROW_WHEEL_UI_SCALE,
+  NARROW_DESIGN_NUDGE_RIGHT_BASE *
+    NARROW_WHEEL_UI_SCALE *
+    NARROW_WHEEL_FIT_SCALE,
 );
 export const NARROW_PHOTOS_POPUP_SCALE =
   NARROW_CENTER_POPUP_MAX / NARROW_PHOTOS_CLUSTER_REF_W;
 /** Lift photos fan slightly above hub centre (artboard px). */
 const NARROW_PHOTOS_NUDGE_UP_BASE = 80;
 export const NARROW_PHOTOS_NUDGE_UP_PX = Math.round(
-  NARROW_PHOTOS_NUDGE_UP_BASE * NARROW_WHEEL_UI_SCALE,
+  NARROW_PHOTOS_NUDGE_UP_BASE *
+    NARROW_WHEEL_UI_SCALE *
+    NARROW_WHEEL_FIT_SCALE,
 );
 export const NARROW_INSTALLATION_POPUP_W = Math.round(
   NARROW_CENTER_POPUP_MAX * 1.5 * 1.3,
 );
 /** Narrow installation Lottie scale (width + scale combined). */
 export const NARROW_INSTALLATION_POPUP_SCALE =
-  1.08 * 1.5 * NARROW_WHEEL_UI_SCALE * 1.15;
+  1.08 * 1.5 * NARROW_WHEEL_UI_SCALE * 1.15 * NARROW_WHEEL_FIT_SCALE;
 
 /** @deprecated use cluster-specific scales above */
 export const NARROW_CENTER_POPUP_SCALE = NARROW_DESIGN_POPUP_SCALE;
