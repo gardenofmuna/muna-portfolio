@@ -288,83 +288,35 @@ export function narrowIndexAtTop(
 }
 
 /**
- * Label index under a screen point — uses rendered tspan bounds (accurate taps).
- * Falls back to ring angle when nothing is measurable yet.
+ * Nearest label to a point — distance to each label's position on the rotated ring.
  */
-export function narrowIndexFromPointer(
+export function narrowIndexNearestOnRing(
   px: number,
   py: number,
   rotation: number,
   labelAngles: NarrowLabelAngles,
-  clientX?: number,
-  clientY?: number,
 ): number {
-  if (clientX != null && clientY != null) {
-    const fromDom = narrowIndexFromDomPoint(clientX, clientY);
-    if (fromDom != null) return fromDom;
-  }
-
-  const dx = px - NARROW_WHEEL_CENTER.x;
-  const dy = py - NARROW_WHEEL_CENTER.y;
-  const distFromHub = Math.hypot(dx, dy);
+  const cx = NARROW_WHEEL_CENTER.x;
+  const cy = NARROW_WHEEL_CENTER.y;
   const r = NARROW_WHEEL_R;
-  if (distFromHub < r * 0.55 || distFromHub > r * 1.45) {
-    return narrowIndexAtTop(rotation, labelAngles);
-  }
-
-  const pointerAngle = Math.atan2(dy, dx);
+  const c = Math.cos(rotation);
+  const s = Math.sin(rotation);
   let best = 0;
   let bestDist = Infinity;
+
   for (let i = 0; i < LABELS.length; i++) {
-    const labelPos = narrowLabelAngle(i, labelAngles) + rotation;
-    let d = pointerAngle - labelPos;
-    while (d > Math.PI) d -= 2 * Math.PI;
-    while (d < -Math.PI) d += 2 * Math.PI;
-    const dist = Math.abs(d);
-    if (dist < bestDist) {
-      bestDist = dist;
+    const θ = narrowLabelAngle(i, labelAngles);
+    const dx = r * Math.cos(θ);
+    const dy = r * Math.sin(θ);
+    const x = cx + dx * c - dy * s;
+    const y = cy + dx * s + dy * c;
+    const d = Math.hypot(px - x, py - y);
+    if (d < bestDist) {
+      bestDist = d;
       best = i;
     }
   }
   return best;
-}
-
-/** Screen coords → label index via live tspan bounding boxes. */
-export function narrowIndexFromDomPoint(
-  clientX: number,
-  clientY: number,
-): number | null {
-  if (typeof document === "undefined") return null;
-
-  let hit: number | null = null;
-  let bestDist = Infinity;
-
-  for (let i = 0; i < LABELS.length; i++) {
-    const el = document.getElementById(`circular-nav-item-${i}`);
-    if (!el) continue;
-    const rect = el.getBoundingClientRect();
-    if (rect.width <= 0 || rect.height <= 0) continue;
-
-    const pad = 14;
-    if (
-      clientX >= rect.left - pad &&
-      clientX <= rect.right + pad &&
-      clientY >= rect.top - pad &&
-      clientY <= rect.bottom + pad
-    ) {
-      return i;
-    }
-
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-    const d = Math.hypot(clientX - cx, clientY - cy);
-    if (d < bestDist) {
-      bestDist = d;
-      hit = i;
-    }
-  }
-
-  return bestDist < 120 ? hit : null;
 }
 
 /**

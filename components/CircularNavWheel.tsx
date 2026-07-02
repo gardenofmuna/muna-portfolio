@@ -4,7 +4,6 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, Fra
 
 import {
   narrowIndexAtTop,
-  narrowIndexFromPointer,
   narrowLabelAngle,
   narrowRingPathD,
   narrowSnapRotation,
@@ -529,20 +528,23 @@ export function CircularNavWheel({
     if (delta < -Math.PI) delta += Math.PI * 2;
     dragRef.current.lastAngle = angle;
 
-    dragRef.current.cumMovePx += Math.hypot(e.movementX, e.movementY);
+    if (!dragRef.current.moved) {
+      dragRef.current.cumMovePx += Math.hypot(e.movementX, e.movementY);
+      if (
+        dragRef.current.cumMovePx <= TAP_MOVE_PX &&
+        Math.abs(delta) <= DRAG_MOVE_RAD
+      ) {
+        return;
+      }
+      dragRef.current.moved = true;
+    }
+
     const now = performance.now();
     const dt = now - dragRef.current.lastMoveTs;
     if (dt > 0) {
       dragRef.current.velocity = (delta / dt) * 16;
     }
     dragRef.current.lastMoveTs = now;
-
-    if (
-      dragRef.current.cumMovePx > TAP_MOVE_PX ||
-      Math.abs(delta) > DRAG_MOVE_RAD
-    ) {
-      dragRef.current.moved = true;
-    }
 
     setRotation((prev) => {
       const next = prev + delta;
@@ -574,14 +576,7 @@ export function CircularNavWheel({
     if (!wasMoved) {
       const p = pointerLocal(e.clientX, e.clientY);
       if (isNarrow) {
-        const i = narrowIndexFromPointer(
-          p.x,
-          p.y,
-          φ,
-          labelAnglesRef.current,
-          e.clientX,
-          e.clientY,
-        );
+        const i = nearestIndexToPointer(p.x, p.y, φ);
         selectNarrowIndex(i, φ);
         setWheelInteracting(false);
       } else {
