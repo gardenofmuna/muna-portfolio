@@ -4,14 +4,29 @@ import { useEffect, useState } from "react";
 
 import {
   NARROW_H,
-  NARROW_LABEL_BAND_PX,
   NARROW_LABEL_TRACKING_EM,
   NARROW_RING_FONT_SIZE_PT,
-  NARROW_RING_TEXT_SPAN,
   NARROW_W,
   NARROW_WHEEL_CENTER,
   NARROW_WHEEL_R,
 } from "@/lib/narrow-stage";
+
+/**
+ * Narrow ring geometry — label arcs, snap targets, hit overlays, Safari fallback.
+ *
+ * Label widths: NARROW_LABEL_WORD_WIDTH_PX (Chromium-measured per word).
+ * Regenerate after font/tracking changes: node scripts/measure-ring-widths.mjs
+ *
+ * Layout: buildDeterministicNarrowLabelArcs() — cumulative widths + gap.
+ * Snap: narrowSnapRotation / narrowIndexAtTop; visual fine-tune in
+ * narrowVisualSnapDelta (DOM bbox vs hub).
+ * Hitboxes: narrowHitOverlayRects() — tangent buttons from labelArcs,
+ * radial outset + scaled perpendicular height for glyph envelope.
+ * Safari: measureLabelArcsFromTextPath; labelArcsAreUsable() gates fallback
+ * to the same deterministic layout.
+ *
+ * Artboard constants: lib/narrow-stage.ts
+ */
 
 const LABELS = [
   "about",
@@ -51,20 +66,79 @@ function ptToPx(pt: number): number {
   return pt * (96 / 72);
 }
 
-/** Measured label-centre angles (Arial 800, 70.5pt, tracking −0.1) — fallback when DOM measure fails. */
-export const NARROW_BAKED_LABEL_ANGLES: NarrowLabelAngles = [
-  -1.334251379022796,
-  -0.7806318491929849,
-  -0.02934373891513474,
-  0.7336411676992275,
-  1.2091152343133267,
-  2.007979866877421,
-  3.077590146039743,
-  -2.4462575819525934,
-];
+/**
+ * Chromium-measured word widths along the ring path (Arial 800, locked ring type).
+ * Same string construction as the SVG textPath: `word + " "` per label.
+ * Scales uniformly when pathLength differs from the reference circle.
+ */
+const NARROW_LABEL_WORD_WIDTH_PX = [
+  191.55, 221.81, 356.52, 230.02, 119.72, 503.91, 337.05, 253.67,
+] as const;
 
-function estimatedLabelAngles(_spanFraction: number): NarrowLabelAngles {
-  return NARROW_BAKED_LABEL_ANGLES;
+/** Inter-label space width (trailing space after each word). */
+const NARROW_INTER_LABEL_GAP_PX = 16.56;
+
+/** Path length when word widths above were measured. */
+const NARROW_RING_LAYOUT_REF_PATH_LENGTH = 2350.56;
+
+const TWO_PI = 2 * Math.PI;
+
+/** Centre angle (rad) from distance along the ring path — path starts at 12 o'clock. */
+function angleFromPathDistance(dist: number, pathLength: number): number {
+  const d = ((dist % pathLength) + pathLength) % pathLength;
+  return -Math.PI / 2 + (d / pathLength) * TWO_PI;
+}
+
+/**
+ * Deterministic ring layout — cumulative word widths + consistent gaps.
+ * One function drives hit targets, snap, and active alignment.
+ */
+function buildDeterministicNarrowLabelArcs(
+  pathLength = 2 * Math.PI * NARROW_WHEEL_R,
+): NarrowLabelArc[] {
+  const scale = pathLength / NARROW_RING_LAYOUT_REF_PATH_LENGTH;
+  const gapPx = NARROW_INTER_LABEL_GAP_PX * scale;
+  const n = LABELS.length;
+  let cursor = 0;
+
+  return LABELS.map((label, i) => {
+    const wordPx = NARROW_LABEL_WORD_WIDTH_PX[i]! * scale;
+    const pathStart = cursor;
+    const pathEnd = cursor + wordPx;
+    const centerDist = pathStart + wordPx / 2;
+    cursor = pathEnd + (i < n - 1 ? gapPx : 0);
+    return {
+      pathStart,
+      pathEnd,
+      start: angleFromPathDistance(pathStart, pathLength),
+      end: angleFromPathDistance(pathEnd, pathLength),
+      center: angleFromPathDistance(centerDist, pathLength),
+    };
+  });
+}
+
+/** Derived centre angles — same model as buildDeterministicNarrowLabelArcs. */
+export const NARROW_BAKED_LABEL_ANGLES: NarrowLabelAngles =
+  buildDeterministicNarrowLabelArcs().map((arc) => arc.center);
+
+function deterministicRingLayout(
+  pathLength = 2 * Math.PI * NARROW_WHEEL_R,
+): {
+  naturalLength: number;
+  labelAngles: NarrowLabelAngles;
+  labelArcs: NarrowLabelArc[];
+} {
+  const labelArcs = buildDeterministicNarrowLabelArcs(pathLength);
+  const scale = pathLength / NARROW_RING_LAYOUT_REF_PATH_LENGTH;
+  const gapPx = NARROW_INTER_LABEL_GAP_PX * scale;
+  const naturalLength =
+    NARROW_LABEL_WORD_WIDTH_PX.reduce((sum, w) => sum + w * scale, 0) +
+    gapPx * (LABELS.length - 1);
+  return {
+    naturalLength,
+    labelAngles: labelArcs.map((arc) => arc.center),
+    labelArcs,
+  };
 }
 
 function angleFromPathPoint(path: SVGPathElement, distance: number): number {
@@ -76,19 +150,8 @@ function angleFromPathPoint(path: SVGPathElement, distance: number): number {
   );
 }
 
-/** Word-centre angles from textPath substring lengths + circle geometry. */
-export function measureLabelAnglesFromTextPath(
-  path: SVGPathElement,
-  textPath: SVGTextPathElement,
-  pathOffset = 0,
-): NarrowLabelAngles | null {
-  const arcs = measureLabelArcsFromTextPath(path, textPath, pathOffset);
-  if (!arcs) return null;
-  return arcs.map((a) => a.center);
-}
-
-/** Per-word angular spans along the ring path (for tap hit testing). */
-export function measureLabelArcsFromTextPath(
+/** Per-word angular spans along the ring path (Safari measure). */
+function measureLabelArcsFromTextPath(
   path: SVGPathElement,
   textPath: SVGTextPathElement,
   pathOffset = 0,
@@ -120,136 +183,111 @@ export function measureLabelArcsFromTextPath(
   }
 }
 
-/** Fallback slots — proportional to label length along the path (path order). */
-export function buildLabelArcsFromAngles(
-  labelAngles: NarrowLabelAngles,
-  pathLength = 2 * Math.PI * NARROW_WHEEL_R,
-): NarrowLabelArc[] {
-  const totalChars = LABELS.reduce((acc, label) => acc + label.length + 1, 0);
-  let charIndex = 0;
-  return LABELS.map((label, i) => {
-    const pathStart = (charIndex / totalChars) * pathLength;
-    charIndex += label.length + 1;
-    const pathEnd = (charIndex / totalChars) * pathLength;
-    const center = labelAngles[i] ?? -Math.PI / 2 + ((i + 0.5) / LABELS.length) * 2 * Math.PI;
-    return {
-      pathStart,
-      pathEnd,
-      start: center,
-      end: center,
-      center,
-    };
-  });
-}
-
-const TWO_PI = 2 * Math.PI;
-
 function normalizeAngle(a: number): number {
   let x = a % TWO_PI;
   if (x < 0) x += TWO_PI;
   return x;
 }
 
-function pathOrderMidpoint(from: number, to: number): number {
-  let span = to - from;
-  if (span <= 0) span += TWO_PI;
-  return normalizeAngle(from + span / 2);
+/** Reject collapsed or clustered label centres — must span the ring. */
+function labelCentersAreUsable(centers: number[]): boolean {
+  if (centers.length !== LABELS.length) return false;
+  if (!centers.every((c) => Number.isFinite(c))) return false;
+
+  const sorted = centers.map((c) => normalizeAngle(c)).sort((a, b) => a - b);
+
+  const coverage = sorted[sorted.length - 1]! - sorted[0]!;
+  if (coverage < Math.PI * 1.5) return false;
+
+  const n = sorted.length;
+  const gaps: number[] = [];
+  for (let i = 0; i < n - 1; i++) {
+    gaps.push(sorted[i + 1]! - sorted[i]!);
+  }
+  gaps.push(TWO_PI - sorted[n - 1]! + sorted[0]!);
+
+  const minGap = Math.min(...gaps);
+  const maxGap = Math.max(...gaps);
+  const idealGap = TWO_PI / n;
+
+  if (minGap < idealGap * 0.35) return false;
+  if (maxGap > idealGap * 2.75) return false;
+
+  return true;
 }
 
-function angleInClockwiseWedge(
-  angle: number,
-  start: number,
-  end: number,
-): boolean {
-  const a = normalizeAngle(angle);
-  const s = normalizeAngle(start);
-  const e = normalizeAngle(end);
-  if (s <= e) return a >= s && a <= e;
-  return a >= s || a <= e;
-}
+/** Reject collapsed iOS/Safari textPath measures — centers must span the ring. */
+function labelArcsAreUsable(arcs: NarrowLabelArc[]): boolean {
+  if (arcs.length !== LABELS.length) return false;
 
-function nearestLabelByCenter(
-  localAngle: number,
-  labelArcs: NarrowLabelArc[],
-): number {
-  let best = 0;
-  let bestDist = Infinity;
-  for (let i = 0; i < labelArcs.length; i++) {
-    const center = labelArcs[i]!.center;
-    let d = Math.abs(normalizeAngle(localAngle - center));
-    if (d > Math.PI) d = TWO_PI - d;
-    if (d < bestDist) {
-      bestDist = d;
-      best = i;
+  for (let i = 0; i < arcs.length; i++) {
+    const arc = arcs[i]!;
+    if (
+      !Number.isFinite(arc.center) ||
+      !Number.isFinite(arc.start) ||
+      !Number.isFinite(arc.end) ||
+      arc.pathEnd <= arc.pathStart
+    ) {
+      return false;
+    }
+    if (i > 0 && arc.pathStart <= arcs[i - 1]!.pathStart) {
+      return false;
     }
   }
-  return best;
+
+  return labelCentersAreUsable(arcs.map((a) => a.center));
 }
 
-export type NarrowLabelWedge = {
+export type NarrowHitOverlayRect = {
   index: number;
-  start: number;
-  end: number;
-  center: number;
+  /** Glyph-centre anchor on the ring (artboard px). */
+  centerX: number;
+  centerY: number;
+  /** Extent along the ring path from pathStart → pathEnd, plus end padding. */
+  width: number;
+  /** Extent across the glyph band, plus normal padding. */
+  height: number;
+  /** Tangent angle (rad) — pathStart to pathEnd runs along this axis. */
+  angleRad: number;
 };
 
-/** Non-overlapping tap wedges — midpoints between neighbours in path order. */
-export function buildNarrowLabelWedges(
-  labelArcs: NarrowLabelArc[],
-): NarrowLabelWedge[] {
-  const centers = labelArcs.map((a) => a.center);
-  const n = centers.length;
-  return centers.map((center, i) => {
-    const prev = centers[(i + n - 1) % n]!;
-    const next = centers[(i + 1) % n]!;
-    return {
-      index: i,
-      center,
-      start: pathOrderMidpoint(prev, center),
-      end: pathOrderMidpoint(center, next),
-    };
-  });
-}
+/** Radial offset — hit center sits on glyphs, not the textPath baseline (artboard px). */
+const HIT_RADIAL_OUTSET_PX = 8;
+/** Perpendicular extent vs bandPx — covers cap height + descenders. */
+const HIT_PERP_SCALE = 1.35;
 
-/** SVG arc segment for an invisible stroke hit target on the ring. */
-export function narrowWedgeArcPath(
+/** HTML tap targets from ring geometry — artboard px, rotation 0 (parent rotator turns). */
+export function narrowHitOverlayRects(
+  rotation: number,
+  labelArcs: NarrowLabelArc[],
   cx: number,
   cy: number,
   radius: number,
-  startRad: number,
-  endRad: number,
-): string {
-  const x0 = cx + radius * Math.cos(startRad);
-  const y0 = cy + radius * Math.sin(startRad);
-  const x1 = cx + radius * Math.cos(endRad);
-  const y1 = cy + radius * Math.sin(endRad);
-  let span = endRad - startRad;
-  if (span <= 0) span += TWO_PI;
-  const largeArc = span > Math.PI ? 1 : 0;
-  return `M ${x0} ${y0} A ${radius} ${radius} 0 ${largeArc} 1 ${x1} ${y1}`;
-}
+  bandPx: number,
+): NarrowHitOverlayRect[] {
+  /** Padding beyond pathStart / pathEnd along the word tangent. */
+  const padEnd = 10;
 
-/** Topmost painted element under a screen tap (hit paths or label glyphs). */
-export function narrowIndexFromTapStack(
-  clientX: number,
-  clientY: number,
-): number | null {
-  if (typeof document === "undefined") return null;
-  const stack = document.elementsFromPoint(clientX, clientY);
-  for (const el of stack) {
-    if (!(el instanceof Element)) continue;
-    const attr = el.getAttribute("data-nav-hit-index");
-    if (attr != null) {
-      const i = Number.parseInt(attr, 10);
-      if (i >= 0 && i < LABELS.length) return i;
-    }
-    const idMatch = el.id?.match(/^(?:circular-nav-item|narrow-nav-hit)-(\d+)$/);
-    if (idMatch) {
-      const i = Number.parseInt(idMatch[1]!, 10);
-      if (i >= 0 && i < LABELS.length) return i;
-    }
-  }
-  return null;
+  return labelArcs.map((arc, index) => {
+    const θ = arc.center + rotation;
+    const ringX = cx + radius * Math.cos(θ);
+    const ringY = cy + radius * Math.sin(θ);
+    const centerX = ringX + Math.cos(θ) * HIT_RADIAL_OUTSET_PX;
+    const centerY = ringY + Math.sin(θ) * HIT_RADIAL_OUTSET_PX;
+
+    const span = Math.max(arc.pathEnd - arc.pathStart, 0);
+    const width = span + padEnd * 2;
+    const height = bandPx * HIT_PERP_SCALE;
+
+    return {
+      index,
+      centerX,
+      centerY,
+      width,
+      height,
+      angleRad: θ,
+    };
+  });
 }
 
 export function narrowRingPathD(radius: number): string {
@@ -260,11 +298,6 @@ export function narrowRingPathD(radius: number): string {
 
 export function ringWordText(index: number): string {
   return LABELS[index]!;
-}
-
-/** Trailing space after every word — closure gap matches all others. */
-export function ringFullText(): string {
-  return LABELS.map((label) => `${label} `).join("");
 }
 
 function createMeasureSvg(fontSizePt: number, radius: number) {
@@ -318,28 +351,19 @@ function measureLabelAngles(
   labelArcs: NarrowLabelArc[];
 } {
   const pathLength = 2 * Math.PI * radius;
-  const fallbackAngles = estimatedLabelAngles(NARROW_RING_TEXT_SPAN);
-  const fallback = {
-    naturalLength: pathLength * NARROW_RING_TEXT_SPAN,
-    labelAngles: fallbackAngles,
-    labelArcs: buildLabelArcsFromAngles(fallbackAngles, pathLength),
-  };
+  const fallback = deterministicRingLayout(pathLength);
   const { svg, path, tp } = createMeasureSvg(fontSizePt, radius);
   try {
     const naturalLength = tp.getComputedTextLength?.() ?? 0;
     const fromArcs = measureLabelArcsFromTextPath(path, tp);
-    if (fromArcs) {
+    if (fromArcs && labelArcsAreUsable(fromArcs)) {
       return {
         naturalLength: naturalLength > 0 ? naturalLength : fallback.naturalLength,
         labelAngles: fromArcs.map((a) => a.center),
         labelArcs: fromArcs,
       };
     }
-    return {
-      naturalLength: fallback.naturalLength,
-      labelAngles: NARROW_BAKED_LABEL_ANGLES,
-      labelArcs: buildLabelArcsFromAngles(NARROW_BAKED_LABEL_ANGLES, pathLength),
-    };
+    return fallback;
   } finally {
     document.body.removeChild(svg);
   }
@@ -350,13 +374,15 @@ function staticRingLayout(): NarrowRingLayout {
   const radius = NARROW_WHEEL_R;
   const fontSizePt = NARROW_RING_FONT_SIZE_PT;
   const pathLength = 2 * Math.PI * radius;
+  const { naturalLength, labelAngles, labelArcs } =
+    deterministicRingLayout(pathLength);
   return {
     radius,
     fontSizePt,
     pathLength,
-    naturalLength: pathLength,
-    labelAngles: NARROW_BAKED_LABEL_ANGLES,
-    labelArcs: buildLabelArcsFromAngles(NARROW_BAKED_LABEL_ANGLES, pathLength),
+    naturalLength,
+    labelAngles,
+    labelArcs,
     ready: true,
   };
 }
@@ -466,54 +492,6 @@ export function narrowIndexAtTop(
 }
 
 /**
- * Label under a tap — wheel-local angular wedges (path order, no wrap overlap).
- */
-export function narrowIndexFromRingTap(
-  px: number,
-  py: number,
-  rotation: number,
-  labelArcs: NarrowLabelArc[],
-  _pathLength = 2 * Math.PI * NARROW_WHEEL_R,
-): number {
-  const cx = NARROW_WHEEL_CENTER.x;
-  const cy = NARROW_WHEEL_CENTER.y;
-  const dx = px - cx;
-  const dy = py - cy;
-  const dist = Math.hypot(dx, dy);
-  const r = NARROW_WHEEL_R;
-
-  const tapAngle = Math.atan2(dy, dx);
-  const localAngle = normalizeAngle(tapAngle - rotation);
-
-  if (dist < r - NARROW_LABEL_BAND_PX * 1.5 || dist > r + NARROW_LABEL_BAND_PX * 1.5) {
-    return nearestLabelByCenter(localAngle, labelArcs);
-  }
-
-  const wedges = buildNarrowLabelWedges(labelArcs);
-  for (const wedge of wedges) {
-    if (angleInClockwiseWedge(localAngle, wedge.start, wedge.end)) {
-      return wedge.index;
-    }
-  }
-  return nearestLabelByCenter(localAngle, labelArcs);
-}
-
-/** @deprecated use narrowIndexFromRingTap */
-export function narrowIndexNearestOnRing(
-  px: number,
-  py: number,
-  rotation: number,
-  labelAngles: NarrowLabelAngles,
-): number {
-  return narrowIndexFromRingTap(
-    px,
-    py,
-    rotation,
-    buildLabelArcsFromAngles(labelAngles),
-  );
-}
-
-/**
  * Rotation delta (rad) so the focused label centre sits on the vertical axis.
  */
 export function narrowVisualSnapDelta(
@@ -539,4 +517,4 @@ export function narrowVisualSnapDelta(
   return -Math.asin(ratio);
 }
 
-export { LABELS as NARROW_NAV_LABELS, NARROW_WHEEL_CENTER };
+export { LABELS as NARROW_NAV_LABELS };
