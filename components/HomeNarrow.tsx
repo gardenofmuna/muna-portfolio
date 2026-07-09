@@ -8,6 +8,7 @@ import { InstallationLottie } from "@/components/InstallationLottie";
 import { MobileFooterLinks } from "@/components/MobileFooterLinks";
 import { NarrowArtboard } from "@/components/NarrowArtboard";
 import { PhotosHoverCluster } from "@/components/PhotosHoverCluster";
+import { SelectedWorksHoverGif } from "@/components/SelectedWorksHoverGif";
 import { NarrowCenterPopup } from "@/components/NarrowCenterPopup";
 import { SiteWordmark } from "@/components/SiteWordmark";
 
@@ -37,6 +38,7 @@ export function HomeNarrow() {
   const showPhotos = previewLabel === "photos";
   const showDesign = previewLabel === "design";
   const showInstallation = previewLabel === "installation";
+  const showSelectedWorks = previewLabel === "selected works";
   const fadeMs = wheelInteracting ? 120 : reduceMotion ? 80 : 520;
   const bioFadeStyle = {
     opacity: showAboutBio ? 1 : 0,
@@ -60,6 +62,7 @@ export function HomeNarrow() {
         />
         <DesignCluster visible={showDesign} variant="narrow" />
         <InstallationLottie visible={showInstallation} layout="narrow" />
+        <SelectedWorksHoverGif visible={showSelectedWorks} layout="narrow" />
         <PhotosHoverCluster visible={showPhotos} variant="narrow" />
         <NarrowCenterPopup visible={showAboutBio} style={bioFadeStyle}>
           <AboutBio

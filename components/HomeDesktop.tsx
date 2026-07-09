@@ -8,6 +8,7 @@ import { ContactTopLinks } from "@/components/ContactTopLinks";
 import { DesignCluster } from "@/components/DesignCluster";
 import { InstallationLottie } from "@/components/InstallationLottie";
 import { PhotosHoverCluster } from "@/components/PhotosHoverCluster";
+import { SelectedWorksHoverGif } from "@/components/SelectedWorksHoverGif";
 
 /** Layout baseline: image frames 544×659, inset 100, on 1624-tall artboard */
 const REF_PAGE_HEIGHT = 1624;
@@ -64,6 +65,10 @@ export function HomeDesktop() {
       <PhotosHoverCluster
         visible={hoverNavLabel === "photos"}
         variant="desktop"
+      />
+      <SelectedWorksHoverGif
+        visible={hoverNavLabel === "selected works"}
+        layout="desktop"
       />
       <ContactTopLinks visible={isContact} top={inset} right={aboutBioRight} />
       <div

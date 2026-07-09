@@ -8,6 +8,7 @@ import { ContactTopLinks } from "@/components/ContactTopLinks";
 import { DesignCluster } from "@/components/DesignCluster";
 import { InstallationLottie } from "@/components/InstallationLottie";
 import { PhotosHoverCluster } from "@/components/PhotosHoverCluster";
+import { SelectedWorksHoverGif } from "@/components/SelectedWorksHoverGif";
 
 /** Layout baseline: image frames 544×659, inset 100, at this viewport height */
 const REF_PAGE_HEIGHT = 1624;
@@ -61,6 +62,7 @@ export function HomeScene() {
       <DesignCluster visible={activeLabel === "design"} />
       <InstallationLottie visible={activeLabel === "installation"} />
       <PhotosHoverCluster visible={hoverNavLabel === "photos"} />
+      <SelectedWorksHoverGif visible={hoverNavLabel === "selected works"} />
       <ContactTopLinks visible={isContact} top={inset} right={aboutBioRight} />
       <div
         aria-hidden={!showAboutBio}

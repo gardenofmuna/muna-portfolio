@@ -509,6 +509,14 @@ export function CircularNavWheel({
     onHoverLabelRef.current?.(label);
   }, [hoveredIndex, items]);
 
+  /** Drop stale desktop hover after drag/keyboard changes focus away from hovered item. */
+  useEffect(() => {
+    if (isNarrow || isDragging) return;
+    setHoveredIndex((prev) =>
+      prev !== null && prev !== focusedIndex ? null : prev,
+    );
+  }, [focusedIndex, isDragging, isNarrow]);
+
   /** Stable primitive — never pass labelAngles array into effect deps. */
   const layoutSnapKey = `${isNarrow}:${ringLayout.ready}:${labelArcsVersion}`;
   const layoutSnappedKeyRef = useRef("");
@@ -594,7 +602,14 @@ export function CircularNavWheel({
     }
   };
 
-  const onItemLeave = () => setHoveredIndex(null);
+  /** Desktop: keep hover while the snapped item stays focused (label moves under cursor on rotate). */
+  const onItemLeave = (i: number) => {
+    if (isNarrow) {
+      setHoveredIndex(null);
+      return;
+    }
+    setHoveredIndex((prev) => (focusedRef.current === i ? i : null));
+  };
 
   const pointerLocal = (clientX: number, clientY: number) => {
     if (!isNarrow) return { x: clientX, y: clientY };
@@ -957,7 +972,7 @@ export function CircularNavWheel({
                     transition: reduceMotion ? "none" : "color 0.18s ease",
                   }}
                   onMouseEnter={() => onItemEnter(item.index)}
-                  onMouseLeave={onItemLeave}
+                  onMouseLeave={() => onItemLeave(item.index)}
                   onFocus={() => {
                     setFocusedIndex(item.index);
                     setHoveredIndex(item.index);
@@ -967,7 +982,7 @@ export function CircularNavWheel({
                       );
                     }
                   }}
-                  onBlur={() => setHoveredIndex(null)}
+                  onBlur={() => onItemLeave(item.index)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
