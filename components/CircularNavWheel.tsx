@@ -155,10 +155,70 @@ function narrowHitIndexAtPoint(clientX: number, clientY: number): number | null 
   return null;
 }
 
-/** Wheel / trackpad → radians per delta unit */
+/** Wheel / trackpad → radians per delta unit (narrow). */
 const WHEEL_ROT_SCALE = 0.0022;
-/** Idle after wheel before snapping to nearest slot */
+/** Idle after wheel before snapping to nearest slot (narrow). */
 const WHEEL_SNAP_MS = 140;
+
+/** Desktop: slower scroll + longer settle so trackpad does not skip labels. */
+const DESKTOP_WHEEL_ROT_SCALE = 0.00075;
+const DESKTOP_WHEEL_SNAP_MS = 400;
+/** Desktop drag: dampen finger travel vs wheel angle. */
+const DESKTOP_DRAG_GAIN = 0.62;
+/** Desktop: keep current label unless another snap is clearly closer (rad). */
+const DESKTOP_SNAP_HYSTERESIS_RAD = 0.085;
+
+function nearestDesktopLabelSnap(
+  φ: number,
+  snapFn: (i: number, current: number) => number,
+  tileCount: number,
+  preferTileIndex?: number,
+): { tileIndex: number; rotation: number } {
+  const labelCount = LABELS.length;
+  const perLabel: {
+    label: number;
+    tileIndex: number;
+    cost: number;
+    rotation: number;
+  }[] = [];
+
+  for (let label = 0; label < labelCount; label++) {
+    let bestTile = label;
+    let bestCost = Infinity;
+    let bestRot = φ;
+    for (let tile = label; tile < tileCount; tile += labelCount) {
+      const rot = snapFn(tile, φ);
+      const cost = Math.abs(rot - φ);
+      if (cost < bestCost) {
+        bestCost = cost;
+        bestTile = tile;
+        bestRot = rot;
+      }
+    }
+    perLabel.push({
+      label,
+      tileIndex: bestTile,
+      cost: bestCost,
+      rotation: bestRot,
+    });
+  }
+
+  let pick = perLabel.reduce((a, b) => (b.cost < a.cost ? b : a));
+
+  if (preferTileIndex != null) {
+    const preferLabel =
+      ((preferTileIndex % labelCount) + labelCount) % labelCount;
+    const prefer = perLabel.find((e) => e.label === preferLabel);
+    if (
+      prefer &&
+      pick.cost > prefer.cost - DESKTOP_SNAP_HYSTERESIS_RAD
+    ) {
+      pick = prefer;
+    }
+  }
+
+  return { tileIndex: pick.tileIndex, rotation: pick.rotation };
+}
 const NARROW_SNAP_MS = 380;
 
 function initialNarrowRotation(
@@ -461,8 +521,14 @@ export function CircularNavWheel({
     const onWheel = (e: WheelEvent) => {
       if (isDraggingRef.current) return;
       e.preventDefault();
-      setRotation((prev) => prev + e.deltaY * WHEEL_ROT_SCALE);
+      const rotScale = isNarrowRef.current
+        ? WHEEL_ROT_SCALE
+        : DESKTOP_WHEEL_ROT_SCALE;
+      setRotation((prev) => prev + e.deltaY * rotScale);
       if (idle) clearTimeout(idle);
+      const snapMs = isNarrowRef.current
+        ? WHEEL_SNAP_MS
+        : DESKTOP_WHEEL_SNAP_MS;
       idle = setTimeout(() => {
         idle = null;
         const φ = rotationRef.current;
@@ -473,19 +539,15 @@ export function CircularNavWheel({
           setFocusedIndex(bestI);
           return;
         }
-        let bestI = 0;
-        let bestCost = Infinity;
-        for (let i = 0; i < n; i++) {
-          const snap = snapFn(i, φ);
-          const cost = Math.abs(snap - φ);
-          if (cost < bestCost) {
-            bestCost = cost;
-            bestI = i;
-          }
-        }
-        setFocusedIndex(bestI);
-        setRotation(snapFn(bestI, φ));
-      }, WHEEL_SNAP_MS);
+        const { tileIndex, rotation: nextRot } = nearestDesktopLabelSnap(
+          φ,
+          snapFn,
+          n,
+          focusedRef.current,
+        );
+        setFocusedIndex(tileIndex);
+        setRotation(nextRot);
+      }, snapMs);
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => {
@@ -596,9 +658,13 @@ export function CircularNavWheel({
 
   const onItemEnter = (i: number) => {
     setHoveredIndex(i);
-    setFocusedIndex(i);
     if (!isDragging && !isNarrow) {
-      setRotation((prev) => snapRotationForIndex(i, prev));
+      const nextLabel = i % LABELS.length;
+      const curLabel = focusedRef.current % LABELS.length;
+      if (nextLabel !== curLabel) {
+        setFocusedIndex(i);
+        setRotation((prev) => snapRotationForIndex(i, prev));
+      }
     }
   };
 
@@ -715,7 +781,8 @@ export function CircularNavWheel({
     }
 
     setRotation((prev) => {
-      const next = prev + delta;
+      const applied = isNarrow ? delta : delta * DESKTOP_DRAG_GAIN;
+      const next = prev + applied;
       rotationRef.current = next;
       if (isNarrow) {
         syncNarrowTopHover(next);
@@ -770,18 +837,14 @@ export function CircularNavWheel({
     } else if (isNarrow && wasDragging) {
       finishNarrowSpin();
     } else {
-      let bestI = 0;
-      let bestCost = Infinity;
-      for (let i = 0; i < N; i++) {
-        const snap = snapRotationForIndex(i, φ);
-        const cost = Math.abs(snap - φ);
-        if (cost < bestCost) {
-          bestCost = cost;
-          bestI = i;
-        }
-      }
-      setFocusedIndex(bestI);
-      setRotation(snapRotationForIndex(bestI, φ));
+      const { tileIndex, rotation: nextRot } = nearestDesktopLabelSnap(
+        φ,
+        snapRotationForIndex,
+        N,
+        focusedRef.current,
+      );
+      setFocusedIndex(tileIndex);
+      setRotation(nextRot);
     }
 
     dragRef.current.moved = false;
