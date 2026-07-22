@@ -94,9 +94,6 @@ export function PaperFoldAccordion({
   const middlePanelShadow = open
     ? "0 12px 28px rgba(0, 0, 0, 0.18)"
     : "0 5px 14px rgba(0, 0, 0, 0.14)";
-  const bottomPanelShadow = open
-    ? "0 14px 28px rgba(0, 0, 0, 0.16)"
-    : "0 6px 14px rgba(0, 0, 0, 0.20)";
   const openHeight = Math.round((width / dimensions.w) * dimensions.h);
   const panelTopHeight = Math.round(openHeight * (fold1 / pageHeight));
   const panelMiddleHeight = Math.round(openHeight * ((fold2 - fold1) / pageHeight));
@@ -267,12 +264,11 @@ export function PaperFoldAccordion({
                 : open
                   ? "rotateX(0deg)"
                   : "rotateX(180deg)",
-              transition: `transform ${foldMs}ms ease, box-shadow ${foldMs}ms ease`,
+              transition: `transform ${foldMs}ms ease`,
               transitionDelay: open ? `${foldMs}ms` : "0ms",
               transformStyle: "preserve-3d",
               ...(isSafari && { WebkitTransformStyle: "preserve-3d" as const }),
               zIndex: 2,
-              boxShadow: bottomPanelShadow,
             }}
           >
             {isSafari && (
@@ -337,6 +333,23 @@ export function PaperFoldAccordion({
                 }}
               />
             ) : null}
+            <div
+              aria-hidden
+              style={{
+                position: "absolute",
+                left: "4%",
+                right: "4%",
+                bottom: 0,
+                height: 1,
+                pointerEvents: "none",
+                transform: "translateY(1px) translateZ(-1px)",
+                boxShadow: open
+                  ? "0 3px 6px 0 rgba(0,0,0,0.16)"
+                  : "0 2px 4px 0 rgba(0,0,0,0.14)",
+                opacity: open ? 1 : 0.7,
+                transition: `box-shadow ${foldMs}ms ease, opacity ${foldMs}ms ease`,
+              }}
+            />
           </div>
         </div>
       </div>
