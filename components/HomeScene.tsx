@@ -8,6 +8,7 @@ import { ContactTopLinks } from "@/components/ContactTopLinks";
 import { DesignCluster } from "@/components/DesignCluster";
 import { InstallationLottie } from "@/components/InstallationLottie";
 import { PhotosHoverCluster } from "@/components/PhotosHoverCluster";
+import { CvPressHoverAccordion } from "@/components/CvPressHoverAccordion";
 import { FilmHoverGif } from "@/components/FilmHoverGif";
 import { SelectedWorksHoverGif } from "@/components/SelectedWorksHoverGif";
 
@@ -64,6 +65,11 @@ export function HomeScene() {
       <InstallationLottie visible={activeLabel === "installation"} />
       <PhotosHoverCluster visible={hoverNavLabel === "photos"} />
       <FilmHoverGif visible={hoverNavLabel === "film"} />
+      <CvPressHoverAccordion
+        visible={
+          hoverNavLabel === "cv + press" || activeLabel === "cv + press"
+        }
+      />
       <SelectedWorksHoverGif visible={hoverNavLabel === "selected works"} />
       <ContactTopLinks visible={isContact} top={inset} right={aboutBioRight} />
       <div

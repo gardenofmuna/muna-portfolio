@@ -8,6 +8,7 @@ import { InstallationLottie } from "@/components/InstallationLottie";
 import { MobileFooterLinks } from "@/components/MobileFooterLinks";
 import { NarrowArtboard } from "@/components/NarrowArtboard";
 import { PhotosHoverCluster } from "@/components/PhotosHoverCluster";
+import { CvPressHoverAccordion } from "@/components/CvPressHoverAccordion";
 import { FilmHoverGif } from "@/components/FilmHoverGif";
 import { SelectedWorksHoverGif } from "@/components/SelectedWorksHoverGif";
 import { NarrowCenterPopup } from "@/components/NarrowCenterPopup";
@@ -39,6 +40,7 @@ export function HomeNarrow() {
   const showPhotos = previewLabel === "photos";
   const showDesign = previewLabel === "design";
   const showInstallation = previewLabel === "installation";
+  const showCvPress = previewLabel === "cv + press";
   const showFilm = previewLabel === "film";
   const showSelectedWorks = previewLabel === "selected works";
   const fadeMs = wheelInteracting ? 120 : reduceMotion ? 80 : 520;
@@ -65,6 +67,7 @@ export function HomeNarrow() {
         <DesignCluster visible={showDesign} variant="narrow" />
         <InstallationLottie visible={showInstallation} layout="narrow" />
         <FilmHoverGif visible={showFilm} layout="narrow" />
+        <CvPressHoverAccordion visible={showCvPress} layout="narrow" />
         <SelectedWorksHoverGif visible={showSelectedWorks} layout="narrow" />
         <PhotosHoverCluster visible={showPhotos} variant="narrow" />
         <NarrowCenterPopup visible={showAboutBio} style={bioFadeStyle}>

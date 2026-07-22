@@ -8,6 +8,7 @@ import { ContactTopLinks } from "@/components/ContactTopLinks";
 import { DesignCluster } from "@/components/DesignCluster";
 import { InstallationLottie } from "@/components/InstallationLottie";
 import { PhotosHoverCluster } from "@/components/PhotosHoverCluster";
+import { CvPressHoverAccordion } from "@/components/CvPressHoverAccordion";
 import { FilmHoverGif } from "@/components/FilmHoverGif";
 import { SelectedWorksHoverGif } from "@/components/SelectedWorksHoverGif";
 
@@ -68,6 +69,12 @@ export function HomeDesktop() {
         variant="desktop"
       />
       <FilmHoverGif visible={hoverNavLabel === "film"} layout="desktop" />
+      <CvPressHoverAccordion
+        visible={
+          hoverNavLabel === "cv + press" || activeLabel === "cv + press"
+        }
+        layout="desktop"
+      />
       <SelectedWorksHoverGif
         visible={hoverNavLabel === "selected works"}
         layout="desktop"

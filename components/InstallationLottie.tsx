@@ -21,6 +21,8 @@ const FRAME_SENSITIVITY = 0.42;
 /** Horizontal drag drives forward/back; small vertical blend for diagonal moves. */
 const MOVE_X = 1;
 const MOVE_Y = 0.35;
+/** Narrow mobile playback rate (>1 = faster). */
+const NARROW_PLAYBACK_SPEED = 2;
 
 function lastFrameIndex(api: LottieRefCurrentProps): number | null {
   const dur = api.getDuration(true);
@@ -30,7 +32,7 @@ function lastFrameIndex(api: LottieRefCurrentProps): number | null {
 
 /**
  * Lottie beside the circular nav arc when “installation” is active.
- * Playback is driven only by pointer *movement*: moving right advances, left rewinds.
+ * Desktop: pointer movement scrubs the timeline. Narrow: plays once on selection.
  */
 export function InstallationLottie({
   visible,
@@ -43,6 +45,7 @@ export function InstallationLottie({
   /** Current playhead (frames); only changes when the pointer moves. */
   const frameRef = useRef(0);
   const flushRafRef = useRef<number | null>(null);
+  const isNarrow = layout === "narrow";
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -71,9 +74,9 @@ export function InstallationLottie({
     };
   }, [visible, animationData, loadError]);
 
-  /** Pointer movement is the only driver: delta → forward / backward along the timeline. */
+  /** Desktop only: pointer movement scrubs the timeline. */
   useEffect(() => {
-    if (!visible || reduceMotion) {
+    if (isNarrow || !visible || reduceMotion) {
       return;
     }
 
@@ -112,11 +115,11 @@ export function InstallationLottie({
         flushRafRef.current = null;
       }
     };
-  }, [visible, reduceMotion]);
+  }, [isNarrow, visible, reduceMotion]);
 
-  /** Start on the last frame once the Lottie instance is ready. */
+  /** Desktop: start on the last frame once the Lottie instance is ready. */
   useEffect(() => {
-    if (!visible || reduceMotion || !animationData) return;
+    if (isNarrow || !visible || reduceMotion || !animationData) return;
     let n = 0;
     const tick = () => {
       const api = lottieRef.current;
@@ -133,7 +136,39 @@ export function InstallationLottie({
       }
     };
     requestAnimationFrame(tick);
-  }, [visible, reduceMotion, animationData]);
+  }, [isNarrow, visible, reduceMotion, animationData]);
+
+  /** Narrow: play through once when installation is selected at 12 o'clock. */
+  useEffect(() => {
+    if (!isNarrow || !visible || reduceMotion || !animationData) return;
+
+    let n = 0;
+    const tick = () => {
+      const api = lottieRef.current;
+      if (!api?.animationLoaded && n++ < 50) {
+        requestAnimationFrame(tick);
+        return;
+      }
+      if (api?.animationLoaded) {
+        frameRef.current = 0;
+        api.setSpeed(NARROW_PLAYBACK_SPEED);
+        api.goToAndPlay(0, true);
+      }
+    };
+    requestAnimationFrame(tick);
+
+    return () => {
+      const api = lottieRef.current;
+      if (!api?.animationLoaded) return;
+      api.pause();
+      api.setSpeed(1);
+      const last = lastFrameIndex(api);
+      if (last !== null) {
+        frameRef.current = last;
+        api.goToAndStop(last, true);
+      }
+    };
+  }, [isNarrow, visible, reduceMotion, animationData]);
 
   useEffect(() => {
     const api = lottieRef.current;
@@ -146,7 +181,6 @@ export function InstallationLottie({
   }, [reduceMotion]);
 
   const fadeMs = reduceMotion ? 80 : 480;
-  const isNarrow = layout === "narrow";
 
   if (loadError) {
     return null;

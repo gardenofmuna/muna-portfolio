@@ -28,7 +28,7 @@ export function NarrowCenterPopup({
 
   return (
     <div
-      className={`pointer-events-none absolute z-[5] select-none ${className}`}
+      className={`pointer-events-none absolute z-[5] select-none overflow-visible ${className}`}
       aria-hidden={!visible}
       style={{
         left: NARROW_WHEEL_CENTER.x,
@@ -40,7 +40,7 @@ export function NarrowCenterPopup({
       }}
     >
       <div
-        className="flex h-full w-full items-center justify-center"
+        className="flex h-full w-full items-center justify-center overflow-visible"
         style={{ opacity, transition, transform }}
       >
         {children}
