@@ -1,19 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 
 const FOLD_DURATION_MS = 600;
 
 function useIsSafari() {
   const [isSafari, setIsSafari] = useState(false);
-  useEffect(() => {
-    if (typeof navigator === "undefined") return;
+  useLayoutEffect(() => {
     const ua = navigator.userAgent;
-    const value =
-      (/Safari/.test(ua) && !/Chrome|Chromium|Edg/.test(ua)) ||
-      /iPhone|iPad|iPod/.test(ua);
-    const id = setTimeout(() => setIsSafari(value), 0);
-    return () => clearTimeout(id);
+    setIsSafari(
+      (/Safari/.test(ua) && !/Chrome|Chromium|Edg|CriOS|FxiOS/.test(ua)) ||
+        /iPhone|iPad|iPod/.test(ua),
+    );
   }, []);
   return isSafari;
 }
@@ -269,6 +267,7 @@ export function PaperFoldAccordion({
               transformStyle: "preserve-3d",
               ...(isSafari && { WebkitTransformStyle: "preserve-3d" as const }),
               zIndex: 2,
+              overflow: "visible",
             }}
           >
             {isSafari && (
@@ -340,14 +339,23 @@ export function PaperFoldAccordion({
                 left: "4%",
                 right: "4%",
                 bottom: 0,
-                height: 1,
+                height: isSafari ? 3 : 1,
                 pointerEvents: "none",
-                transform: "translateY(1px) translateZ(-1px)",
+                backgroundColor: isSafari ? "rgba(255,255,255,0.01)" : "transparent",
+                transformStyle: "preserve-3d",
+                ...(isSafari && { WebkitTransformStyle: "preserve-3d" as const }),
+                transform: isSafari
+                  ? "translate3d(0, 2px, -4px)"
+                  : "translateY(1px) translateZ(-1px)",
                 boxShadow: open
-                  ? "0 3px 6px 0 rgba(0,0,0,0.16)"
-                  : "0 2px 4px 0 rgba(0,0,0,0.14)",
-                opacity: open ? 1 : 0.7,
+                  ? "0 4px 10px 0 rgba(0,0,0,0.22)"
+                  : "0 2px 6px 0 rgba(0,0,0,0.18)",
+                opacity: open ? 1 : 0.75,
                 transition: `box-shadow ${foldMs}ms ease, opacity ${foldMs}ms ease`,
+                ...(isSafari && {
+                  WebkitBackfaceVisibility: "visible" as const,
+                  backfaceVisibility: "visible",
+                }),
               }}
             />
           </div>
