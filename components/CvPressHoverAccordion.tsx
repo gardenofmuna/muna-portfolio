@@ -38,13 +38,6 @@ const NARROW_FIT_SCALE = Math.min(
   (NARROW_CENTER_POPUP_MAX * 0.92) / ACCORDION_OUTER.h,
 );
 
-const CV_SOFT_SHADOW =
-  "drop-shadow(0 10px 26px rgba(0, 0, 0, 0.16)) drop-shadow(0 3px 10px rgba(0, 0, 0, 0.09))";
-
-/** Stronger shadow for narrow hub — paper reads on bright phone screens. */
-const CV_NARROW_SHADOW =
-  "drop-shadow(0 16px 36px rgba(0, 0, 0, 0.32)) drop-shadow(0 6px 18px rgba(0, 0, 0, 0.22)) drop-shadow(0 2px 6px rgba(0, 0, 0, 0.14))";
-
 /** Slight counter-clockwise tilt — paper resting angled to the left. */
 const CV_PAPER_TILT_DEG = -4;
 
@@ -90,9 +83,11 @@ export function CvPressHoverAccordion({
     <div
       className="relative h-full w-full"
       style={{
-        filter: isDesktop ? CV_SOFT_SHADOW : CV_NARROW_SHADOW,
+        width: ACCORDION_OUTER.w,
+        height: ACCORDION_OUTER.h,
         transform: `rotate(${CV_PAPER_TILT_DEG}deg)`,
         transformOrigin: "center center",
+        overflow: "visible",
       }}
     >
       <PaperFoldAccordion

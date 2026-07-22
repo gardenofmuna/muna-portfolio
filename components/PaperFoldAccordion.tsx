@@ -88,6 +88,15 @@ export function PaperFoldAccordion({
 
   const open = hoverToOpen ? hoverOpen : isOpen;
   const foldMs = reduceMotion ? 0 : FOLD_DURATION_MS;
+  const topPanelShadow = open
+    ? "0 8px 16px rgba(0, 0, 0, 0.10)"
+    : "0 -5px 12px rgba(0, 0, 0, 0.20)";
+  const middlePanelShadow = open
+    ? "0 12px 28px rgba(0, 0, 0, 0.18)"
+    : "0 5px 14px rgba(0, 0, 0, 0.14)";
+  const bottomPanelShadow = open
+    ? "0 14px 28px rgba(0, 0, 0, 0.16)"
+    : "0 6px 14px rgba(0, 0, 0, 0.20)";
   const openHeight = Math.round((width / dimensions.w) * dimensions.h);
   const panelTopHeight = Math.round(openHeight * (fold1 / pageHeight));
   const panelMiddleHeight = Math.round(openHeight * ((fold2 - fold1) / pageHeight));
@@ -160,9 +169,7 @@ export function PaperFoldAccordion({
               transformStyle: "preserve-3d",
               ...(isSafari && { WebkitTransformStyle: "preserve-3d" as const }),
               zIndex: 3,
-              ...(!isSafari && {
-                boxShadow: open ? "none" : "1px -2px 6px 0 rgba(0,0,0,0.2)",
-              }),
+              boxShadow: topPanelShadow,
             }}
           >
             {isSafari && (
@@ -224,25 +231,9 @@ export function PaperFoldAccordion({
                   backgroundSize: `${renderW}px ${renderH}px`,
                   backgroundPosition: "0 0",
                   backgroundRepeat: "no-repeat",
-                  boxShadow: open ? "none" : "1px -2px 6px 0 rgba(0,0,0,0.2)",
-                  transition: `box-shadow ${foldMs}ms ease`,
                 }}
               />
-            ) : (
-              <div
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  backgroundImage: `url(${frontSrc})`,
-                  backgroundSize: `${renderW}px ${renderH}px`,
-                  backgroundPosition: "0 0",
-                  pointerEvents: "none",
-                  opacity: 0.001,
-                  filter: open ? "none" : "drop-shadow(1px -2px 6px rgba(0,0,0,0.2))",
-                  transition: `filter ${foldMs}ms ease`,
-                }}
-              />
-            )}
+            ) : null}
           </div>
 
           {/* MIDDLE PANEL */}
@@ -256,6 +247,8 @@ export function PaperFoldAccordion({
               backgroundSize: `${renderW}px ${renderH}px`,
               backgroundPosition: `0 ${-pt}px`,
               zIndex: 1,
+              boxShadow: middlePanelShadow,
+              transition: `box-shadow ${foldMs}ms ease`,
             }}
           />
 
@@ -279,9 +272,7 @@ export function PaperFoldAccordion({
               transformStyle: "preserve-3d",
               ...(isSafari && { WebkitTransformStyle: "preserve-3d" as const }),
               zIndex: 2,
-              ...(!isSafari && {
-                boxShadow: open ? "none" : "1px -2px 6px 0 rgba(0,0,0,0.2)",
-              }),
+              boxShadow: bottomPanelShadow,
             }}
           >
             {isSafari && (
@@ -343,25 +334,9 @@ export function PaperFoldAccordion({
                   backgroundSize: `${renderW}px ${renderH}px`,
                   backgroundPosition: `0 ${-(pt + pm)}px`,
                   backgroundRepeat: "no-repeat",
-                  boxShadow: open ? "none" : "1px -2px 6px 0 rgba(0,0,0,0.2)",
-                  transition: `box-shadow ${foldMs}ms ease`,
                 }}
               />
-            ) : (
-              <div
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  backgroundImage: `url(${frontSrc})`,
-                  backgroundSize: `${renderW}px ${renderH}px`,
-                  backgroundPosition: `0 ${-(pt + pm)}px`,
-                  pointerEvents: "none",
-                  opacity: 0.001,
-                  filter: open ? "none" : "drop-shadow(1px -2px 6px rgba(0,0,0,0.2))",
-                  transition: `filter ${foldMs}ms ease`,
-                }}
-              />
-            )}
+            ) : null}
           </div>
         </div>
       </div>
