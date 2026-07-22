@@ -8,6 +8,7 @@ import { ContactTopLinks } from "@/components/ContactTopLinks";
 import { DesignCluster } from "@/components/DesignCluster";
 import { InstallationLottie } from "@/components/InstallationLottie";
 import { PhotosHoverCluster } from "@/components/PhotosHoverCluster";
+import { FilmHoverGif } from "@/components/FilmHoverGif";
 import { SelectedWorksHoverGif } from "@/components/SelectedWorksHoverGif";
 
 /** Layout baseline: image frames 544×659, inset 100, on 1624-tall artboard */
@@ -66,6 +67,7 @@ export function HomeDesktop() {
         visible={hoverNavLabel === "photos"}
         variant="desktop"
       />
+      <FilmHoverGif visible={hoverNavLabel === "film"} layout="desktop" />
       <SelectedWorksHoverGif
         visible={hoverNavLabel === "selected works"}
         layout="desktop"
