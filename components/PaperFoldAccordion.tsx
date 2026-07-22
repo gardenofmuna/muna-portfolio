@@ -332,32 +332,43 @@ export function PaperFoldAccordion({
                 }}
               />
             ) : null}
-            <div
-              aria-hidden
-              style={{
-                position: "absolute",
-                left: "4%",
-                right: "4%",
-                bottom: 0,
-                height: isSafari ? 3 : 1,
-                pointerEvents: "none",
-                backgroundColor: isSafari ? "rgba(255,255,255,0.01)" : "transparent",
-                transformStyle: "preserve-3d",
-                ...(isSafari && { WebkitTransformStyle: "preserve-3d" as const }),
-                transform: isSafari
-                  ? "translate3d(0, 2px, -4px)"
-                  : "translateY(1px) translateZ(-1px)",
-                boxShadow: open
-                  ? "0 4px 10px 0 rgba(0,0,0,0.22)"
-                  : "0 2px 6px 0 rgba(0,0,0,0.18)",
-                opacity: open ? 1 : 0.75,
-                transition: `box-shadow ${foldMs}ms ease, opacity ${foldMs}ms ease`,
-                ...(isSafari && {
-                  WebkitBackfaceVisibility: "visible" as const,
-                  backfaceVisibility: "visible",
-                }),
-              }}
-            />
+            {isSafari ? (
+              <div
+                aria-hidden
+                style={{
+                  position: "absolute",
+                  left: "4%",
+                  right: "4%",
+                  bottom: -2,
+                  height: open ? 14 : 10,
+                  pointerEvents: "none",
+                  transform: "translateZ(-1px)",
+                  background: open
+                    ? "linear-gradient(to bottom, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.07) 45%, transparent 100%)"
+                    : "linear-gradient(to bottom, rgba(0,0,0,0.14) 0%, rgba(0,0,0,0.05) 45%, transparent 100%)",
+                  opacity: open ? 1 : 0.7,
+                  transition: `opacity ${foldMs}ms ease`,
+                }}
+              />
+            ) : (
+              <div
+                aria-hidden
+                style={{
+                  position: "absolute",
+                  left: "4%",
+                  right: "4%",
+                  bottom: 0,
+                  height: 1,
+                  pointerEvents: "none",
+                  transform: "translateY(1px) translateZ(-1px)",
+                  boxShadow: open
+                    ? "0 3px 6px 0 rgba(0,0,0,0.16)"
+                    : "0 2px 4px 0 rgba(0,0,0,0.14)",
+                  opacity: open ? 1 : 0.7,
+                  transition: `box-shadow ${foldMs}ms ease, opacity ${foldMs}ms ease`,
+                }}
+              />
+            )}
           </div>
         </div>
       </div>
