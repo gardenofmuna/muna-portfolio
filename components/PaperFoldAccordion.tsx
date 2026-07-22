@@ -29,6 +29,7 @@ export type PaperFoldAccordionProps = {
   /** When true, fold state follows pointer hover over the page imagery. */
   hoverToOpen?: boolean;
   onHoverOpenChange?: (open: boolean) => void;
+  layout?: "desktop" | "narrow";
 };
 
 /**
@@ -46,12 +47,38 @@ export function PaperFoldAccordion({
   reduceMotion = false,
   hoverToOpen = false,
   onHoverOpenChange,
+  layout = "desktop",
 }: PaperFoldAccordionProps) {
   const isSafari = useIsSafari();
+  const isNarrow = layout === "narrow";
   const [dimensions, setDimensions] = useState<{ w: number; h: number } | null>(
     null,
   );
   const [hoverOpen, setHoverOpen] = useState(false);
+  const [foldComplete, setFoldComplete] = useState(isOpen);
+
+  useEffect(() => {
+    if (!isNarrow) return;
+
+    const open = hoverToOpen ? hoverOpen : isOpen;
+    const foldMs = reduceMotion ? 0 : FOLD_DURATION_MS;
+
+    if (!open) {
+      setFoldComplete(false);
+      return;
+    }
+
+    if (foldMs === 0) {
+      setFoldComplete(true);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setFoldComplete(true);
+    }, foldMs * 2);
+
+    return () => window.clearTimeout(timer);
+  }, [hoverOpen, hoverToOpen, isNarrow, isOpen, reduceMotion]);
 
   const setHoverOpenState = (next: boolean) => {
     setHoverOpen(next);
@@ -92,6 +119,11 @@ export function PaperFoldAccordion({
   const middlePanelShadow = open
     ? "0 12px 28px rgba(0, 0, 0, 0.18)"
     : "0 5px 14px rgba(0, 0, 0, 0.14)";
+  const creaseShadow = open
+    ? "0 1px 3px rgba(0,0,0,0.08)"
+    : "0 3px 8px rgba(0,0,0,0.16)";
+  const topShadow = isNarrow ? creaseShadow : topPanelShadow;
+  const middleShadow = isNarrow ? creaseShadow : middlePanelShadow;
   const openHeight = Math.round((width / dimensions.w) * dimensions.h);
   const panelTopHeight = Math.round(openHeight * (fold1 / pageHeight));
   const panelMiddleHeight = Math.round(openHeight * ((fold2 - fold1) / pageHeight));
@@ -112,6 +144,7 @@ export function PaperFoldAccordion({
     <div
       className={hoverToOpen ? "relative" : "pointer-events-none"}
       style={{
+        position: "relative",
         width: scaledWidth,
         height: scaledHeight,
         perspective: 1200,
@@ -120,6 +153,22 @@ export function PaperFoldAccordion({
         overflow: "visible",
       }}
     >
+      {isNarrow ? (
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: -1,
+            pointerEvents: "none",
+            borderRadius: 2,
+            opacity: foldComplete ? 1 : 0,
+            boxShadow:
+              "0 7px 16px rgba(0,0,0,0.12), 0 2px 5px rgba(0,0,0,0.08)",
+            transition: "opacity 180ms ease",
+          }}
+        />
+      ) : null}
       <div
         style={{
           width: renderW,
@@ -164,7 +213,7 @@ export function PaperFoldAccordion({
               transformStyle: "preserve-3d",
               ...(isSafari && { WebkitTransformStyle: "preserve-3d" as const }),
               zIndex: 3,
-              boxShadow: topPanelShadow,
+              boxShadow: topShadow,
             }}
           >
             {isSafari && (
@@ -242,7 +291,7 @@ export function PaperFoldAccordion({
               backgroundSize: `${renderW}px ${renderH}px`,
               backgroundPosition: `0 ${-pt}px`,
               zIndex: 1,
-              boxShadow: middlePanelShadow,
+              boxShadow: middleShadow,
               transition: `box-shadow ${foldMs}ms ease`,
             }}
           />
@@ -267,7 +316,6 @@ export function PaperFoldAccordion({
               transformStyle: "preserve-3d",
               ...(isSafari && { WebkitTransformStyle: "preserve-3d" as const }),
               zIndex: 2,
-              overflow: "visible",
             }}
           >
             {isSafari && (
@@ -332,25 +380,7 @@ export function PaperFoldAccordion({
                 }}
               />
             ) : null}
-            {isSafari ? (
-              <div
-                aria-hidden
-                style={{
-                  position: "absolute",
-                  left: "4%",
-                  right: "4%",
-                  bottom: -2,
-                  height: open ? 14 : 10,
-                  pointerEvents: "none",
-                  transform: "translateZ(-1px)",
-                  background: open
-                    ? "linear-gradient(to bottom, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.07) 45%, transparent 100%)"
-                    : "linear-gradient(to bottom, rgba(0,0,0,0.14) 0%, rgba(0,0,0,0.05) 45%, transparent 100%)",
-                  opacity: open ? 1 : 0.7,
-                  transition: `opacity ${foldMs}ms ease`,
-                }}
-              />
-            ) : (
+            {!isNarrow && !isSafari ? (
               <div
                 aria-hidden
                 style={{
@@ -368,7 +398,7 @@ export function PaperFoldAccordion({
                   transition: `box-shadow ${foldMs}ms ease, opacity ${foldMs}ms ease`,
                 }}
               />
-            )}
+            ) : null}
           </div>
         </div>
       </div>
