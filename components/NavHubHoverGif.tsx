@@ -12,6 +12,8 @@ type Props = {
   visible: boolean;
   layout?: "desktop" | "narrow";
   src: string;
+  /** Narrow-only scale multiplier (default 1). */
+  narrowScaleMultiplier?: number;
 };
 
 /** Half of InstallationLottie desktop display scale. */
@@ -26,6 +28,7 @@ export function NavHubHoverGif({
   visible,
   layout = "desktop",
   src,
+  narrowScaleMultiplier = 1,
 }: Props) {
   const [reduceMotion, setReduceMotion] = useState(false);
 
@@ -65,7 +68,7 @@ export function NavHubHoverGif({
             width: NARROW_INSTALLATION_POPUP_W,
             maxWidth: "100%",
             maxHeight: "100%",
-            transform: `scale(${NAV_HUB_HOVER_NARROW_SCALE})`,
+            transform: `scale(${NAV_HUB_HOVER_NARROW_SCALE * narrowScaleMultiplier})`,
             transformOrigin: "center center",
           }}
         >

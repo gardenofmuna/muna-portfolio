@@ -12,6 +12,11 @@ export function FilmHoverGif({
   layout = "desktop",
 }: Props) {
   return (
-    <NavHubHoverGif visible={visible} layout={layout} src="/S8GIF.gif" />
+    <NavHubHoverGif
+      visible={visible}
+      layout={layout}
+      src="/S8GIF.gif"
+      narrowScaleMultiplier={1.08}
+    />
   );
 }
