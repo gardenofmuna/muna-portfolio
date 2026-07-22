@@ -41,6 +41,10 @@ const NARROW_FIT_SCALE = Math.min(
 const CV_SOFT_SHADOW =
   "drop-shadow(0 10px 26px rgba(0, 0, 0, 0.16)) drop-shadow(0 3px 10px rgba(0, 0, 0, 0.09))";
 
+/** Stronger shadow for narrow hub — paper reads on bright phone screens. */
+const CV_NARROW_SHADOW =
+  "drop-shadow(0 16px 36px rgba(0, 0, 0, 0.32)) drop-shadow(0 6px 18px rgba(0, 0, 0, 0.22)) drop-shadow(0 2px 6px rgba(0, 0, 0, 0.14))";
+
 /** Slight counter-clockwise tilt — paper resting angled to the left. */
 const CV_PAPER_TILT_DEG = -4;
 
@@ -86,7 +90,7 @@ export function CvPressHoverAccordion({
     <div
       className="relative h-full w-full"
       style={{
-        filter: CV_SOFT_SHADOW,
+        filter: isDesktop ? CV_SOFT_SHADOW : CV_NARROW_SHADOW,
         transform: `rotate(${CV_PAPER_TILT_DEG}deg)`,
         transformOrigin: "center center",
       }}
