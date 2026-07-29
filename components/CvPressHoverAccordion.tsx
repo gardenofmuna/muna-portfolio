@@ -44,6 +44,9 @@ const CV_PAPER_TILT_DEG = -4;
 /** Desktop hub scale — 80% larger than other nav hover previews. */
 const CV_DESKTOP_SCALE = NAV_HUB_HOVER_DESKTOP_SCALE * 1.8;
 
+/** Shift desktop preview slightly left of hub centre. */
+const CV_DESKTOP_NUDGE_LEFT_PX = 28;
+
 /**
  * Hub preview for “cv + press” — appears on nav hover; desktop unfolds on paper hover.
  */
@@ -137,8 +140,8 @@ export function CvPressHoverAccordion({
         width: ACCORDION_OUTER.w,
         height: ACCORDION_OUTER.h,
         transform: showDesktop
-          ? `translate(-50%, -50%) scale(${desktopScale})`
-          : `translate(-50%, calc(-50% + 12px)) scale(${desktopScale})`,
+          ? `translate(calc(-50% - ${CV_DESKTOP_NUDGE_LEFT_PX}px), -50%) scale(${desktopScale})`
+          : `translate(calc(-50% - ${CV_DESKTOP_NUDGE_LEFT_PX}px), calc(-50% + 12px)) scale(${desktopScale})`,
         transformOrigin: "center center",
         opacity: showDesktop ? 1 : 0,
         transition: reduceMotion
