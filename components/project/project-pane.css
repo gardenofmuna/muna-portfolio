@@ -41,13 +41,6 @@
   pointer-events: none;
 }
 
-.desktop-project-shell__signature-inner {
-  position: absolute;
-  right: var(--shell-inset-top);
-  bottom: var(--shell-inset-top);
-  user-select: none;
-}
-
 .project-nav-layer {
   position: absolute;
   inset: 0;
@@ -133,7 +126,7 @@
 }
 
 .project-pane__chrome {
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .project-pane[data-menu-state="hidden"] .project-pane__chrome {
@@ -203,7 +196,8 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: flex-end;
+  justify-self: end;
   gap: 0.15rem;
   font-family: "Arial MT Std", Arial, Helvetica, sans-serif;
   font-size: 0.8125rem;
@@ -222,24 +216,27 @@
 }
 
 .project-pane[data-menu-state="open"] .project-header__title {
-  font-size: 2.125rem;
+  font-size: 2rem;
 }
 
 .project-pane[data-menu-state="open"] .project-header__description {
-  font-size: 0.875rem;
-  max-width: 15.5rem;
+  font-size: 0.8125rem;
+  max-width: 14.75rem;
+  line-height: 1.45;
 }
 
 .project-pane[data-menu-state="open"] .project-header {
-  margin-bottom: 1rem;
+  margin-bottom: 0.85rem;
+  column-gap: 2.5rem;
 }
 
 .project-pane[data-menu-state="open"] .project-section:first-of-type {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
 }
 
 .project-pane[data-menu-state="open"] .project-section:first-of-type .project-section__title {
-  margin-bottom: 0.65rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.125rem;
 }
 
 /* Sections */
@@ -266,34 +263,34 @@
 
 .project-pane[data-menu-state="open"] .project-egwu-logos {
   display: grid;
-  grid-template-columns: minmax(6.75rem, 8.25rem) minmax(0, 1fr);
-  gap: 0.35rem 1.15rem;
+  grid-template-columns: minmax(6.25rem, 7.75rem) minmax(0, 1fr);
+  gap: 0.25rem 1rem;
   align-items: start;
   max-width: 100%;
 }
 
 .project-pane[data-menu-state="open"] .project-egwu-logos__primary .project-egwu-logos__image {
   width: 100%;
-  max-width: 8.25rem;
+  max-width: 7.75rem;
   height: auto;
 }
 
 .project-pane[data-menu-state="open"] .project-egwu-logos__secondary {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.4rem;
   align-items: flex-start;
 }
 
 .project-pane[data-menu-state="open"] .project-egwu-logos__figure:first-child .project-egwu-logos__image {
   width: 100%;
-  max-width: 15.5rem;
+  max-width: 14.25rem;
   height: auto;
 }
 
 .project-pane[data-menu-state="open"] .project-egwu-logos__figure:last-child .project-egwu-logos__image {
   width: 100%;
-  max-width: 10.5rem;
+  max-width: 9.75rem;
   height: auto;
 }
 

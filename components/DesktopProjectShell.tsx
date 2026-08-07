@@ -1,14 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import type { ReactNode } from "react";
 
-import {
-  getDesktopCanvasMetrics,
-  getDesktopProjectGridStyle,
-  NZERIBE_IMG_H,
-  NZERIBE_IMG_W,
-} from "@/lib/desktop-canvas";
+import { NzeribeSignature } from "@/components/NzeribeSignature";
+import { getDesktopProjectGridStyle } from "@/lib/desktop-canvas";
 
 import type { ProjectMenuState } from "@/components/project/ProjectContentPane";
 
@@ -24,7 +19,6 @@ type Props = {
  * [ navigation zone ] [ project zone ] [ signature zone ]
  */
 export function DesktopProjectShell({ children, menuState, nav }: Props) {
-  const m = getDesktopCanvasMetrics();
   const gridStyle = getDesktopProjectGridStyle(menuState);
 
   return (
@@ -39,27 +33,13 @@ export function DesktopProjectShell({ children, menuState, nav }: Props) {
 
       <main className="desktop-project-shell__project">{children}</main>
 
+      {/* Reserves right column width; signature uses fixed viewport coords. */}
       <aside
         className="desktop-project-shell__signature"
-        aria-label="Site signature"
-      >
-        <div
-          className="desktop-project-shell__signature-inner"
-          style={{
-            width: m.nzeribeW,
-            height: m.nzeribeH,
-          }}
-        >
-          <Image
-            src="/nzeribe1.webp"
-            alt="Nzeribe"
-            width={NZERIBE_IMG_W}
-            height={NZERIBE_IMG_H}
-            className="block h-full w-full object-contain object-right object-bottom"
-            sizes={`${NZERIBE_IMG_W}px`}
-          />
-        </div>
-      </aside>
+        aria-hidden="true"
+      />
+
+      <NzeribeSignature />
     </div>
   );
 }

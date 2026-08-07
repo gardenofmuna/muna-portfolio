@@ -31,6 +31,11 @@ export function ProjectContentPane({
     }
   }, [onMenuStateChange]);
 
+  const handleMenuOpen = useCallback(() => {
+    scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    onMenuStateChange("open");
+  }, [onMenuStateChange]);
+
   return (
     <div className="project-pane" data-menu-state={menuState}>
       {isHidden && (
@@ -39,7 +44,7 @@ export function ProjectContentPane({
           className="project-pane__menu-toggle"
           aria-label="Open project menu"
           aria-expanded={false}
-          onClick={() => onMenuStateChange("open")}
+          onClick={handleMenuOpen}
         >
           <span className="project-pane__menu-bar" />
           <span className="project-pane__menu-bar" />
