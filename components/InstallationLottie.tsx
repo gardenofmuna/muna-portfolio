@@ -12,7 +12,13 @@ import {
 type Props = {
   visible: boolean;
   layout?: "desktop" | "narrow";
+  /** Lock position to the desktop stage (no vw). */
+  stageLocked?: boolean;
 };
+
+/** Desktop hub left/width at layout u=1 (replaces 34vw / 111vw clamps at 1440). */
+const STAGE_HUB_LEFT_PX = 420 - 245;
+const STAGE_HUB_WIDTH_PX = 1153;
 
 /** Visual size vs prior baseline (0.9 = 10% smaller). */
 const LOTTIE_DISPLAY_SCALE = 0.9;
@@ -37,6 +43,7 @@ function lastFrameIndex(api: LottieRefCurrentProps): number | null {
 export function InstallationLottie({
   visible,
   layout = "desktop",
+  stageLocked = false,
 }: Props) {
   const [animationData, setAnimationData] = useState<object | null>(null);
   const [loadError, setLoadError] = useState(false);
@@ -226,12 +233,18 @@ export function InstallationLottie({
 
   return (
     <div
-      className="pointer-events-none fixed z-[40] select-none"
+      className={
+        stageLocked
+          ? "pointer-events-none absolute z-[40] select-none"
+          : "pointer-events-none fixed z-[40] select-none"
+      }
       aria-hidden={!visible}
       style={{
         top: "50%",
-        left: "calc(clamp(220px, min(34vw, 420px), 480px) - 245px)",
-        width: "min(1153px, 111vw)",
+        left: stageLocked
+          ? STAGE_HUB_LEFT_PX
+          : "calc(clamp(220px, min(34vw, 420px), 480px) - 245px)",
+        width: stageLocked ? STAGE_HUB_WIDTH_PX : "min(1153px, 111vw)",
         maxWidth: "100%",
         transform: visible
           ? `translateY(-50%) rotate(-8deg) scale(${LOTTIE_DISPLAY_SCALE})`

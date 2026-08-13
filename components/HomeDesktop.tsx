@@ -1,35 +1,33 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useState } from "react";
+
 import { AboutBio } from "@/components/AboutBio";
 import { CircularNavWheel } from "@/components/CircularNavWheel";
 import { ContactTopLinks } from "@/components/ContactTopLinks";
+import { CvPressHoverAccordion } from "@/components/CvPressHoverAccordion";
 import { DesignCluster } from "@/components/DesignCluster";
+import { DesktopSiteShell } from "@/components/DesktopSiteShell";
+import { DesktopStageCanvas } from "@/components/DesktopStageCanvas";
+import { FilmHoverGif } from "@/components/FilmHoverGif";
 import { InstallationLottie } from "@/components/InstallationLottie";
 import { PhotosHoverCluster } from "@/components/PhotosHoverCluster";
-import { CvPressHoverAccordion } from "@/components/CvPressHoverAccordion";
-import { FilmHoverGif } from "@/components/FilmHoverGif";
 import { SelectedWorksHoverGif } from "@/components/SelectedWorksHoverGif";
+import {
+  DESKTOP_LAYOUT_BIO_LEFT,
+  getDesktopStageMetrics,
+} from "@/lib/desktop-stage";
 
-/** Layout baseline: image frames 544×659, inset 100, on 1624-tall artboard */
-const REF_PAGE_HEIGHT = 1624;
-const REF_STAGE_W = 1440;
-const REF_STAGE_H = 811.5;
-const REF_INSET = 100;
-const IMG_W = 544;
-const IMG_H = 659;
-const NZERIBE_IMG_W = 546;
-const NZERIBE_IMG_H = 117;
-const ABOUT_GAP_FROM_WEBP_PX = 20;
-const U_STAGE = `min(100vw / ${REF_STAGE_W}, 100vh / ${REF_STAGE_H})`;
-const U_1624 = `(${U_STAGE}) * (${REF_STAGE_H} / ${REF_PAGE_HEIGHT})`;
-const BIO_GROUP_LEFT = `calc(392 * ${U_STAGE})`;
-
+/**
+ * Desktop landing — same 2875×1623 stage + three-quadrant shell as EGWÚ.
+ * Menu uses stage containment (shared off-axis position). Hover/bio/contact
+ * overlays are authored in layout coordinates and scale with the stage.
+ */
 export function HomeDesktop() {
   const [activeLabel, setActiveLabel] = useState("contact");
   const [hoverNavLabel, setHoverNavLabel] = useState<string | null>(null);
   const [reduceMotion, setReduceMotion] = useState(false);
+  const m = getDesktopStageMetrics();
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -39,102 +37,95 @@ export function HomeDesktop() {
     return () => mq.removeEventListener("change", u);
   }, []);
 
-  const inset = `calc(${REF_INSET} * ${U_1624})`;
-  const frameW = `calc(${IMG_W} * ${U_1624})`;
-  const frameH = `calc(${IMG_H} * ${U_1624})`;
-  const nzeribeW = `calc(${NZERIBE_IMG_W} * ${U_1624})`;
-  const nzeribeH = `calc(${NZERIBE_IMG_H} * ${U_1624})`;
-  const gapScaled = `calc(${ABOUT_GAP_FROM_WEBP_PX} * ${U_1624})`;
-  const bioRightClearOfNzeribe = `calc(${REF_INSET} * ${U_1624} + ${NZERIBE_IMG_W} * ${U_1624} + ${gapScaled})`;
-  const aboutBioRight = `calc(${REF_INSET} * ${U_1624} + ${IMG_W} * ${U_1624} + ${ABOUT_GAP_FROM_WEBP_PX}px)`;
-
-  const isContact = activeLabel === "contact";
-  const showAboutBio = activeLabel === "about" || isContact;
+  const previewLabel = hoverNavLabel ?? activeLabel;
+  const isContact = previewLabel === "contact";
+  const showAboutBio = previewLabel === "about" || isContact;
   const fadeMs = reduceMotion ? 80 : 520;
 
+  /** Clear signature column for bio; contact bar meets polaroid flush (no black gap). */
+  const bioRightClearOfNzeribe = m.inset + m.nzeribeW + m.gapScaled;
+  const contactBarRight = m.inset + m.frameW + 25;
+
   return (
-    <div
-      className={`fixed inset-0 transition-colors duration-300 ${isContact ? "bg-black" : "bg-white"}`}
-    >
-      <CircularNavWheel
-        layout="desktop"
-        initialActiveLabel="contact"
-        onActiveLabelChange={setActiveLabel}
-        onHoverLabelChange={setHoverNavLabel}
-      />
-      <DesignCluster visible={activeLabel === "design"} variant="desktop" />
-      <InstallationLottie visible={activeLabel === "installation"} layout="desktop" />
-      <PhotosHoverCluster
-        visible={hoverNavLabel === "photos"}
-        variant="desktop"
-      />
-      <FilmHoverGif visible={hoverNavLabel === "film"} layout="desktop" />
-      <CvPressHoverAccordion
-        visible={
-          hoverNavLabel === "cv + press" || activeLabel === "cv + press"
+    <DesktopStageCanvas>
+      <DesktopSiteShell
+        layout="stage"
+        showPolaroid
+        menuState="open"
+        nav={
+          <CircularNavWheel
+            layout="desktop"
+            containment="stage"
+            initialActiveLabel="contact"
+            onActiveLabelChange={setActiveLabel}
+            onHoverLabelChange={setHoverNavLabel}
+          />
         }
-        layout="desktop"
+        center={<div className="h-full w-full" aria-hidden />}
+        stageOverlays={
+          <>
+            <DesignCluster
+              visible={activeLabel === "design"}
+              variant="desktop"
+              stageLocked
+            />
+            <InstallationLottie
+              visible={activeLabel === "installation"}
+              layout="desktop"
+              stageLocked
+            />
+            <PhotosHoverCluster
+              visible={hoverNavLabel === "photos"}
+              variant="desktop"
+              stageLocked
+            />
+            <FilmHoverGif
+              visible={hoverNavLabel === "film"}
+              layout="desktop"
+              stageLocked
+            />
+            <CvPressHoverAccordion
+              visible={
+                hoverNavLabel === "cv + press" || activeLabel === "cv + press"
+              }
+              layout="desktop"
+              stageLocked
+            />
+            <SelectedWorksHoverGif
+              visible={hoverNavLabel === "selected works"}
+              layout="desktop"
+              stageLocked
+            />
+            <ContactTopLinks
+              visible={isContact}
+              stageLocked
+              top={`${m.inset}px`}
+              left={`${DESKTOP_LAYOUT_BIO_LEFT}px`}
+              right={`${contactBarRight}px`}
+            />
+            <div
+              aria-hidden={!showAboutBio}
+              className="pointer-events-none absolute z-[30] flex flex-row items-end"
+              style={{
+                left: DESKTOP_LAYOUT_BIO_LEFT,
+                right: bioRightClearOfNzeribe,
+                bottom: m.inset,
+                opacity: showAboutBio ? 1 : 0,
+                transition: reduceMotion
+                  ? "none"
+                  : `opacity ${fadeMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+              }}
+            >
+              <AboutBio
+                visible={showAboutBio}
+                embedded
+                stageLocked
+                whiteBodyText={isContact}
+              />
+            </div>
+          </>
+        }
       />
-      <SelectedWorksHoverGif
-        visible={hoverNavLabel === "selected works"}
-        layout="desktop"
-      />
-      <ContactTopLinks visible={isContact} top={inset} right={aboutBioRight} />
-      <div
-        aria-hidden={!showAboutBio}
-        className="pointer-events-none fixed z-[30] flex flex-row items-end"
-        style={{
-          left: BIO_GROUP_LEFT,
-          right: bioRightClearOfNzeribe,
-          bottom: inset,
-          opacity: showAboutBio ? 1 : 0,
-          transition: reduceMotion
-            ? "none"
-            : `opacity ${fadeMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
-        }}
-      >
-        <AboutBio
-          visible={showAboutBio}
-          embedded
-          whiteBodyText={isContact}
-        />
-      </div>
-      <div
-        className="pointer-events-none fixed z-[30] shrink-0 select-none"
-        style={{
-          bottom: inset,
-          right: inset,
-          width: nzeribeW,
-          height: nzeribeH,
-        }}
-      >
-        <Image
-          src="/nzeribe1.webp"
-          alt="Nzeribe"
-          width={NZERIBE_IMG_W}
-          height={NZERIBE_IMG_H}
-          className="block h-full w-full object-contain object-right object-bottom"
-          sizes={`${NZERIBE_IMG_W}px`}
-        />
-      </div>
-      <div
-        className="fixed z-[2] select-none"
-        style={{
-          top: inset,
-          right: inset,
-          width: frameW,
-          height: frameH,
-        }}
-      >
-        <Image
-          src="/muna-polaroid.webp"
-          alt="Muna"
-          fill
-          className="object-contain object-right object-top"
-          sizes="34vw"
-          priority
-        />
-      </div>
-    </div>
+    </DesktopStageCanvas>
   );
 }

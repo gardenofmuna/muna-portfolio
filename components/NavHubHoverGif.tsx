@@ -14,7 +14,13 @@ type Props = {
   src: string;
   /** Narrow-only scale multiplier (default 1). */
   narrowScaleMultiplier?: number;
+  /** Lock position to the desktop stage (no vw). */
+  stageLocked?: boolean;
 };
+
+/** Desktop hub left/width at layout u=1 (replaces 34vw / 111vw clamps at 1440). */
+const STAGE_HUB_LEFT_PX = 420 - 245;
+const STAGE_HUB_WIDTH_PX = 1153;
 
 /** Half of InstallationLottie desktop display scale. */
 export const NAV_HUB_HOVER_DESKTOP_SCALE = 0.9 * 0.5;
@@ -29,6 +35,7 @@ export function NavHubHoverGif({
   layout = "desktop",
   src,
   narrowScaleMultiplier = 1,
+  stageLocked = false,
 }: Props) {
   const [reduceMotion, setReduceMotion] = useState(false);
 
@@ -80,12 +87,18 @@ export function NavHubHoverGif({
 
   return (
     <div
-      className="pointer-events-none fixed z-[40] select-none"
+      className={
+        stageLocked
+          ? "pointer-events-none absolute z-[40] select-none"
+          : "pointer-events-none fixed z-[40] select-none"
+      }
       aria-hidden={!visible}
       style={{
         top: "50%",
-        left: "calc(clamp(220px, min(34vw, 420px), 480px) - 245px)",
-        width: "min(1153px, 111vw)",
+        left: stageLocked
+          ? STAGE_HUB_LEFT_PX
+          : "calc(clamp(220px, min(34vw, 420px), 480px) - 245px)",
+        width: stageLocked ? STAGE_HUB_WIDTH_PX : "min(1153px, 111vw)",
         maxWidth: "100%",
         transform: visible
           ? `translateY(-50%) scale(${NAV_HUB_HOVER_DESKTOP_SCALE})`

@@ -3,6 +3,7 @@
 import type { CSSProperties } from "react";
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 
+import { DESKTOP_LAYOUT_H, DESKTOP_LAYOUT_W } from "@/lib/desktop-stage";
 import {
   NARROW_BIO_FONT_SCALE,
   NARROW_BIO_POPUP_W,
@@ -130,6 +131,8 @@ type Props = {
   embedded?: boolean;
   /** Use Artboard_2 (859×1623) scale for typography on narrow layout. */
   narrowStage?: boolean;
+  /** Lock typography to the 1440×811.5 desktop stage (no window resize). */
+  stageLocked?: boolean;
   /** Centre bio inside the narrow wheel hub (about / contact). */
   hubCentered?: boolean;
 };
@@ -144,6 +147,7 @@ export function AboutBio({
   alignRight,
   embedded = false,
   narrowStage = false,
+  stageLocked = false,
   hubCentered = false,
 }: Props) {
   const stageOpts = narrowStage
@@ -168,7 +172,11 @@ export function AboutBio({
 
   const [reduceMotion, setReduceMotion] = useState(false);
   const [layout, setLayout] = useState<Layout>(() =>
-    layoutForViewport(1440, 900, layoutOpts),
+    layoutForViewport(
+      stageLocked ? DESKTOP_LAYOUT_W : 1440,
+      stageLocked ? DESKTOP_LAYOUT_H : 900,
+      layoutOpts,
+    ),
   );
 
   useLayoutEffect(() => {
@@ -176,14 +184,19 @@ export function AboutBio({
       const vw =
         narrowStage && embedded
           ? NARROW_W
-          : document.documentElement.clientWidth;
+          : stageLocked
+            ? DESKTOP_LAYOUT_W
+            : document.documentElement.clientWidth;
       const vh =
         narrowStage && embedded
           ? NARROW_H
-          : document.documentElement.clientHeight;
+          : stageLocked
+            ? DESKTOP_LAYOUT_H
+            : document.documentElement.clientHeight;
       setLayout(layoutForViewport(vw, vh, layoutOpts));
     };
     read();
+    if (stageLocked) return;
     const ro = new ResizeObserver(read);
     ro.observe(document.documentElement);
     window.addEventListener("resize", read);
@@ -191,7 +204,7 @@ export function AboutBio({
       ro.disconnect();
       window.removeEventListener("resize", read);
     };
-  }, [embedded, narrowStage, layoutOpts]);
+  }, [embedded, narrowStage, stageLocked, layoutOpts]);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");

@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 
 import { NarrowCenterPopup } from "@/components/NarrowCenterPopup";
+import { DESKTOP_LAYOUT_H, DESKTOP_LAYOUT_W } from "@/lib/desktop-stage";
 import { NARROW_DESIGN_NUDGE_RIGHT_PX, NARROW_DESIGN_POPUP_SCALE } from "@/lib/narrow-stage";
 
 /**
@@ -36,6 +37,8 @@ const DESIGN_CLUSTER_BBOX = {
 type Props = {
   visible: boolean;
   variant?: "desktop" | "narrow";
+  /** Lock positions to the 1440×811.5 desktop stage (no vw/vh). */
+  stageLocked?: boolean;
 };
 
 function DesignPieces({
@@ -126,7 +129,11 @@ function DesignPieces({
 /**
  * Three “scrapbook” pieces when the wheel highlights “design”.
  */
-export function DesignCluster({ visible, variant = "desktop" }: Props) {
+export function DesignCluster({
+  visible,
+  variant = "desktop",
+  stageLocked = false,
+}: Props) {
   const [reduceMotion, setReduceMotion] = useState(false);
 
   useEffect(() => {
@@ -177,12 +184,21 @@ export function DesignCluster({ visible, variant = "desktop" }: Props) {
     );
   }
 
-  const u = `min(100vw / ${REF_DESIGN_W}, 100vh / ${REF_DESIGN_H})`;
-  const at = (n: number) => `calc(${n} * ${u})`;
+  const uScale = stageLocked
+    ? Math.min(DESKTOP_LAYOUT_W / REF_DESIGN_W, DESKTOP_LAYOUT_H / REF_DESIGN_H)
+    : null;
+  const at = (n: number) =>
+    uScale != null
+      ? `${n * uScale}px`
+      : `calc(${n} * min(100vw / ${REF_DESIGN_W}, 100vh / ${REF_DESIGN_H}))`;
 
   return (
     <div
-      className="pointer-events-none fixed inset-0 z-[40] select-none"
+      className={
+        stageLocked
+          ? "pointer-events-none absolute inset-0 z-[40] select-none"
+          : "pointer-events-none fixed inset-0 z-[40] select-none"
+      }
       aria-hidden={!visible}
       style={fadeStyle}
     >

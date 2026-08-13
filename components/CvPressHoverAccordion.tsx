@@ -10,6 +10,8 @@ import { NARROW_CENTER_POPUP_MAX } from "@/lib/narrow-stage";
 type Props = {
   visible: boolean;
   layout?: "desktop" | "narrow";
+  /** Lock position to the desktop stage (absolute, not viewport-fixed). */
+  stageLocked?: boolean;
 };
 
 /** CV crease positions at native scan scale (1252 × 1638). */
@@ -53,6 +55,7 @@ const CV_DESKTOP_NUDGE_LEFT_PX = 28;
 export function CvPressHoverAccordion({
   visible,
   layout = "desktop",
+  stageLocked = false,
 }: Props) {
   const [reduceMotion, setReduceMotion] = useState(false);
   const [isPaperHovered, setIsPaperHovered] = useState(false);
@@ -130,7 +133,7 @@ export function CvPressHoverAccordion({
 
   return (
     <div
-      className={`fixed z-[50] select-none ${showDesktop ? "pointer-events-auto" : "pointer-events-none"}`}
+      className={`${stageLocked ? "absolute" : "fixed"} z-[50] select-none ${showDesktop ? "pointer-events-auto" : "pointer-events-none"}`}
       aria-hidden={!showDesktop}
       onMouseEnter={() => setIsPaperHovered(true)}
       onMouseLeave={() => setIsPaperHovered(false)}

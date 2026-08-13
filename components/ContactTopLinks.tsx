@@ -6,9 +6,10 @@ import { CONTACT_LINKS } from "@/lib/contact-links";
 
 /** Matches AboutBio `layoutForViewport` scale u */
 const U = "min(100vw / 1440, 100vh / 811.5)";
-const LEFT_MIN = `calc(392 * ${U})`;
+const LEFT_MIN_FLUID = `calc(392 * ${U})`;
 /** Sits below nav arc; slightly larger than prior `30 * u`. */
-const FONT_SIZE = `calc(36 * ${U})`;
+const FONT_SIZE_FLUID = `calc(36 * ${U})`;
+const FONT_SIZE_STAGE = "36px";
 /** Faux-bold stroke; matches AboutBio coloured spans. */
 const FAUX_STROKE = "1px";
 /** Design tracking “-50” → −0.05em (matches AboutBio). */
@@ -18,11 +19,21 @@ type Props = {
   visible: boolean;
   /** Same as polaroid wrapper `top` — text top aligns with polaroid frame top */
   top: string;
-  /** Same as `aboutBioRight`: inset + frame width + gap from viewport right */
+  /** Distance from stage/viewport right — should meet the polaroid’s left edge (no gap). */
   right: string;
+  /** Stage-locked left edge (layout px). Defaults to fluid 392×U when omitted. */
+  left?: string;
+  /** Lock typography/position to the desktop stage (no vw/vh). */
+  stageLocked?: boolean;
 };
 
-export function ContactTopLinks({ visible, top, right }: Props) {
+export function ContactTopLinks({
+  visible,
+  top,
+  right,
+  left,
+  stageLocked = false,
+}: Props) {
   const [reduceMotion, setReduceMotion] = useState(false);
 
   useEffect(() => {
@@ -38,7 +49,7 @@ export function ContactTopLinks({ visible, top, right }: Props) {
   const linkBase = {
     fontFamily: '"LTC Garamont Display OT", "Times New Roman", serif',
     fontStyle: "italic" as const,
-    fontSize: FONT_SIZE,
+    fontSize: stageLocked ? FONT_SIZE_STAGE : FONT_SIZE_FLUID,
     lineHeight: 1.15,
     letterSpacing: `${TRACKING_EM}em`,
     color: "#000",
@@ -51,13 +62,15 @@ export function ContactTopLinks({ visible, top, right }: Props) {
     <nav
       aria-label="Contact"
       aria-hidden={!visible}
-      className="pointer-events-none fixed z-[25] flex flex-row flex-wrap items-start justify-end gap-x-[4em] gap-y-1"
+      className={
+        stageLocked
+          ? "pointer-events-none absolute z-[25] flex flex-row flex-wrap items-start justify-end gap-x-[4em] gap-y-1"
+          : "pointer-events-none fixed z-[25] flex flex-row flex-wrap items-start justify-end gap-x-[4em] gap-y-1"
+      }
       style={{
         top,
-        left: LEFT_MIN,
+        left: left ?? LEFT_MIN_FLUID,
         right,
-        /** Black links on black contact page: white band behind row only */
-        backgroundColor: "#fff",
         paddingBottom: "0.45em",
         paddingRight: "4px",
         boxSizing: "border-box",

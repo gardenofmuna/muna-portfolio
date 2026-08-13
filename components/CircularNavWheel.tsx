@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, Fragment } from "react";
+import { useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, Fragment } from "react";
 
 import {
   narrowHitOverlayRects,
@@ -14,6 +14,13 @@ import {
   ringWordText,
   useNarrowRingLayout,
 } from "@/lib/narrow-nav-ring";
+import { DesktopStageViewContext } from "@/components/DesktopStageCanvas";
+import {
+  DESKTOP_LAYOUT_H,
+  DESKTOP_LAYOUT_SCALE,
+  DESKTOP_LAYOUT_W,
+  DESKTOP_STAGE_W,
+} from "@/lib/desktop-stage";
 import {
   NARROW_H,
   NARROW_LABEL_ACTIVE,
@@ -23,6 +30,9 @@ import {
   NARROW_W,
   NARROW_WHEEL_CENTER,
 } from "@/lib/narrow-stage";
+
+/** Authored desktop label size in layout coords (×2 into the 2875 master). */
+const DESKTOP_STAGE_LABEL_FONT_SIZE = "2.88rem";
 
 /**
  * CircularNavWheel — narrow (mobile) and desktop arc navigation.
@@ -74,6 +84,8 @@ const TARGET_ARC_SPACING_PX = 45;
 
 /** Shift wheel center further left so the arc sits deeper off-screen (px) */
 const ARC_OFFSET_BACK_PX = 300;
+/** Extra left shift for project-page stage layout coords (menu “backed up”). */
+const STAGE_ARC_EXTRA_BACK_LAYOUT_PX = 180;
 
 type Item = { index: number; label: string };
 
@@ -239,6 +251,15 @@ export type CircularNavWheelProps = {
   initialActiveLabel?: (typeof LABELS)[number];
   /** Artboard_2: centered full circle; desktop: arc off left edge. */
   layout?: "desktop" | "narrow";
+  /**
+   * Desktop only.
+   * - `"viewport"`: fixed full-bleed root (landing page).
+   * - `"nav-zone"`: absolute root sized to the viewport for geometry, clipped by
+   *   the shell’s left nav column (`overflow: hidden`).
+   * - `"stage"`: absolute root locked to the 1440×811.5 layout inside the
+   *   2875×1623 master artboard (scales with DesktopStageCanvas; no vw geometry).
+   */
+  containment?: "viewport" | "nav-zone" | "stage";
 };
 
 export function CircularNavWheel({
@@ -247,6 +268,7 @@ export function CircularNavWheel({
   onWheelInteractingChange,
   initialActiveLabel,
   layout = "desktop",
+  containment = "viewport",
 }: CircularNavWheelProps = {}) {
   const isNarrow = layout === "narrow";
   const ringLayout = useNarrowRingLayout(isNarrow);
@@ -333,10 +355,33 @@ export function CircularNavWheel({
     return () => mq.removeEventListener("change", u);
   }, []);
 
+  const stageView = useContext(DesktopStageViewContext);
+  const useNavZoneContainment = !isNarrow && containment === "nav-zone";
+  const useStageContainment = !isNarrow && containment === "stage";
+  const useClippedDesktopRoot = useNavZoneContainment || useStageContainment;
+  const stageWheelH = useStageContainment
+    ? stageView.wheelLayoutH
+    : DESKTOP_LAYOUT_H;
+
   useEffect(() => {
     if (isNarrow) {
       setSize({ w: NARROW_W, h: NARROW_H });
       return;
+    }
+    if (useStageContainment) {
+      setSize({ w: DESKTOP_LAYOUT_W, h: stageWheelH });
+      return;
+    }
+    if (useNavZoneContainment) {
+      const read = () => {
+        setSize({
+          w: window.innerWidth || 1200,
+          h: window.innerHeight || 800,
+        });
+      };
+      read();
+      window.addEventListener("resize", read);
+      return () => window.removeEventListener("resize", read);
     }
     const el = wrapRef.current;
     if (!el) return;
@@ -355,15 +400,27 @@ export function CircularNavWheel({
       ro.disconnect();
       window.removeEventListener("resize", read);
     };
-  }, [isNarrow]);
+  }, [isNarrow, useNavZoneContainment, useStageContainment, stageWheelH]);
 
   const { w, h } = size;
   const arcSpacing = TARGET_ARC_SPACING_PX;
+  /**
+   * Stage layout is scaled into the 2875 master. Use the landing wheel’s
+   * master-space origin, expressed in layout coordinates, so the menu keeps
+   * the same off-axis relationship after the uniform ×2 layout scale.
+   */
   const originX = isNarrow
     ? NARROW_WHEEL_CENTER.x
-    : -0.22 * w - ARC_OFFSET_BACK_PX;
+    : useStageContainment
+      ? (-0.22 * DESKTOP_STAGE_W - ARC_OFFSET_BACK_PX) / DESKTOP_LAYOUT_SCALE -
+        STAGE_ARC_EXTRA_BACK_LAYOUT_PX
+      : -0.22 * w - ARC_OFFSET_BACK_PX;
   const originY = isNarrow ? NARROW_WHEEL_CENTER.y : h / 2;
-  const r = isNarrow ? ringLayout.radius : Math.min(w, h) * 0.88;
+  const r = isNarrow
+    ? ringLayout.radius
+    : useStageContainment
+      ? Math.min(DESKTOP_LAYOUT_W, DESKTOP_LAYOUT_H) * 0.88
+      : Math.min(w, h) * 0.88;
   ringMetricsRef.current = { ox: originX, oy: originY, r };
 
   /* Narrow: one label per slot on the ring; desktop: tile repeats for arc density. */
@@ -678,16 +735,20 @@ export function CircularNavWheel({
   };
 
   const pointerLocal = (clientX: number, clientY: number) => {
-    if (!isNarrow) return { x: clientX, y: clientY };
+    if (!isNarrow && !useStageContainment) {
+      return { x: clientX, y: clientY };
+    }
     const el = wrapRef.current;
     if (!el) return { x: clientX, y: clientY };
     const rect = el.getBoundingClientRect();
     if (rect.width <= 0 || rect.height <= 0) {
       return { x: clientX, y: clientY };
     }
+    const localW = useStageContainment ? DESKTOP_LAYOUT_W : NARROW_W;
+    const localH = useStageContainment ? stageWheelH : NARROW_H;
     return {
-      x: ((clientX - rect.left) / rect.width) * NARROW_W,
-      y: ((clientY - rect.top) / rect.height) * NARROW_H,
+      x: ((clientX - rect.left) / rect.width) * localW,
+      y: ((clientY - rect.top) / rect.height) * localH,
     };
   };
 
@@ -868,11 +929,32 @@ export function CircularNavWheel({
         ? narrowIndexAtTop(rotation, labelAngles)
         : focusedIndex;
 
+  const desktopRootClass = useClippedDesktopRoot
+    ? "absolute left-0 top-0 touch-none select-none bg-transparent"
+    : isNarrow
+      ? "absolute inset-0 touch-none select-none bg-transparent"
+      : "fixed inset-0 touch-none select-none bg-white";
+
   return (
     <div
       ref={wrapRef}
-      className={`${isNarrow ? "absolute inset-0" : "fixed inset-0"} touch-none select-none ${isNarrow ? "bg-transparent" : "bg-white"}`}
-      style={{ zIndex: isNarrow ? 10 : 1, touchAction: "none" }}
+      className={desktopRootClass}
+      style={{
+        zIndex: isNarrow ? 10 : 1,
+        touchAction: "none",
+        ...(useStageContainment
+          ? {
+              width: DESKTOP_LAYOUT_W,
+              height: stageWheelH,
+              top: (DESKTOP_LAYOUT_H - stageWheelH) / 2,
+            }
+          : useNavZoneContainment
+            ? {
+                width: "100vw",
+                height: "100vh",
+              }
+            : null),
+      }}
       onPointerDownCapture={onPointerDownCapture}
       onPointerMove={onPointerMove}
       onPointerUp={endPointer}
@@ -1028,7 +1110,9 @@ export function CircularNavWheel({
                     transformOrigin: "left center",
                     fontFamily: '"Arial MT Std", Arial, Helvetica, sans-serif',
                     fontWeight: 800,
-                    fontSize: "clamp(1.62rem, 4.32vw, 2.88rem)",
+                    fontSize: useStageContainment
+                      ? DESKTOP_STAGE_LABEL_FONT_SIZE
+                      : "clamp(1.62rem, 4.32vw, 2.88rem)",
                     letterSpacing: "-0.06em",
                     textTransform: "lowercase",
                     color: isHot ? "#000000" : "#a3a3a3",

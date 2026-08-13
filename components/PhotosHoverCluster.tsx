@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 
 import { NarrowCenterPopup } from "@/components/NarrowCenterPopup";
+import { DESKTOP_LAYOUT_H, DESKTOP_LAYOUT_W } from "@/lib/desktop-stage";
 import {
   NARROW_CENTER_POPUP_MAX,
   NARROW_PHOTOS_NUDGE_UP_PX,
@@ -12,7 +13,7 @@ import {
 
 const REF_STAGE_W = 1440;
 const REF_STAGE_H = 811.5;
-const U_STAGE = `min(100vw / ${REF_STAGE_W}, 100vh / ${REF_STAGE_H})`;
+const U_STAGE_FLUID = `min(100vw / ${REF_STAGE_W}, 100vh / ${REF_STAGE_H})`;
 
 /** Overall cluster scale vs prior layout (~0.8 ≈ 20% smaller). */
 const CLUSTER_SCALE = 0.8;
@@ -48,6 +49,8 @@ const SRC_H = 2387;
 type Props = {
   visible: boolean;
   variant?: "desktop" | "narrow";
+  /** Lock sizes to the 1440×811.5 desktop stage (no vw/vh). */
+  stageLocked?: boolean;
 };
 
 /**
@@ -57,11 +60,16 @@ type Props = {
 export function PhotosHoverCluster({
   visible,
   variant = "desktop",
+  stageLocked = false,
 }: Props) {
   const [reduceMotion, setReduceMotion] = useState(false);
   const [fanOut, setFanOut] = useState(false);
   /** True until intro spread runs (wings start at 0 lateral offset). */
   const [introPending, setIntroPending] = useState(true);
+  const uStage = stageLocked
+    ? Math.min(DESKTOP_LAYOUT_W / REF_STAGE_W, DESKTOP_LAYOUT_H / REF_STAGE_H)
+    : null;
+  const uStageCss = uStage != null ? String(uStage) : U_STAGE_FLUID;
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -142,8 +150,17 @@ export function PhotosHoverCluster({
     : introPending
       ? "none"
       : `transform ${wingMoveMs}ms ${wingEase}, opacity ${wingMoveMs}ms cubic-bezier(0.22, 1, 0.36, 1)`;
-  const imgW = isNarrow ? `${cardWRef}px` : `calc(${cardWRef} * ${U_STAGE})`;
-  const dim = (n: number) => (isNarrow ? `${n}px` : `calc(${n} * ${U_STAGE})`);
+  const imgW = isNarrow
+    ? `${cardWRef}px`
+    : uStage != null
+      ? `${cardWRef * uStage}px`
+      : `calc(${cardWRef} * ${uStageCss})`;
+  const dim = (n: number) =>
+    isNarrow
+      ? `${n}px`
+      : uStage != null
+        ? `${n * uStage}px`
+        : `calc(${n} * ${uStageCss})`;
 
   const photo = (src: string, alt: string, sizes: string) => (
     <Image
@@ -164,7 +181,11 @@ export function PhotosHoverCluster({
       style={{
         width: dim(clusterWRef),
         height: dim(clusterHRef),
-        maxWidth: isNarrow ? NARROW_CENTER_POPUP_MAX : "92vw",
+        maxWidth: isNarrow
+          ? NARROW_CENTER_POPUP_MAX
+          : stageLocked
+            ? DESKTOP_LAYOUT_W
+            : "92vw",
       }}
       onMouseEnter={() => setFanOut(true)}
       onMouseLeave={() => setFanOut(false)}
@@ -174,7 +195,9 @@ export function PhotosHoverCluster({
           style={{
             transform: isNarrow
               ? `translateX(calc(-50% - ${wingOffsetPx}px)) rotate(${LEFT_ROT}deg)`
-              : `translateX(calc(-50% - ${wingOffsetPx} * ${U_STAGE})) rotate(${LEFT_ROT}deg)`,
+              : uStage != null
+                ? `translateX(calc(-50% - ${wingOffsetPx * uStage}px)) rotate(${LEFT_ROT}deg)`
+                : `translateX(calc(-50% - ${wingOffsetPx} * ${uStageCss})) rotate(${LEFT_ROT}deg)`,
             transformOrigin: "center bottom",
             boxShadow: SHADOW_BACK,
             transition: wingTransition,
@@ -191,7 +214,9 @@ export function PhotosHoverCluster({
           style={{
             transform: isNarrow
               ? `translateX(calc(-50% + ${wingOffsetPx}px)) rotate(${RIGHT_ROT}deg)`
-              : `translateX(calc(-50% + ${wingOffsetPx} * ${U_STAGE})) rotate(${RIGHT_ROT}deg)`,
+              : uStage != null
+                ? `translateX(calc(-50% + ${wingOffsetPx * uStage}px)) rotate(${RIGHT_ROT}deg)`
+                : `translateX(calc(-50% + ${wingOffsetPx} * ${uStageCss})) rotate(${RIGHT_ROT}deg)`,
             transformOrigin: "center bottom",
             boxShadow: SHADOW_BACK,
             transition: wingTransition,
@@ -211,7 +236,9 @@ export function PhotosHoverCluster({
             opacity: introPending ? 0.72 : 1,
             marginBottom: isNarrow
               ? `${Math.round(12 * clusterScale)}px`
-              : `calc(${Math.round(12 * clusterScale)} * ${U_STAGE})`,
+              : uStage != null
+                ? `${Math.round(12 * clusterScale) * uStage}px`
+                : `calc(${Math.round(12 * clusterScale)} * ${uStageCss})`,
             boxShadow: SHADOW_FRONT,
             transition: wingTransition,
           }}
@@ -249,7 +276,11 @@ export function PhotosHoverCluster({
 
   return (
     <div
-      className="pointer-events-none fixed inset-0 z-[40] select-none"
+      className={
+        stageLocked
+          ? "pointer-events-none absolute inset-0 z-[40] select-none"
+          : "pointer-events-none fixed inset-0 z-[40] select-none"
+      }
       aria-hidden={!visible}
       style={fadeStyle}
     >
