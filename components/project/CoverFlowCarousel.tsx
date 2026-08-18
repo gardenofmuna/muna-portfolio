@@ -12,6 +12,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useRef,
   useState,
   type CSSProperties,
   type KeyboardEvent,
@@ -45,34 +46,52 @@ type CoverFlowCarouselProps = {
   maxRotation?: number;
 };
 
+const POSTER_SLOT_OFFSETS = [-1, 0, 1] as const;
+
+const FAN_BEHAVIOR = {
+  /** 2D fan — prev / current / next only, even ±4° steps. */
+  sideOffset: 90,
+  neighbor1Scale: 0.84,
+  neighbor2Scale: 0.8,
+  maxRotation: 8,
+  maxVisibleOffset: 1,
+  tilt: "fan" as const,
+  centerScale: 1.05,
+  outerOpacity: 0.85,
+} as const;
+
 const DEFAULT_VARIANT_BEHAVIOR = {
   poster: {
-    sideOffset: 92,
-    neighbor1Scale: 0.76,
-    neighbor2Scale: 0.6,
-    maxRotation: 28,
+    ...FAN_BEHAVIOR,
+    sideOffset: 104,
   },
   merchandise: {
-    sideOffset: 80,
-    neighbor1Scale: 0.74,
-    neighbor2Scale: 0.58,
-    maxRotation: 22,
+    ...FAN_BEHAVIOR,
+    sideOffset: 104,
   },
 } as const;
 
 const SWIPE_OFFSET_PX = 52;
 const SWIPE_VELOCITY = 320;
+const POSTER_SCROLL_STEP = 88;
+const POSTER_SCROLL_COOLDOWN_MS = 280;
 
 function clampIndex(index: number, length: number) {
   return Math.max(0, Math.min(length - 1, index));
+}
+
+function wrapIndex(index: number, length: number) {
+  if (length <= 0) return 0;
+  return ((index % length) + length) % length;
 }
 
 function scaleForOffset(
   abs: number,
   neighbor1Scale: number,
   neighbor2Scale: number,
+  centerScale: number,
 ) {
-  if (abs === 0) return 1;
+  if (abs === 0) return centerScale;
   if (abs === 1) return neighbor1Scale;
   if (abs === 2) return neighbor2Scale;
   return neighbor2Scale * 0.82;
@@ -85,28 +104,34 @@ function itemTransform(
   neighbor2Scale: number,
   maxRotation: number,
   maxVisibleOffset: number,
+  tilt: "fan" | "stack",
   itemScale = 1,
+  centerScale = 1,
+  outerOpacity = 1,
 ) {
   const abs = Math.abs(offset);
   if (abs > maxVisibleOffset) {
     return {
-      x: offset * sideOffset * 0.45,
-      scale: 0.48 * itemScale,
-      rotateY: offset > 0 ? maxRotation : -maxRotation,
+      x: offset * sideOffset * 0.3,
+      scale: 0.5 * itemScale,
+      rotate: 0,
       zIndex: 0,
       opacity: 0,
     };
   }
 
-  const scale = scaleForOffset(abs, neighbor1Scale, neighbor2Scale) * itemScale;
-  const rotateY = -offset * (maxRotation / 2.4);
+  const scale =
+    scaleForOffset(abs, neighbor1Scale, neighbor2Scale, centerScale) *
+    itemScale;
+  const rotate =
+    tilt === "fan" ? offset * (maxRotation / 2) : offset * maxRotation;
 
   return {
     x: offset * sideOffset,
     scale,
-    rotateY,
+    rotate,
     zIndex: 100 - abs,
-    opacity: abs > 2 ? 0.68 : 1,
+    opacity: abs === maxVisibleOffset ? outerOpacity : 1,
   };
 }
 
@@ -124,14 +149,21 @@ export function CoverFlowCarousel({
   const reduceMotion = useReducedMotion();
   const regionId = useId();
   const statusId = `${regionId}-status`;
+  const rootRef = useRef<HTMLElement>(null);
+  const wrapSlots = true;
   const [activeIndex, setActiveIndex] = useState(() =>
     clampIndex(initialIndex, items.length),
   );
+  const activeIndexRef = useRef(activeIndex);
+  activeIndexRef.current = activeIndex;
   const dragX = useMotionValue(0);
 
   const goTo = useCallback(
     (index: number) => {
-      setActiveIndex(clampIndex(index, items.length));
+      if (items.length === 0) return;
+      const next = clampIndex(index, items.length);
+      activeIndexRef.current = next;
+      setActiveIndex(next);
     },
     [items.length],
   );
@@ -186,6 +218,175 @@ export function CoverFlowCarousel({
     if (reduceMotion) dragX.set(0);
   }, [activeIndex, dragX, reduceMotion]);
 
+  useEffect(() => {
+    if (items.length <= 1) return;
+    const root = rootRef.current;
+    if (!root) return;
+    const scroller = root.closest(".project-pane__scroll");
+    if (!(scroller instanceof HTMLElement)) return;
+    const sectionId = variant === "poster" ? "posters" : "merchandise";
+    const lockEl =
+      (root.closest(`#${sectionId}`) as HTMLElement | null) ?? root;
+    const heading =
+      (lockEl.querySelector(".project-section__title") as HTMLElement | null) ??
+      lockEl;
+    const lastIndex = items.length - 1;
+
+    let pinned = false;
+    let releaseDir: "down" | "up" | null = null;
+    let accumulated = 0;
+    let cooldownUntil = 0;
+    let holding = false;
+    let lastTouchY = 0;
+
+    const metrics = () => {
+      const scrollerRect = scroller.getBoundingClientRect();
+      const headingRect = heading.getBoundingClientRect();
+      const sectionRect = lockEl.getBoundingClientRect();
+      const toggle = document.querySelector(
+        ".desktop-site-shell__menu-toggle",
+      );
+      const hamburgerTop =
+        toggle instanceof HTMLElement
+          ? toggle.getBoundingClientRect().top
+          : scrollerRect.top + 36;
+      return {
+        scrollerRect,
+        headingRect,
+        sectionRect,
+        desiredTop: hamburgerTop,
+        drift: headingRect.top - hamburgerTop,
+      };
+    };
+
+    const sectionReachedPin = () => {
+      const { headingRect, desiredTop, sectionRect, scrollerRect } = metrics();
+      return (
+        headingRect.top <= desiredTop + 1 &&
+        sectionRect.bottom > scrollerRect.top + 80
+      );
+    };
+
+    const sectionLeftView = () => {
+      const { sectionRect, scrollerRect } = metrics();
+      return (
+        sectionRect.bottom < scrollerRect.top + 8 ||
+        sectionRect.top > scrollerRect.bottom - 8
+      );
+    };
+
+    const menuIsOpen = () =>
+      !document.querySelector(".desktop-site-shell__menu-toggle");
+
+    const holdPin = () => {
+      if (menuIsOpen()) {
+        pinned = false;
+        return;
+      }
+      if (!pinned || holding) return;
+      holding = true;
+      requestAnimationFrame(() => {
+        holding = false;
+        if (!pinned || menuIsOpen()) {
+          pinned = false;
+          return;
+        }
+        const { drift } = metrics();
+        if (Math.abs(drift) > 0.75) scroller.scrollTop += drift;
+      });
+    };
+
+    const applyScrollDelta = (delta: number): boolean => {
+      if (delta === 0 || menuIsOpen()) return false;
+      const goingDown = delta > 0;
+
+      if (sectionLeftView()) {
+        pinned = false;
+        releaseDir = null;
+        accumulated = 0;
+        return false;
+      }
+
+      if (!pinned) {
+        if (!sectionReachedPin()) return false;
+        const blocked =
+          (releaseDir === "down" && goingDown) ||
+          (releaseDir === "up" && !goingDown);
+        if (blocked) return false;
+        pinned = true;
+        releaseDir = null;
+        if (goingDown && activeIndexRef.current !== 0) goTo(0);
+        if (!goingDown && activeIndexRef.current !== lastIndex) {
+          goTo(lastIndex);
+        }
+      }
+
+      const index = activeIndexRef.current;
+      const canAdvance = goingDown && index < lastIndex;
+      const canRetreat = !goingDown && index > 0;
+      if (!canAdvance && !canRetreat) {
+        pinned = false;
+        releaseDir = goingDown ? "down" : "up";
+        accumulated = 0;
+        return false;
+      }
+
+      holdPin();
+      const now = performance.now();
+      if (now < cooldownUntil) return true;
+
+      accumulated += delta;
+      if (accumulated >= POSTER_SCROLL_STEP) {
+        accumulated = 0;
+        cooldownUntil = now + POSTER_SCROLL_COOLDOWN_MS;
+        goTo(index + 1);
+      } else if (accumulated <= -POSTER_SCROLL_STEP) {
+        accumulated = 0;
+        cooldownUntil = now + POSTER_SCROLL_COOLDOWN_MS;
+        goTo(index - 1);
+      }
+      return true;
+    };
+
+    const onWheel = (event: WheelEvent) => {
+      if (event.deltaY === 0) return;
+      const delta =
+        event.deltaMode === 1 ? event.deltaY * 16 : event.deltaY;
+      if (applyScrollDelta(delta)) event.preventDefault();
+    };
+
+    const onTouchStart = (event: TouchEvent) => {
+      lastTouchY = event.touches[0]?.clientY ?? 0;
+    };
+
+    const onTouchMove = (event: TouchEvent) => {
+      const y = event.touches[0]?.clientY ?? lastTouchY;
+      const delta = lastTouchY - y;
+      lastTouchY = y;
+      if (applyScrollDelta(delta)) event.preventDefault();
+    };
+
+    const onScroll = () => {
+      if (menuIsOpen()) {
+        pinned = false;
+        return;
+      }
+      if (pinned) holdPin();
+    };
+
+    const opts: AddEventListenerOptions = { passive: false, capture: true };
+    scroller.addEventListener("wheel", onWheel, opts);
+    scroller.addEventListener("touchstart", onTouchStart, opts);
+    scroller.addEventListener("touchmove", onTouchMove, opts);
+    scroller.addEventListener("scroll", onScroll);
+    return () => {
+      scroller.removeEventListener("wheel", onWheel, opts);
+      scroller.removeEventListener("touchstart", onTouchStart, opts);
+      scroller.removeEventListener("touchmove", onTouchMove, opts);
+      scroller.removeEventListener("scroll", onScroll);
+    };
+  }, [goTo, items.length, variant]);
+
   const activeItem = items[activeIndex];
   const statusText = activeItem
     ? `${itemNoun} ${activeIndex + 1} of ${items.length}${
@@ -209,9 +410,24 @@ export function CoverFlowCarousel({
   const resolvedNeighbor1 = neighbor1Scale ?? behavior.neighbor1Scale;
   const resolvedNeighbor2 = neighbor2Scale ?? behavior.neighbor2Scale;
   const resolvedRotation = maxRotation ?? behavior.maxRotation;
+  const resolvedVisible = behavior.maxVisibleOffset;
+  const tilt = behavior.tilt;
+
+  const visibleItems =
+    wrapSlots && items.length > 0
+      ? POSTER_SLOT_OFFSETS.map((offset) => {
+          const itemIndex = wrapIndex(activeIndex + offset, items.length);
+          return { offset, itemIndex, item: items[itemIndex] };
+        })
+      : items.map((item, index) => ({
+          offset: index - activeIndex,
+          itemIndex: index,
+          item,
+        }));
 
   return (
     <section
+      ref={rootRef}
       className={`project-cover-flow project-cover-flow--${variant}`}
       aria-label={ariaLabel}
       aria-roledescription="carousel"
@@ -219,30 +435,6 @@ export function CoverFlowCarousel({
       tabIndex={0}
       style={stageStyle}
     >
-      <div
-        className="project-cover-flow__controls"
-        aria-hidden={items.length <= 1}
-      >
-        <button
-          type="button"
-          className="project-cover-flow__control project-cover-flow__control--prev"
-          aria-label={`Previous ${itemNoun.toLowerCase()}`}
-          onClick={goPrevious}
-          disabled={activeIndex === 0}
-        >
-          ‹
-        </button>
-        <button
-          type="button"
-          className="project-cover-flow__control project-cover-flow__control--next"
-          aria-label={`Next ${itemNoun.toLowerCase()}`}
-          onClick={goNext}
-          disabled={activeIndex === items.length - 1}
-        >
-          ›
-        </button>
-      </div>
-
       <motion.div
         className="project-cover-flow__stage"
         drag={reduceMotion ? false : "x"}
@@ -254,54 +446,102 @@ export function CoverFlowCarousel({
         }}
         onDragEnd={finishDrag}
       >
+        {variant === "merchandise" ? (
+          <>
+            <button
+              type="button"
+              className="project-cover-flow__peek project-cover-flow__peek--prev"
+              aria-label={`Previous ${itemNoun.toLowerCase()}`}
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => {
+                event.stopPropagation();
+                goPrevious();
+              }}
+            />
+            <button
+              type="button"
+              className="project-cover-flow__peek project-cover-flow__peek--next"
+              aria-label={`Next ${itemNoun.toLowerCase()}`}
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => {
+                event.stopPropagation();
+                goNext();
+              }}
+            />
+          </>
+        ) : null}
         <motion.div className="project-cover-flow__track" style={{ x: dragX }}>
-          {items.map((item, index) => {
-            const offset = index - activeIndex;
+          {visibleItems.map(({ offset, itemIndex, item }) => {
             const transform = itemTransform(
               offset,
               resolvedSideOffset,
               resolvedNeighbor1,
               resolvedNeighbor2,
               resolvedRotation,
-              3,
+              resolvedVisible,
+              tilt,
               item.scale ?? 1,
+              behavior.centerScale,
+              behavior.outerOpacity,
             );
-            const isActive = index === activeIndex;
+            const isActive = offset === 0;
 
             return (
               <motion.figure
-                key={item.src}
+                key={
+                  wrapSlots && items.length < 3
+                    ? `slot-${offset}`
+                    : `${itemIndex}-${item.src}`
+                }
                 className={
                   isActive
                     ? "project-cover-flow__item project-cover-flow__item--active"
                     : "project-cover-flow__item"
                 }
-                aria-hidden={!isActive}
+                role={isActive ? undefined : "button"}
+                tabIndex={isActive ? undefined : 0}
+                aria-hidden={false}
+                aria-label={
+                  isActive
+                    ? undefined
+                    : `Show ${item.label ?? `${itemNoun} ${itemIndex + 1}`}`
+                }
                 style={{
                   zIndex: transform.zIndex,
-                  pointerEvents: isActive ? "auto" : "none",
+                  pointerEvents: "auto",
+                  cursor: isActive ? undefined : "pointer",
                 }}
                 animate={{
                   x: `calc(-50% + ${transform.x}px)`,
                   y: "-50%",
                   scale: transform.scale,
-                  rotateY: transform.rotateY,
+                  rotate: transform.rotate,
                   opacity: transform.opacity,
                 }}
                 transition={transition}
+                onPointerDown={(event) => {
+                  if (!isActive) event.stopPropagation();
+                }}
+                onClick={() => {
+                  if (isActive) return;
+                  goTo(itemIndex);
+                }}
+                onKeyDown={(event) => {
+                  if (isActive) return;
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    goTo(itemIndex);
+                  }
+                }}
               >
                 <Image
                   src={item.src}
                   alt={isActive ? item.alt : ""}
-                  width={item.width}
-                  height={item.height}
+                  fill
                   className="project-cover-flow__image"
                   draggable={false}
-                  sizes={
-                    variant === "poster"
-                      ? "(max-width: 960px) 60vw, 20rem"
-                      : "(max-width: 960px) 55vw, 22rem"
-                  }
+                  sizes={variant === "poster" ? "341px" : "428px"}
                   style={{
                     objectPosition: item.objectPosition ?? "center",
                   }}

@@ -19,7 +19,7 @@ export function EgwuLogoSection({ menuState }: Props) {
           width={vertical.width}
           height={vertical.height}
           className="project-egwu-logos__image"
-          sizes="11rem"
+          sizes="360px"
         />
       </figure>
       <div className="project-egwu-logos__secondary">
@@ -30,7 +30,7 @@ export function EgwuLogoSection({ menuState }: Props) {
             width={wordmark.width}
             height={wordmark.height}
             className="project-egwu-logos__image"
-            sizes="22rem"
+            sizes="320px"
           />
         </figure>
         <figure className="project-egwu-logos__figure">
@@ -40,7 +40,7 @@ export function EgwuLogoSection({ menuState }: Props) {
             width={badge.width}
             height={badge.height}
             className="project-egwu-logos__image"
-            sizes="18rem"
+            sizes="280px"
           />
         </figure>
       </div>

@@ -31,7 +31,7 @@ const EGWU_RECORDS: ProjectDefinition = {
     "Brand identity and visual system for EGWÚ Records, a Lagos-based record store and cultural platform celebrating music across generations. Inspired by vintage record labels and Nigerian print culture, the identity extends across logos, merchandise, event posters, and a comprehensive brand guidelines system.",
   sidebarActiveLabel: "design",
   sectionLinks: [
-    /* Colors match landing AboutBio accent palette */
+    /* Same accent palette as landing AboutBio */
     { id: "logo", label: "Logo,", color: "#488bdc" },
     { id: "colors", label: "Branding,", color: "#019f4b" },
     { id: "merchandise", label: "Merchandise", color: "#f9b109" },
@@ -210,13 +210,13 @@ export const EGWU_MERCHANDISE: CoverFlowItem[] = [
 export const EGWU_COLORS = {
   src: "/projects/egwu/colors.webp",
   alt: "EGWÚ Records primary and secondary color palettes with labeled swatches",
-  width: 1600,
-  height: 760,
+  width: 1575,
+  height: 800,
 } as const;
 
 export const EGWU_PLAYLIST_COVER = {
   src: "/projects/egwu/playlist-cover.webp",
   alt: "EGWÚ Records high energy cassette playlist cover artwork",
-  width: 1200,
-  height: 760,
+  width: 1700,
+  height: 1700,
 } as const;

@@ -36,15 +36,18 @@ const NZERIBE_IMG_H = 117;
 const ABOUT_GAP_FROM_WEBP_PX = 20;
 
 /**
- * Content left edge on the 2875 master (from menu-open reference).
- * Roman numerals / title start ≈ x=854 on the master artboard.
+ * Content column from Artboard 9 guides (user-measured, artboard-relative).
+ * V: 760.8 (visual) | 836.6 (content left) | 2154 (content right) | 2229.7 (signature left)
+ *
+ * Nav clips at content left (836.6) so wheel ink can run through the ~76px
+ * air before the title — not a hard white bar cutting mid-glyph at 760.8.
+ * Signature side keeps the measured gutter (2154 → 2229.7).
  */
-const MASTER_CONTENT_LEFT = 854;
-/**
- * Nav column clip width on the master — matches content left so the menu↔page
- * relationship matches the middle reference (menu ink may crop at the edge).
- */
-const MASTER_NAV_CLIP = 854;
+const MASTER_CONTENT_LEFT = 836.6;
+const MASTER_CONTENT_RIGHT = 2154;
+const MASTER_SIGNATURE_LEFT = 2229.7;
+/** Menu-hidden hamburger column — title/body start at x=301 on the 8514 scroll. */
+const MASTER_NAV_HIDDEN = 301;
 
 const FRAME_SCALE_LAYOUT = DESKTOP_LAYOUT_H / REF_PAGE_HEIGHT;
 
@@ -266,6 +269,7 @@ export type DesktopStageMetrics = {
   navZoneClosed: number;
   signatureZone: number;
   projectGutter: number;
+  projectGutterRight: number;
   shellInsetBottom: number;
 };
 
@@ -274,6 +278,8 @@ export function getDesktopStageMetrics(): DesktopStageMetrics {
   const nzeribeW = NZERIBE_IMG_W * FRAME_SCALE_LAYOUT;
   const nzeribeH = NZERIBE_IMG_H * FRAME_SCALE_LAYOUT;
   const gapScaled = ABOUT_GAP_FROM_WEBP_PX * FRAME_SCALE_LAYOUT;
+  const gutterRight =
+    (MASTER_SIGNATURE_LEFT - MASTER_CONTENT_RIGHT) / DESKTOP_LAYOUT_SCALE;
 
   return {
     inset,
@@ -282,15 +288,12 @@ export function getDesktopStageMetrics(): DesktopStageMetrics {
     nzeribeW,
     nzeribeH,
     gapScaled,
-    navZoneOpen: MASTER_NAV_CLIP / DESKTOP_LAYOUT_SCALE,
-    navZoneClosed: inset,
-    signatureZone: (REF_INSET + IMG_W) * FRAME_SCALE_LAYOUT,
-    /** Content starts at nav edge — matches middle reference (no independent gutter reflow). */
-    projectGutter: Math.max(
-      0,
-      MASTER_CONTENT_LEFT / DESKTOP_LAYOUT_SCALE -
-        MASTER_NAV_CLIP / DESKTOP_LAYOUT_SCALE,
-    ),
+    navZoneOpen: MASTER_CONTENT_LEFT / DESKTOP_LAYOUT_SCALE,
+    navZoneClosed: MASTER_NAV_HIDDEN / DESKTOP_LAYOUT_SCALE,
+    signatureZone: (DESKTOP_STAGE_W - MASTER_SIGNATURE_LEFT) / DESKTOP_LAYOUT_SCALE,
+    /** No left white bar — nav paints up to content left. */
+    projectGutter: 0,
+    projectGutterRight: gutterRight,
     shellInsetBottom: inset + nzeribeH + gapScaled,
   };
 }
@@ -308,8 +311,8 @@ export function getDesktopStageShellStyle(
     ["--signature-zone-width" as string]: `${m.signatureZone}px`,
     ["--shell-inset-top" as string]: `${m.inset}px`,
     ["--shell-inset-bottom" as string]: `${m.shellInsetBottom}px`,
-    ["--project-gutter-left" as string]:
-      menuState === "open" ? `${m.projectGutter}px` : "0px",
-    ["--project-gutter-right" as string]: `${m.projectGutter}px`,
+    /* Gutters stay on the open composition; hidden state scales the object. */
+    ["--project-gutter-left" as string]: `${m.projectGutter}px`,
+    ["--project-gutter-right" as string]: `${m.projectGutterRight}px`,
   };
 }

@@ -9,6 +9,13 @@
 }
 
 @font-face {
+  font-family: "Arial";
+  src: url("/fonts/Arial-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
   font-family: "Arial MT Std";
   src: url("/fonts/ARIALMTEXTRABOLD.TTF") format("truetype");
   font-weight: 800;

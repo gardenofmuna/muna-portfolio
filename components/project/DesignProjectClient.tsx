@@ -2,7 +2,7 @@
 
 import { useLayoutMode } from "@/hooks/useLayoutMode";
 
-import { EgwuDesktopPage } from "@/components/project/EgwuDesktopPage";
+import { HomeDesktop } from "@/components/HomeDesktop";
 import { ProjectHeader } from "@/components/project/ProjectHeader";
 import { ProjectIndexNav } from "@/components/project/ProjectIndexNav";
 import { EgwuRecordsProject } from "@/components/project/projects/EgwuRecordsProject";
@@ -34,5 +34,5 @@ export function DesignProjectClient({ project }: Props) {
     );
   }
 
-  return <EgwuDesktopPage project={project} />;
+  return <HomeDesktop initialProject={project} />;
 }

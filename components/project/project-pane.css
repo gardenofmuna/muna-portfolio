@@ -17,6 +17,28 @@
   overflow: hidden;
   pointer-events: auto;
   background: #fff;
+  box-sizing: border-box;
+}
+
+.project-pane[data-menu-state="open"] {
+  /* Don't clip the left-expanded scrollport at the content-column edge. */
+  overflow: visible;
+  /* Empty leftover over the nav passes through to the wheel. */
+  pointer-events: none;
+}
+
+.project-pane[data-menu-state="open"] .project-pane__scroll {
+  pointer-events: none;
+}
+
+.project-pane[data-menu-state="open"] .project-pane__smart,
+.project-pane[data-menu-state="open"] .project-pane__inner {
+  pointer-events: auto;
+}
+
+.project-pane[data-menu-state="hidden"] {
+  overflow: visible;
+  background: transparent;
 }
 
 .project-pane__scroll {
@@ -27,57 +49,87 @@
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  /* Same unscaled air under nzeribe1.webp (not multiplied by smart-object scale). */
+  padding-bottom: var(--shell-inset-top, 50px);
+}
+
+.project-pane[data-menu-state="hidden"] .project-pane__scroll {
+  /* Keep overflow-x hidden (CSS won't let it be visible with overflow-y auto).
+     Clip box is expanded left in desktop-site-shell.css. */
+  overflow-x: hidden;
 }
 
 .project-pane__scroll::-webkit-scrollbar {
   display: none;
 }
 
+.project-pane__smart {
+  position: relative;
+  width: 100%;
+}
+
 .project-pane__inner {
   /*
-   * Equal solid white gutters (padding, not margin) so menu text cannot
-   * show through and the menu↔page / page↔signature gaps read clearly.
+   * Artboard 9 open composition — a smart object.
+   * Width is locked in JS; hidden menu scales this from top-left.
    */
-  padding-top: 0.75rem;
-  padding-bottom: calc(var(--shell-inset-bottom, 4rem) + 1rem);
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding-top: 36px;
+  padding-bottom: 0;
   padding-left: var(--project-gutter-left, 0px);
   padding-right: var(--project-gutter-right, 0px);
   background: #fff;
-  min-height: 100%;
   box-sizing: border-box;
+  overflow: visible;
 }
 
-/* Shared project typography — matches landing AboutBio */
+.project-pane[data-menu-state="hidden"] .project-pane__inner {
+  background: transparent;
+}
+
+/* Shared project typography — Character panel values ÷ 2 into layout px.
+ * Headings: Arial Bold. Body / numerals / tags: LTC Garamont Display OT.
+ */
 
 .project-body-copy {
   margin: 0;
   font-family: "LTC Garamont Display OT", "Times New Roman", serif;
   font-weight: 400;
-  letter-spacing: -0.05em;
-  line-height: 1.2;
+  /* PS tracking -20 */
+  letter-spacing: -0.02em;
   color: #000;
+  /* Same optical weight as landing bio / contact (PS renders heavier than bare OTF) */
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+  -webkit-text-stroke: 0.75px currentColor;
+  paint-order: stroke fill;
 }
 
 .project-pane__chrome {
-  margin-bottom: 0.85rem;
+  margin-bottom: 45px;
 }
 
 .project-index-nav {
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
-  gap: 0.85rem;
-  margin: 0;
-  font-family: "LTC Garamont Display OT", "Times New Roman", serif;
-  font-size: 0.9375rem;
-  line-height: 1;
-}
-
-.project-pane[data-menu-state="hidden"] .project-index-nav {
+  /* I at content left, X flush with right-aligned tags / commas */
   justify-content: space-between;
-  gap: 0.35rem;
-  /* Room for hamburger in the collapsed nav column */
-  padding-left: 0;
+  gap: 0;
+  margin: 0;
+  width: 100%;
+  max-width: none;
+  font-family: "LTC Garamont Display OT", "Times New Roman", serif;
+  /* 77.79 master → 38.895 layout; tracking -80; leading Auto */
+  font-size: 38.895px;
+  line-height: normal;
+  letter-spacing: -0.08em;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+  -webkit-text-stroke: 0.75px currentColor;
+  paint-order: stroke fill;
 }
 
 .project-index-nav__item {
@@ -97,51 +149,62 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-rows: auto auto;
-  column-gap: 2rem;
-  row-gap: 0.5rem;
-  margin-bottom: 1.25rem;
+  /* Body ↔ tags gap 73 master → 36.5 layout */
+  column-gap: 36.5px;
+  row-gap: 27.5px;
+  margin-bottom: 53.5px;
   align-items: start;
 }
 
 .project-header__title {
   grid-column: 1 / -1;
   margin: 0;
-  font-family: "Arial MT Std", Arial, Helvetica, sans-serif;
-  font-size: 2rem;
+  /* PS Character says Arial Bold, but mockup ink matches Extra Bold */
+  font-family: "Arial MT Std", "Arial", Helvetica, sans-serif;
+  /* 117.52 master → 58.76 layout; tracking -40; leading Auto */
+  font-size: 58.76px;
   font-weight: 800;
-  line-height: 1.05;
-  letter-spacing: -0.02em;
+  line-height: normal;
+  letter-spacing: -0.04em;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
 }
 
 .project-header__description {
   grid-column: 1;
-  max-width: 16.5rem;
-  font-size: 0.875rem;
+  max-width: 476.5px;
+  /* 44 / 41.13 / -20 → layout ÷2 */
+  font-size: 22px;
+  line-height: 20.565px;
+  letter-spacing: -0.02em;
 }
 
 .project-header__section-links {
   grid-column: 2;
   grid-row: 2;
+  align-self: end;
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 0.12rem;
+  align-items: flex-end;
+  text-align: right;
+  gap: 0;
   font-family: "LTC Garamont Display OT", "Times New Roman", serif;
-  font-size: 0.875rem;
+  font-size: 22px;
   font-weight: 400;
-  letter-spacing: -0.05em;
-  line-height: 1.25;
+  letter-spacing: -0.02em;
+  line-height: 20.565px;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+  -webkit-text-stroke: 0.75px currentColor;
+  paint-order: stroke fill;
 }
 
 .project-header__section-link {
   color: inherit;
   text-decoration: none;
-  /* Match landing AboutBio faux-bold weight on accent words */
-  -webkit-text-stroke: 0.6px currentColor;
-  paint-order: stroke fill;
 }
 
 .project-header__section-link:hover {
@@ -149,97 +212,87 @@
   text-underline-offset: 0.15em;
 }
 
-.project-pane[data-menu-state="open"] .project-header__title {
-  font-size: 2.125rem;
-}
-
-.project-pane[data-menu-state="open"] .project-header__description {
-  font-size: 0.875rem;
-  max-width: 15.5rem;
-}
-
-.project-pane[data-menu-state="open"] .project-header {
-  margin-bottom: 1rem;
-}
-
-.project-pane[data-menu-state="open"] .project-section:first-of-type {
-  margin-bottom: 1.5rem;
-}
-
-.project-pane[data-menu-state="open"] .project-section:first-of-type .project-section__title {
-  margin-bottom: 0.65rem;
-}
-
 /* Sections */
 
 .project-section {
-  margin-bottom: 2.25rem;
+  margin-bottom: 53.5px;
   scroll-margin-top: 0.5rem;
 }
 
 .project-section__title {
-  margin: 0 0 0.85rem;
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 1.25rem;
+  margin: 0 0 53.5px;
+  font-family: "Arial", Helvetica, sans-serif;
+  font-size: 36px;
   font-weight: 700;
-  line-height: 1.1;
+  line-height: 1;
+  letter-spacing: -0.02em;
   color: #000;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+  text-box-trim: trim-start;
+  text-box-edge: cap alphabetic;
 }
 
 .project-section__body {
   min-width: 0;
 }
 
+#posters.project-section,
+#merchandise.project-section {
+  overflow-anchor: none;
+}
+
+#posters.project-section,
+#merchandise.project-section {
+  margin-bottom: 24px;
+}
+
+#posters.project-section .project-section__title,
+#merchandise.project-section .project-section__title {
+  margin-bottom: 24px;
+}
+
 /* Logo — equal quadrant gaps in both menu states */
+
+/* Logo — boxes from PS: 500², wordmark 446×190, badge 453×310 (master) */
 
 .project-egwu-logos {
   display: grid;
-  grid-template-columns: minmax(6.75rem, 8.25rem) minmax(0, 1fr);
-  gap: 1.75rem;
+  /* 500 → 250; column gap (1500-845-500)=155 → 77.5 */
+  grid-template-columns: 250px 223px;
+  gap: 77.5px;
   align-items: start;
   max-width: 100%;
 }
 
 .project-egwu-logos__primary .project-egwu-logos__image {
-  width: 100%;
-  max-width: 8.25rem;
+  width: 250px;
+  max-width: 250px;
   height: auto;
 }
 
 .project-egwu-logos__secondary {
   display: flex;
   flex-direction: column;
-  gap: 1.75rem;
+  /* wordmark y=838 vs square y=888 → 50 master → pull up 25 layout */
+  margin-top: -25px;
+  /* badge y - (wordmark y + h) = 1119-(838+190)=91 → 45.5 */
+  gap: 45.5px;
   align-items: flex-start;
   justify-content: flex-start;
+  padding-top: 0;
 }
 
 .project-egwu-logos__figure:first-child .project-egwu-logos__image {
-  width: 100%;
-  max-width: 15.5rem;
+  width: 223px;
+  max-width: 223px;
   height: auto;
 }
 
 .project-egwu-logos__figure:last-child .project-egwu-logos__image {
-  width: 100%;
-  max-width: 10.5rem;
+  width: 226.5px;
+  max-width: 226.5px;
   height: auto;
-}
-
-.project-pane[data-menu-state="hidden"] .project-egwu-logos {
-  grid-template-columns: 6.75rem minmax(0, 1fr);
-}
-
-.project-pane[data-menu-state="hidden"] .project-egwu-logos__primary .project-egwu-logos__image {
-  max-width: 6.75rem;
-}
-
-.project-pane[data-menu-state="hidden"] .project-egwu-logos__figure:first-child .project-egwu-logos__image {
-  max-width: 14rem;
-}
-
-.project-pane[data-menu-state="hidden"] .project-egwu-logos__figure:last-child .project-egwu-logos__image {
-  max-width: 12rem;
 }
 
 .project-egwu-logos__figure {
@@ -250,7 +303,7 @@
   display: block;
 }
 
-/* Colors + playlist */
+/* Colors + playlist — same layout-px lock as Logo (8514 mockup ÷ 2.808). */
 
 .project-asset-single {
   margin: 0;
@@ -262,16 +315,14 @@
   height: auto;
 }
 
-.project-pane[data-menu-state="hidden"] .project-asset-single--colors {
+.project-asset-single--colors {
+  width: 561px;
   max-width: 100%;
 }
 
-.project-pane[data-menu-state="hidden"] .project-asset-single--playlist {
-  max-width: 62%;
-}
-
-.project-pane[data-menu-state="open"] .project-asset-single--playlist {
-  max-width: 48%;
+.project-asset-single--playlist {
+  width: 449px;
+  max-width: 100%;
 }
 
 /* Cover Flow */
@@ -281,53 +332,32 @@
   width: 100%;
   max-width: none;
   margin: 0;
+  overflow: visible;
   touch-action: pan-y;
   overscroll-behavior-x: contain;
   outline: none;
 }
 
-.project-pane[data-menu-state="open"] .project-cover-flow--poster .project-cover-flow__stage {
-  height: 24rem;
+.project-cover-flow--poster,
+.project-cover-flow--merchandise {
+  width: 496px;
+  max-width: 100%;
 }
 
-.project-pane[data-menu-state="open"] .project-cover-flow--poster .project-cover-flow__image {
-  max-height: 22rem;
-  max-width: min(50%, 18rem);
+.project-cover-flow--poster .project-cover-flow__stage {
+  height: 480px;
+  overflow: visible;
 }
 
-.project-pane[data-menu-state="open"] .project-cover-flow--merchandise .project-cover-flow__stage {
-  height: 21rem;
-}
-
-.project-pane[data-menu-state="open"] .project-cover-flow--merchandise .project-cover-flow__image {
-  max-height: 19rem;
-  max-width: min(52%, 20rem);
-  object-fit: contain;
-}
-
-.project-pane[data-menu-state="hidden"] .project-cover-flow--poster .project-cover-flow__stage {
-  height: 27rem;
-}
-
-.project-pane[data-menu-state="hidden"] .project-cover-flow--poster .project-cover-flow__image {
-  max-height: 26rem;
-  max-width: min(52%, 20rem);
-}
-
-.project-pane[data-menu-state="hidden"] .project-cover-flow--merchandise .project-cover-flow__stage {
-  height: 24rem;
-}
-
-.project-pane[data-menu-state="hidden"] .project-cover-flow--merchandise .project-cover-flow__image {
-  max-height: 22rem;
-  max-width: min(55%, 22rem);
-  object-fit: contain;
+.project-cover-flow--merchandise .project-cover-flow__stage {
+  height: 480px;
+  overflow: visible;
 }
 
 .project-cover-flow__stage {
   position: relative;
-  perspective: 1200px;
-  perspective-origin: 50% 44%;
+  /* Flat 2D fan / stack — the mockup is not a perspective cover-flow. */
+  perspective: none;
   cursor: grab;
   user-select: none;
 }
@@ -342,23 +372,67 @@
   height: 100%;
 }
 
+.project-cover-flow__peek {
+  position: absolute;
+  top: 0;
+  z-index: 120;
+  width: calc(50% - 100px);
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.project-cover-flow__peek--prev {
+  left: 0;
+}
+
+.project-cover-flow__peek--next {
+  right: 0;
+}
+
 .project-cover-flow__item {
   position: absolute;
   top: 50%;
   left: 50%;
   margin: 0;
-  transform-style: preserve-3d;
-  backface-visibility: hidden;
+  overflow: visible;
+}
+
+.project-cover-flow__item > span,
+.project-cover-flow__item img {
+  overflow: visible !important;
+}
+
+.project-cover-flow--poster .project-cover-flow__item {
+  width: 341px;
+  height: 428px;
+  min-width: 341px;
+  min-height: 428px;
+}
+
+.project-cover-flow--merchandise .project-cover-flow__item {
+  width: 428px;
+  height: 428px;
+  min-width: 428px;
+  min-height: 428px;
 }
 
 .project-cover-flow__image {
   display: block;
-  width: auto;
-  height: auto;
+  object-fit: contain;
 }
 
-.project-cover-flow--poster .project-cover-flow__image {
-  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.08));
+.project-cover-flow--poster .project-cover-flow__image,
+.project-cover-flow--merchandise .project-cover-flow__image {
+  filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.15));
+  transition: filter 0.28s ease;
+}
+
+.project-cover-flow--poster .project-cover-flow__item--active .project-cover-flow__image,
+.project-cover-flow--merchandise .project-cover-flow__item--active .project-cover-flow__image {
+  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.28));
 }
 
 .project-cover-flow__controls {
@@ -415,19 +489,33 @@
 /* Footer */
 
 .project-footer {
+  position: relative;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: end;
   gap: 1rem;
-  margin-top: 2.5rem;
-  padding-top: 1rem;
-  font-family: "Arial MT Std", Arial, Helvetica, sans-serif;
+  margin-top: 88px;
+  padding-top: 0;
+  padding-bottom: 0;
+  font-family: "LTC Garamont Display OT", "Times New Roman", serif;
 }
 
 .project-footer__nav {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 4px;
+}
+
+.project-footer__measure {
+  position: absolute;
+  visibility: hidden;
+  white-space: nowrap;
+  pointer-events: none;
+  font-family: "Arial MT Std", "Arial", Helvetica, sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
 }
 
 .project-footer__nav--next {
@@ -437,15 +525,27 @@
 
 .project-footer__label {
   margin: 0;
-  font-size: 0.8125rem;
-  font-weight: 800;
+  font-family: "LTC Garamont Display OT", "Times New Roman", serif;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: #000;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+  -webkit-text-stroke: 0.75px currentColor;
+  paint-order: stroke fill;
 }
 
 .project-footer__project {
   margin: 0;
-  font-size: 1.25rem;
+  font-family: "Arial MT Std", "Arial", Helvetica, sans-serif;
+  font-size: 28px;
   font-weight: 800;
-  line-height: 1.1;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
 }
 
 .project-footer__project--placeholder {
@@ -456,11 +556,16 @@
   justify-self: center;
   border: 0;
   background: transparent;
-  padding: 0.25rem 0.5rem;
-  font-size: 1.5rem;
-  line-height: 1;
+  padding: 0;
   cursor: pointer;
   color: #000;
+  line-height: 0;
+}
+
+.project-footer__top img {
+  display: block;
+  width: 32px;
+  height: 32px;
 }
 
 .project-footer__top:hover {

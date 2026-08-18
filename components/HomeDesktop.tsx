@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { AboutBio } from "@/components/AboutBio";
 import { CircularNavWheel } from "@/components/CircularNavWheel";
@@ -13,21 +13,55 @@ import { FilmHoverGif } from "@/components/FilmHoverGif";
 import { InstallationLottie } from "@/components/InstallationLottie";
 import { PhotosHoverCluster } from "@/components/PhotosHoverCluster";
 import { SelectedWorksHoverGif } from "@/components/SelectedWorksHoverGif";
+import { ProjectHeader } from "@/components/project/ProjectHeader";
+import { ProjectIndexNav } from "@/components/project/ProjectIndexNav";
+import {
+  ProjectContentPane,
+  type ProjectMenuState,
+} from "@/components/project/ProjectContentPane";
+import { EgwuRecordsProject } from "@/components/project/projects/EgwuRecordsProject";
 import {
   DESKTOP_LAYOUT_BIO_LEFT,
   getDesktopStageMetrics,
 } from "@/lib/desktop-stage";
+import {
+  EGWU_RECORDS_SLUG,
+  getProjectBySlug,
+  type ProjectDefinition,
+} from "@/data/projects";
+
+import "@/components/project/project-pane.css";
+
+const DESIGN_PROJECT_PATH = `/design/${EGWU_RECORDS_SLUG}`;
+
+type Props = {
+  /** Direct visit to a project URL — same shell, already in project view. */
+  initialProject?: ProjectDefinition;
+};
 
 /**
  * Desktop landing — same 2875×1623 stage + three-quadrant shell as EGWÚ.
  * Menu uses stage containment (shared off-axis position). Hover/bio/contact
  * overlays are authored in layout coordinates and scale with the stage.
+ *
+ * Clicking “design” keeps this shell and wheel mounted; the middle and
+ * signature quadrants fill with the project in place (no route remount).
  */
-export function HomeDesktop() {
-  const [activeLabel, setActiveLabel] = useState("contact");
+export function HomeDesktop({ initialProject }: Props) {
+  const [activeLabel, setActiveLabel] = useState(
+    initialProject ? "design" : "contact",
+  );
   const [hoverNavLabel, setHoverNavLabel] = useState<string | null>(null);
+  const [project, setProject] = useState<ProjectDefinition | null>(
+    initialProject ?? null,
+  );
+  const [enteredFromLanding, setEnteredFromLanding] = useState(false);
+  const [menuState, setMenuState] = useState<ProjectMenuState>("open");
   const [reduceMotion, setReduceMotion] = useState(false);
   const m = getDesktopStageMetrics();
+  const projectOpen = project != null;
+  const projectRef = useRef(project);
+  projectRef.current = project;
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -37,9 +71,43 @@ export function HomeDesktop() {
     return () => mq.removeEventListener("change", u);
   }, []);
 
+  const openDesignProject = useCallback(() => {
+    if (projectRef.current) return;
+    const next = getProjectBySlug(EGWU_RECORDS_SLUG);
+    if (!next) return;
+    setEnteredFromLanding(true);
+    setMenuState("open");
+    setProject(next);
+    if (window.location.pathname !== DESIGN_PROJECT_PATH) {
+      window.history.pushState(
+        { munaProject: EGWU_RECORDS_SLUG },
+        "",
+        DESIGN_PROJECT_PATH,
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    const onPop = () => {
+      if (window.location.pathname === "/") {
+        setProject(null);
+        setEnteredFromLanding(false);
+        setMenuState("open");
+        return;
+      }
+      const match = /^\/design\/([^/]+)/.exec(window.location.pathname);
+      const next = match ? getProjectBySlug(match[1] ?? "") : undefined;
+      setProject(next ?? null);
+      setEnteredFromLanding(false);
+      setMenuState("open");
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
   const previewLabel = hoverNavLabel ?? activeLabel;
-  const isContact = previewLabel === "contact";
-  const showAboutBio = previewLabel === "about" || isContact;
+  const isContact = !projectOpen && previewLabel === "contact";
+  const showAboutBio = !projectOpen && (previewLabel === "about" || isContact);
   const fadeMs = reduceMotion ? 80 : 520;
 
   /** Clear signature column for bio; contact bar meets polaroid flush (no black gap). */
@@ -50,49 +118,80 @@ export function HomeDesktop() {
     <DesktopStageCanvas>
       <DesktopSiteShell
         layout="stage"
-        showPolaroid
-        menuState="open"
+        showPolaroid={!projectOpen}
+        menuState={projectOpen ? menuState : "open"}
+        onOpenMenu={projectOpen ? () => setMenuState("open") : undefined}
         nav={
           <CircularNavWheel
             layout="desktop"
             containment="stage"
-            initialActiveLabel="contact"
+            initialActiveLabel={initialProject ? "design" : "contact"}
             onActiveLabelChange={setActiveLabel}
             onHoverLabelChange={setHoverNavLabel}
+            onLabelActivate={(label) => {
+              if (label === "design") openDesignProject();
+            }}
           />
         }
-        center={<div className="h-full w-full" aria-hidden />}
+        center={
+          project ? (
+            <div
+              className={
+                enteredFromLanding && !reduceMotion
+                  ? "desktop-site-shell__quadrant-fill"
+                  : undefined
+              }
+            >
+              <ProjectContentPane
+                menuState={menuState}
+                onMenuStateChange={setMenuState}
+              >
+                <div className="project-pane__chrome">
+                  <ProjectIndexNav
+                    activeNumber={project.number}
+                    total={project.indexTotal}
+                  />
+                </div>
+                <ProjectHeader project={project} menuState={menuState} />
+                <EgwuRecordsProject menuState={menuState} />
+              </ProjectContentPane>
+            </div>
+          ) : (
+            <div className="h-full w-full" aria-hidden />
+          )
+        }
         stageOverlays={
           <>
             <DesignCluster
-              visible={activeLabel === "design"}
+              visible={!projectOpen && activeLabel === "design"}
               variant="desktop"
               stageLocked
             />
             <InstallationLottie
-              visible={activeLabel === "installation"}
+              visible={!projectOpen && activeLabel === "installation"}
               layout="desktop"
               stageLocked
             />
             <PhotosHoverCluster
-              visible={hoverNavLabel === "photos"}
+              visible={!projectOpen && hoverNavLabel === "photos"}
               variant="desktop"
               stageLocked
             />
             <FilmHoverGif
-              visible={hoverNavLabel === "film"}
+              visible={!projectOpen && hoverNavLabel === "film"}
               layout="desktop"
               stageLocked
             />
             <CvPressHoverAccordion
               visible={
-                hoverNavLabel === "cv + press" || activeLabel === "cv + press"
+                !projectOpen &&
+                (hoverNavLabel === "cv + press" || activeLabel === "cv + press")
               }
               layout="desktop"
               stageLocked
             />
             <SelectedWorksHoverGif
-              visible={hoverNavLabel === "selected works"}
+              visible={!projectOpen && hoverNavLabel === "selected works"}
               layout="desktop"
               stageLocked
             />

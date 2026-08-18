@@ -11,7 +11,7 @@ export function EgwuColorsSection() {
         width={EGWU_COLORS.width}
         height={EGWU_COLORS.height}
         className="project-asset-single__image"
-        sizes="(max-width: 960px) 100vw, 42rem"
+        sizes="561px"
       />
     </figure>
   );

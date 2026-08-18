@@ -245,6 +245,8 @@ export type CircularNavWheelProps = {
   onActiveLabelChange?: (label: string) => void;
   /** Fired when a nav item is hovered/focus-hovered (`null` when hover ends). Label is lowercase e.g. `"photos"`. */
   onHoverLabelChange?: (label: string | null) => void;
+  /** Fired on click/tap of a label (not wheel-spin snap). */
+  onLabelActivate?: (label: string) => void;
   /** True while the narrow wheel is dragging or coasting (live preview mode). */
   onWheelInteractingChange?: (interacting: boolean) => void;
   /** Section selected on first paint (wheel angle + focus). Default: first label (`about`). */
@@ -265,6 +267,7 @@ export type CircularNavWheelProps = {
 export function CircularNavWheel({
   onActiveLabelChange,
   onHoverLabelChange,
+  onLabelActivate,
   onWheelInteractingChange,
   initialActiveLabel,
   layout = "desktop",
@@ -314,6 +317,8 @@ export function CircularNavWheel({
   onLabelRef.current = onActiveLabelChange;
   const onHoverLabelRef = useRef(onHoverLabelChange);
   onHoverLabelRef.current = onHoverLabelChange;
+  const onActivateRef = useRef(onLabelActivate);
+  onActivateRef.current = onLabelActivate;
   const onWheelInteractingRef = useRef(onWheelInteractingChange);
   onWheelInteractingRef.current = onWheelInteractingChange;
   const isWheelInteractingRef = useRef(false);
@@ -862,6 +867,8 @@ export function CircularNavWheel({
         /* noop */
       }
       setWheelInteracting(false);
+      const label = items[focusedRef.current]?.label;
+      if (label) onActivateRef.current?.(label);
       return;
     }
 
@@ -894,6 +901,13 @@ export function CircularNavWheel({
         const i = nearestIndexToPointer(p.x, p.y, φ);
         setFocusedIndex(i);
         setRotation((prev) => snapRotationForIndex(i, prev));
+        const hit = document.elementFromPoint(e.clientX, e.clientY);
+        const btn =
+          hit instanceof Element ? hit.closest("button") : null;
+        if (btn?.id === `circular-nav-item-${i}`) {
+          const label = items[i]?.label;
+          if (label) onActivateRef.current?.(label);
+        }
       }
     } else if (isNarrow && wasDragging) {
       finishNarrowSpin();
@@ -933,7 +947,7 @@ export function CircularNavWheel({
     ? "absolute left-0 top-0 touch-none select-none bg-transparent"
     : isNarrow
       ? "absolute inset-0 touch-none select-none bg-transparent"
-      : "fixed inset-0 touch-none select-none bg-white";
+      : "fixed inset-0 touch-none select-none bg-transparent";
 
   return (
     <div
@@ -1130,10 +1144,14 @@ export function CircularNavWheel({
                     }
                   }}
                   onBlur={() => onItemLeave(item.index)}
+                  onClick={() => {
+                    onActivateRef.current?.(item.label);
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
                       onItemEnter(item.index);
+                      onActivateRef.current?.(item.label);
                     }
                     if (e.key === "ArrowUp" || e.key === "ArrowDown") {
                       e.preventDefault();

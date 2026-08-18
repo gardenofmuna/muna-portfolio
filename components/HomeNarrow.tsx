@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AboutBio } from "@/components/AboutBio";
 import { CircularNavWheel } from "@/components/CircularNavWheel";
 import { DesignCluster } from "@/components/DesignCluster";
@@ -13,12 +14,14 @@ import { FilmHoverGif } from "@/components/FilmHoverGif";
 import { SelectedWorksHoverGif } from "@/components/SelectedWorksHoverGif";
 import { NarrowCenterPopup } from "@/components/NarrowCenterPopup";
 import { SiteWordmark } from "@/components/SiteWordmark";
+import { EGWU_RECORDS_SLUG } from "@/data/projects";
 
 /**
  * Artboard_2 (859×1623): centered wheel, wordmark, footer links always on,
  * about/contact bio in wheel hub — no page scroll.
  */
 export function HomeNarrow() {
+  const router = useRouter();
   const [activeLabel, setActiveLabel] = useState("contact");
   const [hoverNavLabel, setHoverNavLabel] = useState<string | null>(null);
   const [wheelInteracting, setWheelInteracting] = useState(false);
@@ -63,6 +66,11 @@ export function HomeNarrow() {
           onActiveLabelChange={setActiveLabel}
           onHoverLabelChange={setHoverNavLabel}
           onWheelInteractingChange={setWheelInteracting}
+          onLabelActivate={(label) => {
+            if (label === "design") {
+              router.push(`/design/${EGWU_RECORDS_SLUG}`);
+            }
+          }}
         />
         <DesignCluster visible={showDesign} variant="narrow" />
         <InstallationLottie visible={showInstallation} layout="narrow" />
