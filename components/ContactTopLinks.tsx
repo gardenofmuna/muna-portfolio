@@ -75,6 +75,7 @@ export function ContactTopLinks({
         paddingRight: "4px",
         boxSizing: "border-box",
         opacity: visible ? 1 : 0,
+        visibility: visible ? "visible" : "hidden",
         transition: reduceMotion
           ? "none"
           : `opacity ${fadeMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
@@ -85,7 +86,7 @@ export function ContactTopLinks({
         <button
           key={href}
           type="button"
-          className="contact-top-link cursor-pointer pointer-events-auto select-text border-none bg-transparent p-0 text-left no-underline outline-offset-4 underline-offset-[0.18em] decoration-1 decoration-black hover:underline hover:decoration-black"
+          className="contact-top-link cursor-pointer select-text border-none bg-transparent p-0 text-left no-underline outline-offset-4 underline-offset-[0.18em] decoration-1 decoration-black hover:underline hover:decoration-black"
           style={linkBase}
           onClick={(e) => {
             if (e.metaKey || e.ctrlKey) {

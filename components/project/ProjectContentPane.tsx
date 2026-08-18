@@ -138,6 +138,26 @@ export function ProjectContentPane({
     };
   }, []);
 
+  useEffect(() => {
+    if (menuState !== "open") return;
+    const scroll = scrollRef.current;
+    const inner = innerRef.current;
+    if (!scroll || !inner) return;
+
+    const onWheel = (event: WheelEvent) => {
+      if (event.defaultPrevented) return;
+      const delta =
+        event.deltaMode === 1 ? event.deltaY * 16 : event.deltaY;
+      if (delta === 0) return;
+      const prev = scroll.scrollTop;
+      scroll.scrollTop += delta;
+      if (scroll.scrollTop !== prev) event.preventDefault();
+    };
+
+    inner.addEventListener("wheel", onWheel, { passive: false });
+    return () => inner.removeEventListener("wheel", onWheel);
+  }, [menuState]);
+
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;

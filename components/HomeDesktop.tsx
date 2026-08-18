@@ -138,8 +138,8 @@ export function HomeDesktop({ initialProject }: Props) {
             <div
               className={
                 enteredFromLanding && !reduceMotion
-                  ? "desktop-site-shell__quadrant-fill"
-                  : undefined
+                  ? "desktop-site-shell__center-slot desktop-site-shell__quadrant-fill"
+                  : "desktop-site-shell__center-slot"
               }
             >
               <ProjectContentPane
@@ -161,68 +161,69 @@ export function HomeDesktop({ initialProject }: Props) {
           )
         }
         stageOverlays={
-          <>
-            <DesignCluster
-              visible={!projectOpen && activeLabel === "design"}
-              variant="desktop"
-              stageLocked
-            />
-            <InstallationLottie
-              visible={!projectOpen && activeLabel === "installation"}
-              layout="desktop"
-              stageLocked
-            />
-            <PhotosHoverCluster
-              visible={!projectOpen && hoverNavLabel === "photos"}
-              variant="desktop"
-              stageLocked
-            />
-            <FilmHoverGif
-              visible={!projectOpen && hoverNavLabel === "film"}
-              layout="desktop"
-              stageLocked
-            />
-            <CvPressHoverAccordion
-              visible={
-                !projectOpen &&
-                (hoverNavLabel === "cv + press" || activeLabel === "cv + press")
-              }
-              layout="desktop"
-              stageLocked
-            />
-            <SelectedWorksHoverGif
-              visible={!projectOpen && hoverNavLabel === "selected works"}
-              layout="desktop"
-              stageLocked
-            />
-            <ContactTopLinks
-              visible={isContact}
-              stageLocked
-              top={`${m.inset}px`}
-              left={`${DESKTOP_LAYOUT_BIO_LEFT}px`}
-              right={`${contactBarRight}px`}
-            />
-            <div
-              aria-hidden={!showAboutBio}
-              className="pointer-events-none absolute z-[30] flex flex-row items-end"
-              style={{
-                left: DESKTOP_LAYOUT_BIO_LEFT,
-                right: bioRightClearOfNzeribe,
-                bottom: m.inset,
-                opacity: showAboutBio ? 1 : 0,
-                transition: reduceMotion
-                  ? "none"
-                  : `opacity ${fadeMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
-              }}
-            >
-              <AboutBio
-                visible={showAboutBio}
-                embedded
+          projectOpen ? null : (
+            <>
+              <DesignCluster
+                visible={activeLabel === "design"}
+                variant="desktop"
                 stageLocked
-                whiteBodyText={isContact}
               />
-            </div>
-          </>
+              <InstallationLottie
+                visible={activeLabel === "installation"}
+                layout="desktop"
+                stageLocked
+              />
+              <PhotosHoverCluster
+                visible={hoverNavLabel === "photos"}
+                variant="desktop"
+                stageLocked
+              />
+              <FilmHoverGif
+                visible={hoverNavLabel === "film"}
+                layout="desktop"
+                stageLocked
+              />
+              <CvPressHoverAccordion
+                visible={
+                  hoverNavLabel === "cv + press" || activeLabel === "cv + press"
+                }
+                layout="desktop"
+                stageLocked
+              />
+              <SelectedWorksHoverGif
+                visible={hoverNavLabel === "selected works"}
+                layout="desktop"
+                stageLocked
+              />
+              <ContactTopLinks
+                visible={isContact}
+                stageLocked
+                top={`${m.inset}px`}
+                left={`${DESKTOP_LAYOUT_BIO_LEFT}px`}
+                right={`${contactBarRight}px`}
+              />
+              <div
+                aria-hidden={!showAboutBio}
+                className="pointer-events-none absolute z-[30] flex flex-row items-end"
+                style={{
+                  left: DESKTOP_LAYOUT_BIO_LEFT,
+                  right: bioRightClearOfNzeribe,
+                  bottom: m.inset,
+                  opacity: showAboutBio ? 1 : 0,
+                  transition: reduceMotion
+                    ? "none"
+                    : `opacity ${fadeMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+                }}
+              >
+                <AboutBio
+                  visible={showAboutBio}
+                  embedded
+                  stageLocked
+                  whiteBodyText={isContact}
+                />
+              </div>
+            </>
+          )
         }
       />
     </DesktopStageCanvas>

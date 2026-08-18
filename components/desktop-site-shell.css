@@ -134,19 +134,23 @@
 
 .desktop-site-shell__polaroid[data-visible="false"] {
   opacity: 0;
+  visibility: hidden;
 }
 
-.desktop-site-shell__quadrant-fill {
+.desktop-site-shell__center-slot {
   display: flex;
   flex-direction: column;
   height: 100%;
   min-height: 0;
-  animation: desktop-quadrant-fill 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.desktop-site-shell__quadrant-fill > .project-pane {
+.desktop-site-shell__center-slot > .project-pane {
   flex: 1;
   min-height: 0;
+}
+
+.desktop-site-shell__quadrant-fill {
+  animation: desktop-quadrant-fill 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes desktop-quadrant-fill {

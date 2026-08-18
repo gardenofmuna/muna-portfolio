@@ -73,8 +73,11 @@ const DEFAULT_VARIANT_BEHAVIOR = {
 
 const SWIPE_OFFSET_PX = 52;
 const SWIPE_VELOCITY = 320;
-const POSTER_SCROLL_STEP = 88;
-const POSTER_SCROLL_COOLDOWN_MS = 280;
+const POSTER_SCROLL_STEP = 52;
+const POSTER_SCROLL_COOLDOWN_MS = 120;
+/** Only hijack page scroll while the section title is near the hamburger. */
+const PIN_SLACK_PX = 10;
+const PIN_PAST_PX = 36;
 
 function clampIndex(index: number, length: number) {
   return Math.max(0, Math.min(length - 1, index));
@@ -168,13 +171,23 @@ export function CoverFlowCarousel({
     [items.length],
   );
 
+  const stepWrap = useCallback(
+    (delta: number) => {
+      if (items.length === 0) return;
+      const next = wrapIndex(activeIndexRef.current + delta, items.length);
+      activeIndexRef.current = next;
+      setActiveIndex(next);
+    },
+    [items.length],
+  );
+
   const goPrevious = useCallback(() => {
-    goTo(activeIndex - 1);
-  }, [activeIndex, goTo]);
+    stepWrap(-1);
+  }, [stepWrap]);
 
   const goNext = useCallback(() => {
-    goTo(activeIndex + 1);
-  }, [activeIndex, goTo]);
+    stepWrap(1);
+  }, [stepWrap]);
 
   const finishDrag = useCallback(
     (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
@@ -260,9 +273,10 @@ export function CoverFlowCarousel({
     };
 
     const sectionReachedPin = () => {
-      const { headingRect, desiredTop, sectionRect, scrollerRect } = metrics();
+      const { drift, sectionRect, scrollerRect } = metrics();
       return (
-        headingRect.top <= desiredTop + 1 &&
+        drift <= PIN_SLACK_PX &&
+        drift >= -PIN_PAST_PX &&
         sectionRect.bottom > scrollerRect.top + 80
       );
     };
@@ -292,7 +306,7 @@ export function CoverFlowCarousel({
           return;
         }
         const { drift } = metrics();
-        if (Math.abs(drift) > 0.75) scroller.scrollTop += drift;
+        if (Math.abs(drift) > 2) scroller.scrollTop += drift;
       });
     };
 
@@ -337,11 +351,11 @@ export function CoverFlowCarousel({
 
       accumulated += delta;
       if (accumulated >= POSTER_SCROLL_STEP) {
-        accumulated = 0;
+        accumulated -= POSTER_SCROLL_STEP;
         cooldownUntil = now + POSTER_SCROLL_COOLDOWN_MS;
         goTo(index + 1);
       } else if (accumulated <= -POSTER_SCROLL_STEP) {
-        accumulated = 0;
+        accumulated += POSTER_SCROLL_STEP;
         cooldownUntil = now + POSTER_SCROLL_COOLDOWN_MS;
         goTo(index - 1);
       }
@@ -446,30 +460,26 @@ export function CoverFlowCarousel({
         }}
         onDragEnd={finishDrag}
       >
-        {variant === "merchandise" ? (
-          <>
-            <button
-              type="button"
-              className="project-cover-flow__peek project-cover-flow__peek--prev"
-              aria-label={`Previous ${itemNoun.toLowerCase()}`}
-              onPointerDown={(event) => event.stopPropagation()}
-              onClick={(event) => {
-                event.stopPropagation();
-                goPrevious();
-              }}
-            />
-            <button
-              type="button"
-              className="project-cover-flow__peek project-cover-flow__peek--next"
-              aria-label={`Next ${itemNoun.toLowerCase()}`}
-              onPointerDown={(event) => event.stopPropagation()}
-              onClick={(event) => {
-                event.stopPropagation();
-                goNext();
-              }}
-            />
-          </>
-        ) : null}
+        <button
+          type="button"
+          className="project-cover-flow__peek project-cover-flow__peek--prev"
+          aria-label={`Previous ${itemNoun.toLowerCase()}`}
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={(event) => {
+            event.stopPropagation();
+            goPrevious();
+          }}
+        />
+        <button
+          type="button"
+          className="project-cover-flow__peek project-cover-flow__peek--next"
+          aria-label={`Next ${itemNoun.toLowerCase()}`}
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={(event) => {
+            event.stopPropagation();
+            goNext();
+          }}
+        />
         <motion.div className="project-cover-flow__track" style={{ x: dragX }}>
           {visibleItems.map(({ offset, itemIndex, item }) => {
             const transform = itemTransform(
@@ -508,7 +518,7 @@ export function CoverFlowCarousel({
                 }
                 style={{
                   zIndex: transform.zIndex,
-                  pointerEvents: "auto",
+                  pointerEvents: isActive ? "none" : "auto",
                   cursor: isActive ? undefined : "pointer",
                 }}
                 animate={{
@@ -522,16 +532,16 @@ export function CoverFlowCarousel({
                 onPointerDown={(event) => {
                   if (!isActive) event.stopPropagation();
                 }}
-                onClick={() => {
+                onTap={() => {
                   if (isActive) return;
-                  goTo(itemIndex);
+                  stepWrap(offset > 0 ? 1 : -1);
                 }}
                 onKeyDown={(event) => {
                   if (isActive) return;
                   if (event.key === "Enter" || event.key === " ") {
                     event.preventDefault();
                     event.stopPropagation();
-                    goTo(itemIndex);
+                    stepWrap(offset > 0 ? 1 : -1);
                   }
                 }}
               >

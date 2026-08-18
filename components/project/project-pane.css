@@ -23,7 +23,7 @@
 .project-pane[data-menu-state="open"] {
   /* Don't clip the left-expanded scrollport at the content-column edge. */
   overflow: visible;
-  /* Empty leftover over the nav passes through to the wheel. */
+  /* Expanded leftover over the nav must not steal wheel drags. */
   pointer-events: none;
 }
 
@@ -376,12 +376,13 @@
   position: absolute;
   top: 0;
   z-index: 120;
-  width: calc(50% - 100px);
+  width: calc(50% - 80px);
   height: 100%;
   padding: 0;
   border: 0;
   background: transparent;
   cursor: pointer;
+  pointer-events: auto;
 }
 
 .project-cover-flow__peek--prev {
