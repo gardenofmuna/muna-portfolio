@@ -1,6 +1,17 @@
 "use client";
 
-import { useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, Fragment } from "react";
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  Fragment,
+} from "react";
+
+import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 
 import {
   narrowHitOverlayRects,
@@ -274,6 +285,9 @@ export function CircularNavWheel({
   containment = "viewport",
 }: CircularNavWheelProps = {}) {
   const isNarrow = layout === "narrow";
+  const coarsePointer = useCoarsePointer();
+  const coarseRef = useRef(coarsePointer);
+  coarseRef.current = coarsePointer;
   const ringLayout = useNarrowRingLayout(isNarrow);
   const labelAngles = ringLayout.labelAngles;
   const labelArcs = ringLayout.labelArcs;
@@ -585,7 +599,9 @@ export function CircularNavWheel({
       e.preventDefault();
       const rotScale = isNarrowRef.current
         ? WHEEL_ROT_SCALE
-        : DESKTOP_WHEEL_ROT_SCALE;
+        : coarseRef.current
+          ? DESKTOP_WHEEL_ROT_SCALE * 1.9
+          : DESKTOP_WHEEL_ROT_SCALE;
       setRotation((prev) => prev + e.deltaY * rotScale);
       if (idle) clearTimeout(idle);
       const snapMs = isNarrowRef.current
@@ -847,7 +863,12 @@ export function CircularNavWheel({
     }
 
     setRotation((prev) => {
-      const applied = isNarrow ? delta : delta * DESKTOP_DRAG_GAIN;
+      const dragGain = isNarrow
+        ? 1
+        : coarseRef.current
+          ? 1
+          : DESKTOP_DRAG_GAIN;
+      const applied = isNarrow ? delta : delta * dragGain;
       const next = prev + applied;
       rotationRef.current = next;
       if (isNarrow) {

@@ -18,6 +18,8 @@ import {
   type KeyboardEvent,
 } from "react";
 
+import { useCoarsePointer } from "@/hooks/useCoarsePointer";
+
 export type CoverFlowItem = {
   src: string;
   alt: string;
@@ -150,6 +152,7 @@ export function CoverFlowCarousel({
   maxRotation,
 }: CoverFlowCarouselProps) {
   const reduceMotion = useReducedMotion();
+  const coarsePointer = useCoarsePointer();
   const regionId = useId();
   const statusId = `${regionId}-status`;
   const rootRef = useRef<HTMLElement>(null);
@@ -232,7 +235,8 @@ export function CoverFlowCarousel({
   }, [activeIndex, dragX, reduceMotion]);
 
   useEffect(() => {
-    if (items.length <= 1) return;
+    /* Touch devices: let the page scroll normally; use taps on side cards. */
+    if (items.length <= 1 || coarsePointer) return;
     const root = rootRef.current;
     if (!root) return;
     const scroller = root.closest(".project-pane__scroll");
@@ -399,7 +403,7 @@ export function CoverFlowCarousel({
       scroller.removeEventListener("touchmove", onTouchMove, opts);
       scroller.removeEventListener("scroll", onScroll);
     };
-  }, [goTo, items.length, variant]);
+  }, [goTo, items.length, variant, coarsePointer]);
 
   const activeItem = items[activeIndex];
   const statusText = activeItem
@@ -451,7 +455,7 @@ export function CoverFlowCarousel({
     >
       <motion.div
         className="project-cover-flow__stage"
-        drag={reduceMotion ? false : "x"}
+        drag={reduceMotion || coarsePointer ? false : "x"}
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.14}
         dragMomentum={false}

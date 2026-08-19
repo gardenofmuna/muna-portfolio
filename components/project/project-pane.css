@@ -36,6 +36,25 @@
   pointer-events: auto;
 }
 
+@media (pointer: coarse) {
+  .project-pane[data-menu-state="open"] .project-pane__inner {
+    touch-action: pan-y;
+  }
+
+  .project-cover-flow {
+    touch-action: pan-y;
+  }
+
+  .project-cover-flow__stage {
+    touch-action: pan-y;
+    cursor: default;
+  }
+
+  .project-cover-flow__stage:active {
+    cursor: default;
+  }
+}
+
 .project-pane[data-menu-state="hidden"] {
   overflow: visible;
   background: transparent;

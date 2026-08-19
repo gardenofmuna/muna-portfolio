@@ -12,6 +12,7 @@ import {
 } from "react";
 
 import { getDesktopStageMetrics } from "@/lib/desktop-stage";
+import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 
 export type ProjectMenuState = "open" | "hidden";
 
@@ -61,6 +62,7 @@ export function ProjectContentPane({
     innerH: 0,
   });
   const [reduceMotion, setReduceMotion] = useState(false);
+  const coarsePointer = useCoarsePointer();
 
   useLayoutEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -144,6 +146,8 @@ export function ProjectContentPane({
     const inner = innerRef.current;
     if (!scroll || !inner) return;
 
+    let lastTouchY = 0;
+
     const onWheel = (event: WheelEvent) => {
       if (event.defaultPrevented) return;
       const delta =
@@ -154,9 +158,30 @@ export function ProjectContentPane({
       if (scroll.scrollTop !== prev) event.preventDefault();
     };
 
+    const onTouchStart = (event: TouchEvent) => {
+      lastTouchY = event.touches[0]?.clientY ?? 0;
+    };
+
+    const onTouchMove = (event: TouchEvent) => {
+      if (event.defaultPrevented) return;
+      const y = event.touches[0]?.clientY ?? lastTouchY;
+      const delta = lastTouchY - y;
+      lastTouchY = y;
+      if (delta === 0) return;
+      const prev = scroll.scrollTop;
+      scroll.scrollTop += delta;
+      if (scroll.scrollTop !== prev) event.preventDefault();
+    };
+
     inner.addEventListener("wheel", onWheel, { passive: false });
-    return () => inner.removeEventListener("wheel", onWheel);
-  }, [menuState]);
+    inner.addEventListener("touchstart", onTouchStart, { passive: true });
+    inner.addEventListener("touchmove", onTouchMove, { passive: false });
+    return () => {
+      inner.removeEventListener("wheel", onWheel);
+      inner.removeEventListener("touchstart", onTouchStart);
+      inner.removeEventListener("touchmove", onTouchMove);
+    };
+  }, [menuState, coarsePointer]);
 
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
