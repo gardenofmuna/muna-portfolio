@@ -87,6 +87,15 @@ export function HomeDesktop({ initialProject }: Props) {
     }
   }, []);
 
+  const goToLanding = useCallback(() => {
+    setProject(null);
+    setEnteredFromLanding(false);
+    setMenuState("open");
+    if (window.location.pathname !== "/") {
+      window.history.pushState(null, "", "/");
+    }
+  }, []);
+
   useEffect(() => {
     const onPop = () => {
       if (window.location.pathname === "/") {
@@ -121,6 +130,7 @@ export function HomeDesktop({ initialProject }: Props) {
         showPolaroid={!projectOpen}
         menuState={projectOpen ? menuState : "open"}
         onOpenMenu={projectOpen ? () => setMenuState("open") : undefined}
+        onSignatureClick={projectOpen ? goToLanding : undefined}
         nav={
           <CircularNavWheel
             layout="desktop"

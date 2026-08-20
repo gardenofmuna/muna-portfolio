@@ -41,6 +41,8 @@ type Props = {
   menuState?: DesktopMenuState;
   /** Shown in the nav zone when menuState is hidden. */
   onOpenMenu?: () => void;
+  /** When set, bottom-right nzeribe signature navigates home (e.g. exit project). */
+  onSignatureClick?: () => void;
   /**
    * `"fluid"`: viewport-scaled CSS vars (legacy / unused by landing).
    * `"stage"`: locked layout coords inside the 2875×1623 DesktopStageCanvas.
@@ -60,6 +62,7 @@ export function DesktopSiteShell({
   darkBackground = false,
   menuState = "open",
   onOpenMenu,
+  onSignatureClick,
   layout = "fluid",
 }: Props) {
   const isStage = layout === "stage";
@@ -180,14 +183,32 @@ export function DesktopSiteShell({
         style={signatureStyle}
         aria-label="Site signature"
       >
-        <Image
-          src="/nzeribe1.webp"
-          alt="Nzeribe"
-          width={NZERIBE_IMG_W}
-          height={NZERIBE_IMG_H}
-          className="block h-full w-full object-contain object-right object-bottom"
-          sizes={`${NZERIBE_IMG_W}px`}
-        />
+        {onSignatureClick ? (
+          <button
+            type="button"
+            className="desktop-site-shell__signature-button"
+            aria-label="Back to home"
+            onClick={onSignatureClick}
+          >
+            <Image
+              src="/nzeribe1.webp"
+              alt=""
+              width={NZERIBE_IMG_W}
+              height={NZERIBE_IMG_H}
+              className="block h-full w-full object-contain object-right object-bottom"
+              sizes={`${NZERIBE_IMG_W}px`}
+            />
+          </button>
+        ) : (
+          <Image
+            src="/nzeribe1.webp"
+            alt="Nzeribe"
+            width={NZERIBE_IMG_W}
+            height={NZERIBE_IMG_H}
+            className="block h-full w-full object-contain object-right object-bottom"
+            sizes={`${NZERIBE_IMG_W}px`}
+          />
+        )}
       </div>
     </div>
   );

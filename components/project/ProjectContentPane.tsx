@@ -188,11 +188,11 @@ export function ProjectContentPane({
     if (!el) return;
     if (userOpenedMenuRef.current) return;
     if (el.scrollTop > SCROLL_HIDE_THRESHOLD) {
-      onMenuStateChange("hidden");
+      if (menuState !== "hidden") onMenuStateChange("hidden");
     } else if (el.scrollTop <= 8) {
-      onMenuStateChange("open");
+      if (menuState !== "open") onMenuStateChange("open");
     }
-  }, [onMenuStateChange]);
+  }, [menuState, onMenuStateChange]);
 
   const scrollToTop = useCallback(() => {
     scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });

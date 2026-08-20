@@ -19,6 +19,11 @@ import {
 } from "react";
 
 import { useCoarsePointer } from "@/hooks/useCoarsePointer";
+import { readSafari } from "@/lib/safari";
+import {
+  registerCoverFlowScrollPin,
+  type CoverFlowSectionId,
+} from "@/components/project/coverFlowScrollPin";
 
 export type CoverFlowItem = {
   src: string;
@@ -75,11 +80,10 @@ const DEFAULT_VARIANT_BEHAVIOR = {
 
 const SWIPE_OFFSET_PX = 52;
 const SWIPE_VELOCITY = 320;
-const POSTER_SCROLL_STEP = 52;
-const POSTER_SCROLL_COOLDOWN_MS = 120;
-/** Only hijack page scroll while the section title is near the hamburger. */
-const PIN_SLACK_PX = 10;
-const PIN_PAST_PX = 36;
+const POSTER_SCROLL_STEP = 140;
+const MIN_STEP_INTERVAL_MS = 520;
+const SCROLL_FAN_EASE = [0.22, 1, 0.36, 1] as const;
+const SCROLL_FAN_MS = 0.58;
 
 function clampIndex(index: number, length: number) {
   return Math.max(0, Math.min(length - 1, index));
@@ -163,6 +167,7 @@ export function CoverFlowCarousel({
   const activeIndexRef = useRef(activeIndex);
   activeIndexRef.current = activeIndex;
   const dragX = useMotionValue(0);
+  const safari = readSafari();
 
   const goTo = useCallback(
     (index: number) => {
@@ -235,13 +240,17 @@ export function CoverFlowCarousel({
   }, [activeIndex, dragX, reduceMotion]);
 
   useEffect(() => {
+    /* Safari: normal page scroll — advance carousel via tap / drag only. */
+    if (safari) return;
     /* Touch devices: let the page scroll normally; use taps on side cards. */
     if (items.length <= 1 || coarsePointer) return;
     const root = rootRef.current;
     if (!root) return;
     const scroller = root.closest(".project-pane__scroll");
     if (!(scroller instanceof HTMLElement)) return;
-    const sectionId = variant === "poster" ? "posters" : "merchandise";
+    const sectionId = (variant === "poster"
+      ? "posters"
+      : "merchandise") as CoverFlowSectionId;
     const lockEl =
       (root.closest(`#${sectionId}`) as HTMLElement | null) ?? root;
     const heading =
@@ -249,161 +258,18 @@ export function CoverFlowCarousel({
       lockEl;
     const lastIndex = items.length - 1;
 
-    let pinned = false;
-    let releaseDir: "down" | "up" | null = null;
-    let accumulated = 0;
-    let cooldownUntil = 0;
-    let holding = false;
-    let lastTouchY = 0;
-
-    const metrics = () => {
-      const scrollerRect = scroller.getBoundingClientRect();
-      const headingRect = heading.getBoundingClientRect();
-      const sectionRect = lockEl.getBoundingClientRect();
-      const toggle = document.querySelector(
-        ".desktop-site-shell__menu-toggle",
-      );
-      const hamburgerTop =
-        toggle instanceof HTMLElement
-          ? toggle.getBoundingClientRect().top
-          : scrollerRect.top + 36;
-      return {
-        scrollerRect,
-        headingRect,
-        sectionRect,
-        desiredTop: hamburgerTop,
-        drift: headingRect.top - hamburgerTop,
-      };
-    };
-
-    const sectionReachedPin = () => {
-      const { drift, sectionRect, scrollerRect } = metrics();
-      return (
-        drift <= PIN_SLACK_PX &&
-        drift >= -PIN_PAST_PX &&
-        sectionRect.bottom > scrollerRect.top + 80
-      );
-    };
-
-    const sectionLeftView = () => {
-      const { sectionRect, scrollerRect } = metrics();
-      return (
-        sectionRect.bottom < scrollerRect.top + 8 ||
-        sectionRect.top > scrollerRect.bottom - 8
-      );
-    };
-
-    const menuIsOpen = () =>
-      !document.querySelector(".desktop-site-shell__menu-toggle");
-
-    const holdPin = () => {
-      if (menuIsOpen()) {
-        pinned = false;
-        return;
-      }
-      if (!pinned || holding) return;
-      holding = true;
-      requestAnimationFrame(() => {
-        holding = false;
-        if (!pinned || menuIsOpen()) {
-          pinned = false;
-          return;
-        }
-        const { drift } = metrics();
-        if (Math.abs(drift) > 2) scroller.scrollTop += drift;
-      });
-    };
-
-    const applyScrollDelta = (delta: number): boolean => {
-      if (delta === 0 || menuIsOpen()) return false;
-      const goingDown = delta > 0;
-
-      if (sectionLeftView()) {
-        pinned = false;
-        releaseDir = null;
-        accumulated = 0;
-        return false;
-      }
-
-      if (!pinned) {
-        if (!sectionReachedPin()) return false;
-        const blocked =
-          (releaseDir === "down" && goingDown) ||
-          (releaseDir === "up" && !goingDown);
-        if (blocked) return false;
-        pinned = true;
-        releaseDir = null;
-        if (goingDown && activeIndexRef.current !== 0) goTo(0);
-        if (!goingDown && activeIndexRef.current !== lastIndex) {
-          goTo(lastIndex);
-        }
-      }
-
-      const index = activeIndexRef.current;
-      const canAdvance = goingDown && index < lastIndex;
-      const canRetreat = !goingDown && index > 0;
-      if (!canAdvance && !canRetreat) {
-        pinned = false;
-        releaseDir = goingDown ? "down" : "up";
-        accumulated = 0;
-        return false;
-      }
-
-      holdPin();
-      const now = performance.now();
-      if (now < cooldownUntil) return true;
-
-      accumulated += delta;
-      if (accumulated >= POSTER_SCROLL_STEP) {
-        accumulated -= POSTER_SCROLL_STEP;
-        cooldownUntil = now + POSTER_SCROLL_COOLDOWN_MS;
-        goTo(index + 1);
-      } else if (accumulated <= -POSTER_SCROLL_STEP) {
-        accumulated += POSTER_SCROLL_STEP;
-        cooldownUntil = now + POSTER_SCROLL_COOLDOWN_MS;
-        goTo(index - 1);
-      }
-      return true;
-    };
-
-    const onWheel = (event: WheelEvent) => {
-      if (event.deltaY === 0) return;
-      const delta =
-        event.deltaMode === 1 ? event.deltaY * 16 : event.deltaY;
-      if (applyScrollDelta(delta)) event.preventDefault();
-    };
-
-    const onTouchStart = (event: TouchEvent) => {
-      lastTouchY = event.touches[0]?.clientY ?? 0;
-    };
-
-    const onTouchMove = (event: TouchEvent) => {
-      const y = event.touches[0]?.clientY ?? lastTouchY;
-      const delta = lastTouchY - y;
-      lastTouchY = y;
-      if (applyScrollDelta(delta)) event.preventDefault();
-    };
-
-    const onScroll = () => {
-      if (menuIsOpen()) {
-        pinned = false;
-        return;
-      }
-      if (pinned) holdPin();
-    };
-
-    const opts: AddEventListenerOptions = { passive: false, capture: true };
-    scroller.addEventListener("wheel", onWheel, opts);
-    scroller.addEventListener("touchstart", onTouchStart, opts);
-    scroller.addEventListener("touchmove", onTouchMove, opts);
-    scroller.addEventListener("scroll", onScroll);
-    return () => {
-      scroller.removeEventListener("wheel", onWheel, opts);
-      scroller.removeEventListener("touchstart", onTouchStart, opts);
-      scroller.removeEventListener("touchmove", onTouchMove, opts);
-      scroller.removeEventListener("scroll", onScroll);
-    };
-  }, [goTo, items.length, variant, coarsePointer]);
+    return registerCoverFlowScrollPin(scroller, {
+      sectionId,
+      lockEl,
+      heading,
+      getLastIndex: () => lastIndex,
+      getActiveIndex: () => activeIndexRef.current,
+      goTo,
+      scrollStep: POSTER_SCROLL_STEP,
+      minStepMs: MIN_STEP_INTERVAL_MS,
+      deltaGain: 0.62,
+    });
+  }, [goTo, items.length, safari, variant, coarsePointer]);
 
   const activeItem = items[activeIndex];
   const statusText = activeItem
@@ -414,7 +280,11 @@ export function CoverFlowCarousel({
 
   const transition = reduceMotion
     ? { duration: 0 }
-    : { type: "spring" as const, stiffness: 340, damping: 32, mass: 0.85 };
+    : {
+        type: "tween" as const,
+        duration: SCROLL_FAN_MS,
+        ease: SCROLL_FAN_EASE,
+      };
 
   const stageStyle = {
     "--cover-flow-side-offset": sideOffset ?? undefined,
@@ -549,17 +419,29 @@ export function CoverFlowCarousel({
                   }
                 }}
               >
-                <Image
-                  src={item.src}
-                  alt={isActive ? item.alt : ""}
-                  fill
-                  className="project-cover-flow__image"
-                  draggable={false}
-                  sizes={variant === "poster" ? "341px" : "428px"}
-                  style={{
-                    objectPosition: item.objectPosition ?? "center",
-                  }}
-                />
+                <div
+                  className="project-cover-flow__frame"
+                  style={
+                    {
+                      "--cover-flow-mask": `url("${item.src}")`,
+                      "--cover-flow-object-position":
+                        item.objectPosition ?? "center",
+                    } as CSSProperties
+                  }
+                >
+                  <Image
+                    src={item.src}
+                    alt={isActive ? item.alt : ""}
+                    fill
+                    className="project-cover-flow__image"
+                    draggable={false}
+                    sizes={variant === "poster" ? "341px" : "428px"}
+                    style={{
+                      objectPosition: item.objectPosition ?? "center",
+                    }}
+                  />
+                  <div className="project-cover-flow__shade" aria-hidden="true" />
+                </div>
               </motion.figure>
             );
           })}

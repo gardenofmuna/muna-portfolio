@@ -420,8 +420,36 @@
   overflow: visible;
 }
 
+.project-cover-flow__frame {
+  position: absolute;
+  inset: 0;
+}
+
+.project-cover-flow__shade {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+  -webkit-mask-image: var(--cover-flow-mask);
+  mask-image: var(--cover-flow-mask);
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: var(--cover-flow-object-position, center);
+  mask-position: var(--cover-flow-object-position, center);
+  opacity: 1;
+  transition: opacity 0.58s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.project-cover-flow__item--active .project-cover-flow__shade {
+  opacity: 0;
+}
+
 .project-cover-flow__item > span,
-.project-cover-flow__item img {
+.project-cover-flow__item img,
+.project-cover-flow__frame img {
   overflow: visible !important;
 }
 
