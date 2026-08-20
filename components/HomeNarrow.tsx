@@ -78,7 +78,7 @@ export function HomeNarrow() {
   return (
     <div className="fixed inset-0 overflow-hidden bg-white">
       <NarrowArtboard>
-        <SiteWordmark />
+        <SiteWordmark offsetX={15} />
         <MobileFooterLinks />
         <div
           className="absolute left-0 top-0"

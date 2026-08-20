@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { useNarrowArtboardMetrics } from "@/components/NarrowArtboard";
 import { NARROW_NZERIBE } from "@/lib/narrow-stage";
 
 type Props = {
@@ -12,6 +13,8 @@ type Props = {
   href?: string;
   /** In-flow wordmark (scrolling project) vs absolute Artboard_2 placement. */
   placement?: "artboard" | "flow";
+  /** Screen-space nudge (px) — applied after artboard scale on narrow landing. */
+  offsetX?: number;
 };
 
 /** Top-left nzeribe1.webp on Artboard_2 — matches Figma comp. */
@@ -19,7 +22,9 @@ export function SiteWordmark({
   inverted: _inverted = false,
   href,
   placement = "artboard",
+  offsetX = 0,
 }: Props) {
+  const { u } = useNarrowArtboardMetrics();
   const image = (
     <Image
       src="/nzeribe1.webp"
@@ -52,7 +57,7 @@ export function SiteWordmark({
     <div
       className="pointer-events-none absolute z-[35] select-none"
       style={{
-        left: NARROW_NZERIBE.x,
+        left: NARROW_NZERIBE.x + offsetX / (u || 1),
         top: NARROW_NZERIBE.y,
         width: NARROW_NZERIBE.w,
         height: NARROW_NZERIBE.h,
