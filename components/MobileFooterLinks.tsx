@@ -18,7 +18,9 @@ type Props = {
 /**
  * Artboard_2 footer — linkedin / insta / email always visible on narrow layout.
  */
-export function MobileFooterLinks({ inverted = false }: Props) {
+export function MobileFooterLinks({
+  inverted = false,
+}: Props) {
   const ink = inverted ? "#fff" : "#000";
   const stroke = inverted ? "#fff" : "#000";
 

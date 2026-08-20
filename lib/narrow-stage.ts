@@ -58,6 +58,8 @@ const NARROW_WHEEL_FIT_INSET_PX = 22;
  */
 export const NARROW_WHEEL_FIT_SCALE =
   (NARROW_W - 2 * NARROW_WHEEL_FIT_INSET_PX) / (2 * NARROW_WHEEL_OUTER_R);
+export const NARROW_WHEEL_OUTER_DIAMETER =
+  NARROW_W - 2 * NARROW_WHEEL_FIT_INSET_PX;
 
 /** @deprecated design overflow — use NARROW_WHEEL_FIT_SCALE; path no longer clips. */
 export const NARROW_WHEEL_EDGE_OVERFLOW = 0;

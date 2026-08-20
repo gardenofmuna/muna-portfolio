@@ -3,9 +3,7 @@
 import { useLayoutMode } from "@/hooks/useLayoutMode";
 
 import { HomeDesktop } from "@/components/HomeDesktop";
-import { ProjectHeader } from "@/components/project/ProjectHeader";
-import { ProjectIndexNav } from "@/components/project/ProjectIndexNav";
-import { EgwuRecordsProject } from "@/components/project/projects/EgwuRecordsProject";
+import { ProjectNarrowClient } from "@/components/project/ProjectNarrowClient";
 import type { ProjectDefinition } from "@/data/projects";
 
 import "./project-pane.css";
@@ -22,16 +20,7 @@ export function DesignProjectClient({ project }: Props) {
   }
 
   if (mode === "narrow") {
-    return (
-      <div className="project-narrow-fallback">
-        <ProjectIndexNav
-          activeNumber={project.number}
-          total={project.indexTotal}
-        />
-        <ProjectHeader project={project} menuState="hidden" />
-        <EgwuRecordsProject menuState="hidden" />
-      </div>
-    );
+    return <ProjectNarrowClient project={project} />;
   }
 
   return <HomeDesktop initialProject={project} />;

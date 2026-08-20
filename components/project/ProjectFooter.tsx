@@ -95,7 +95,15 @@ export function ProjectFooter({
         type="button"
         className="project-footer__top"
         aria-label="Scroll to top"
-        onClick={() => scroll?.scrollToTop()}
+        onClick={() => {
+          if (scroll) {
+            scroll.scrollToTop();
+            return;
+          }
+          document
+            .querySelector<HTMLElement>("[data-project-scroll]")
+            ?.scrollTo({ top: 0, behavior: "smooth" });
+        }}
       >
         <img
           src="/projects/egwu/back-to-top-svgrepo-com.svg"

@@ -620,14 +620,162 @@
   opacity: 0.65;
 }
 
-/* Narrow fallback (no mobile design yet) */
+/* Narrow project page (Artboard_2 / 859-wide mockup) */
 
-.project-narrow-fallback {
+.project-narrow {
+  --pn-u: calc(100vw / 859);
   position: fixed;
   inset: 0;
+  overflow-x: hidden;
   overflow-y: auto;
-  padding: 1.5rem;
   background: #fff;
+  -webkit-overflow-scrolling: touch;
+}
+
+.project-narrow__page {
+  box-sizing: border-box;
+  padding: calc(56 * var(--pn-u)) calc(32 * var(--pn-u)) calc(220 * var(--pn-u));
+  max-width: 859px;
+  margin: 0 auto;
+}
+
+.project-narrow__wordmark {
+  display: block;
+  width: calc(328 * var(--pn-u));
+  height: calc(70 * var(--pn-u));
+  margin: 0 0 calc(28 * var(--pn-u));
+}
+
+.project-narrow .project-index-nav {
+  margin: 0 0 calc(36 * var(--pn-u));
+  font-size: calc(32 * var(--pn-u));
+  letter-spacing: -0.06em;
+  gap: calc(10 * var(--pn-u));
+}
+
+.project-narrow .project-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: calc(22 * var(--pn-u));
+  margin-bottom: calc(48 * var(--pn-u));
+}
+
+.project-narrow .project-header__title {
+  font-size: calc(64 * var(--pn-u));
+  letter-spacing: -0.04em;
+}
+
+.project-narrow .project-header__description {
+  max-width: none;
+  font-size: calc(28 * var(--pn-u));
+  line-height: 1.15;
+}
+
+.project-narrow .project-header__section-links {
+  align-self: flex-start;
+  align-items: flex-start;
+  text-align: left;
+  font-size: calc(28 * var(--pn-u));
+  line-height: 1.15;
+}
+
+.project-narrow .project-section {
+  margin-bottom: calc(56 * var(--pn-u));
+}
+
+.project-narrow .project-section__title {
+  font-size: calc(40 * var(--pn-u));
+  margin-bottom: calc(28 * var(--pn-u));
+}
+
+.project-narrow .project-egwu-logos {
+  grid-template-columns: 1.12fr 1fr;
+  gap: calc(28 * var(--pn-u));
+  width: 100%;
+}
+
+.project-narrow .project-egwu-logos__secondary {
+  margin-top: 0;
+  gap: calc(24 * var(--pn-u));
+}
+
+.project-narrow .project-egwu-logos__primary .project-egwu-logos__image,
+.project-narrow .project-egwu-logos__figure:first-child .project-egwu-logos__image,
+.project-narrow .project-egwu-logos__figure:last-child .project-egwu-logos__image {
+  width: 100%;
+  max-width: none;
+  height: auto;
+}
+
+.project-narrow .project-asset-single--colors,
+.project-narrow .project-asset-single--playlist,
+.project-narrow .project-cover-flow--poster,
+.project-narrow .project-cover-flow--merchandise {
+  width: 100%;
+  max-width: 100%;
+}
+
+.project-narrow .project-cover-flow--poster .project-cover-flow__stage,
+.project-narrow .project-cover-flow--merchandise .project-cover-flow__stage {
+  height: min(68vw, 420px);
+}
+
+.project-narrow .project-cover-flow--poster .project-cover-flow__item {
+  width: min(68vw, 280px);
+  height: min(85vw, 352px);
+  min-width: 0;
+  min-height: 0;
+}
+
+.project-narrow .project-cover-flow--merchandise .project-cover-flow__item {
+  width: min(72vw, 320px);
+  height: min(72vw, 320px);
+  min-width: 0;
+  min-height: 0;
+}
+
+.project-narrow .project-footer {
+  margin-top: calc(40 * var(--pn-u));
+}
+
+.project-narrow__wheel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  overflow: hidden;
+  isolation: isolate;
+  clip-path: inset(0);
+  contain: paint;
+  pointer-events: auto;
+}
+
+.project-narrow__wheel-stage {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+}
+
+.project-narrow__menu-toggle {
+  position: fixed;
+  left: calc(32 * var(--pn-u));
+  bottom: calc(48 * var(--pn-u));
+  z-index: 40;
+  width: calc(72 * var(--pn-u));
+  height: calc(50 * var(--pn-u));
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.project-narrow__menu-toggle svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 @media (prefers-reduced-motion: reduce) {
