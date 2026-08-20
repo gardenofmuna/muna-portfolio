@@ -13,8 +13,11 @@ type Props = {
   href?: string;
   /** In-flow wordmark (scrolling project) vs absolute Artboard_2 placement. */
   placement?: "artboard" | "flow";
-  /** Screen-space nudge (px) — applied after artboard scale on narrow landing. */
-  offsetX?: number;
+  /**
+   * Fixed CSS-px distance from the viewport left edge (narrow landing).
+   * When set, overrides artboard X so the gap stays constant across screen sizes.
+   */
+  screenLeft?: number;
 };
 
 /** Top-left nzeribe1.webp on Artboard_2 — matches Figma comp. */
@@ -22,9 +25,9 @@ export function SiteWordmark({
   inverted: _inverted = false,
   href,
   placement = "artboard",
-  offsetX = 0,
+  screenLeft,
 }: Props) {
-  const { u } = useNarrowArtboardMetrics();
+  const { u, ox } = useNarrowArtboardMetrics();
   const image = (
     <Image
       src="/nzeribe1.webp"
@@ -53,11 +56,16 @@ export function SiteWordmark({
     );
   }
 
+  const left =
+    screenLeft == null
+      ? NARROW_NZERIBE.x
+      : (screenLeft - ox) / (u || 1);
+
   return (
     <div
       className="pointer-events-none absolute z-[35] select-none"
       style={{
-        left: NARROW_NZERIBE.x + offsetX / (u || 1),
+        left,
         top: NARROW_NZERIBE.y,
         width: NARROW_NZERIBE.w,
         height: NARROW_NZERIBE.h,

@@ -17,6 +17,7 @@ import { SiteWordmark } from "@/components/SiteWordmark";
 import { EGWU_RECORDS_SLUG } from "@/data/projects";
 import {
   NARROW_H,
+  NARROW_NZERIBE_SCREEN_LEFT,
   NARROW_W,
   NARROW_WHEEL_CENTER,
 } from "@/lib/narrow-stage";
@@ -78,7 +79,7 @@ export function HomeNarrow() {
   return (
     <div className="fixed inset-0 overflow-hidden bg-white">
       <NarrowArtboard>
-        <SiteWordmark offsetX={15} />
+        <SiteWordmark screenLeft={NARROW_NZERIBE_SCREEN_LEFT} />
         <MobileFooterLinks />
         <div
           className="absolute left-0 top-0"

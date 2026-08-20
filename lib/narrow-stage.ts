@@ -23,6 +23,9 @@ export const NARROW_SIDE_INSET = 32;
 /** Top-left nzeribe1.webp on Artboard_2 (Figma). */
 export const NARROW_NZERIBE = { x: 32, y: 56, w: 328, h: 70 } as const;
 
+/** Fixed CSS-px gap from the mobile viewport left edge to nzeribe1.webp. */
+export const NARROW_NZERIBE_SCREEN_LEFT = 24;
+
 /** Top of footer link row (from artboard top). */
 export const NARROW_FOOTER_TOP = 1492;
 /** Footer link typography + cluster spacing (Artboard_2). */
