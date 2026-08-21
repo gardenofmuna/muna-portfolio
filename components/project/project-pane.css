@@ -655,24 +655,13 @@
    * Top clears fixed header: wordmark band ends ~118, gap to numerals →
    * numerals still start @ artboard y=182.
    */
-  padding: calc(182 * var(--pn-u)) var(--pn-inset-right) 0 var(--pn-inset-left);
+  padding: calc(182 * var(--pn-u)) var(--pn-inset-right)
+    calc(24 * var(--pn-u)) var(--pn-inset-left);
   width: 100%;
   margin: 0;
 }
 
-.project-narrow-shell[data-menu-state="open"] .project-narrow__page {
-  /* Wheel peek is vw/859 (not page --pn-u); chrome clears the browser toolbar */
-  padding-bottom: calc(
-    var(--pn-wheel-peek, calc(194 * (100vw / 859))) +
-      var(--pn-chrome-bottom, 0px)
-  );
-}
-
-.project-narrow-shell[data-menu-state="hidden"] .project-narrow__page {
-  padding-bottom: calc(24 * var(--pn-u));
-}
-
-/* Fixed wordmark + menu (menu only once scrolling hides the wheel) */
+/* Fixed wordmark + hamburger (menu action TBD) */
 .project-narrow__header {
   position: fixed;
   top: 0;
@@ -941,82 +930,6 @@
 .project-narrow .project-footer__top-icon {
   height: 100%;
   width: auto;
-}
-
-.project-narrow__wheel {
-  position: fixed;
-  left: 0;
-  right: 0;
-  /* Above mobile browser toolbar (visualViewport), then safe-area */
-  bottom: calc(
-    var(--pn-chrome-bottom, 0px) + env(safe-area-inset-bottom, 0px)
-  );
-  z-index: 40;
-  overflow: visible;
-  pointer-events: none;
-  background: transparent;
-  transition: opacity 0.22s ease, visibility 0.22s ease;
-}
-
-.project-narrow-shell[data-menu-state="hidden"] .project-narrow__wheel {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-}
-
-.project-narrow-shell[data-menu-state="hidden"] .project-narrow__wheel-clip {
-  pointer-events: none;
-}
-
-.project-narrow-shell[data-menu-state="open"] .project-narrow__wheel {
-  opacity: 1;
-  visibility: visible;
-}
-
-/* Soft white veil — denser so page content reads less through the peek */
-.project-narrow__wheel-veil {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  top: -64px;
-  pointer-events: none;
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.55) 22%,
-    rgba(255, 255, 255, 0.92) 52%,
-    #fff 78%,
-    #fff 100%
-  );
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    transparent 0%,
-    rgba(0, 0, 0, 0.45) 18%,
-    #000 48%,
-    #000 100%
-  );
-  mask-image: linear-gradient(
-    to bottom,
-    transparent 0%,
-    rgba(0, 0, 0, 0.45) 18%,
-    #000 48%,
-    #000 100%
-  );
-}
-
-.project-narrow__wheel-clip {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: auto;
-}
-
-.project-narrow__wheel-stage {
-  position: absolute;
-  left: 0;
-  top: 0;
-  transform-origin: 0 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
