@@ -653,26 +653,23 @@
   box-sizing: border-box;
   /*
    * Top clears fixed header: wordmark band ends ~118, gap to numerals →
-   * numerals still start @ artboard y=182. Standalone adds status-bar safe area.
+   * numerals still start @ artboard y=182.
    */
-  padding: calc(182 * var(--pn-u) + env(safe-area-inset-top, 0px))
-    var(--pn-inset-right) 0 var(--pn-inset-left);
+  padding: calc(182 * var(--pn-u)) var(--pn-inset-right) 0 var(--pn-inset-left);
   width: 100%;
   margin: 0;
 }
 
 .project-narrow-shell[data-menu-state="open"] .project-narrow__page {
-  /* Wheel peek + browser/PWA chrome + home-indicator safe area */
+  /* Wheel peek is vw/859 (not page --pn-u); chrome clears the browser toolbar */
   padding-bottom: calc(
     var(--pn-wheel-peek, calc(194 * (100vw / 859))) +
-      var(--pn-chrome-bottom, 0px) + env(safe-area-inset-bottom, 0px)
+      var(--pn-chrome-bottom, 0px)
   );
 }
 
 .project-narrow-shell[data-menu-state="hidden"] .project-narrow__page {
-  padding-bottom: calc(
-    24 * var(--pn-u) + env(safe-area-inset-bottom, 0px)
-  );
+  padding-bottom: calc(24 * var(--pn-u));
 }
 
 /* Fixed wordmark + menu (menu only once scrolling hides the wheel) */
@@ -686,8 +683,8 @@
   align-items: flex-start;
   justify-content: space-between;
   box-sizing: border-box;
-  padding: calc(50 * var(--pn-u) + env(safe-area-inset-top, 0px))
-    var(--pn-inset-right) calc(50 * var(--pn-u)) var(--pn-inset-left);
+  padding: calc(50 * var(--pn-u)) var(--pn-inset-right) calc(50 * var(--pn-u))
+    var(--pn-inset-left);
   pointer-events: none;
   background: #fff;
 }
@@ -976,33 +973,35 @@
   visibility: visible;
 }
 
-/* Soft white veil — solid through most of the peek so page content doesn’t show through */
+/* Soft white veil — denser so page content reads less through the peek */
 .project-narrow__wheel-veil {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  top: -72px;
+  top: -64px;
   pointer-events: none;
   background: linear-gradient(
     to bottom,
     rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.7) 16%,
-    rgba(255, 255, 255, 0.95) 38%,
-    #fff 58%,
+    rgba(255, 255, 255, 0.55) 22%,
+    rgba(255, 255, 255, 0.92) 52%,
+    #fff 78%,
     #fff 100%
   );
-}
-
-/* Homescreen web app: taller viewport — keep veil fully opaque sooner */
-.project-narrow-shell[data-display="standalone"] .project-narrow__wheel-veil {
-  top: -88px;
-  background: linear-gradient(
+  -webkit-mask-image: linear-gradient(
     to bottom,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.85) 12%,
-    #fff 32%,
-    #fff 100%
+    transparent 0%,
+    rgba(0, 0, 0, 0.45) 18%,
+    #000 48%,
+    #000 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.45) 18%,
+    #000 48%,
+    #000 100%
   );
 }
 
@@ -1011,8 +1010,6 @@
   inset: 0;
   overflow: hidden;
   pointer-events: auto;
-  /* Solid base under the ring so scrolled content never bleeds through glyphs */
-  background: #fff;
 }
 
 .project-narrow__wheel-stage {
