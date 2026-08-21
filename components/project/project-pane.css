@@ -632,6 +632,7 @@
   --pn-gutter: 20px;
   --pn-content-w: 704;
   --pn-u: calc((100vw - 2 * var(--pn-gutter)) / var(--pn-content-w));
+  /* --pn-landing-u / --pn-nzeribe-* set from NARROW_* in ProjectNarrowClient */
   --pn-inset-left: var(--pn-gutter);
   --pn-inset-right: var(--pn-gutter);
   position: fixed;
@@ -669,7 +670,7 @@
   right: 0;
   z-index: 45;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   box-sizing: border-box;
   padding: calc(50 * var(--pn-u)) var(--pn-inset-right) calc(50 * var(--pn-u))
@@ -685,18 +686,18 @@
 
 .project-narrow__wordmark {
   display: block;
-  /* nzeribe 316×68 @ y=50 */
-  width: calc(316 * var(--pn-u));
-  height: calc(68 * var(--pn-u));
+  /* Match landing SiteWordmark: NARROW_NZERIBE 328×70 × landing u */
+  width: var(--pn-nzeribe-w);
+  height: var(--pn-nzeribe-h);
   margin: 0;
 }
 
 .project-narrow__menu-toggle {
-  /* Figma state 2: menu @ (715, 60) — 10 artboard px below wordmark top */
+  /* Same height as nzeribe1.webp; width keeps SVG 107×74 aspect */
   flex-shrink: 0;
-  margin-top: calc(10 * var(--pn-u));
-  width: calc(67 * var(--pn-u));
-  height: calc(47 * var(--pn-u));
+  margin-top: 0;
+  width: calc(var(--pn-nzeribe-h) * 107 / 74);
+  height: var(--pn-nzeribe-h);
   padding: 0;
   border: 0;
   background: transparent;

@@ -8,8 +8,12 @@ import { ProjectIndexNav } from "@/components/project/ProjectIndexNav";
 import { EgwuRecordsProject } from "@/components/project/projects/EgwuRecordsProject";
 import type { ProjectDefinition } from "@/data/projects";
 import {
+  NARROW_H,
+  NARROW_NZERIBE,
+  NARROW_PAGE_SCALE,
   NARROW_PROJECT_CONTENT_W,
   NARROW_PROJECT_GUTTER_PX,
+  NARROW_W,
 } from "@/lib/narrow-stage";
 
 type Props = {
@@ -25,6 +29,9 @@ export function ProjectNarrowClient({ project }: Props) {
         {
           "--pn-gutter": `${NARROW_PROJECT_GUTTER_PX}px`,
           "--pn-content-w": NARROW_PROJECT_CONTENT_W,
+          "--pn-landing-u": `calc(min(100vw / ${NARROW_W}, 100vh / ${NARROW_H}) * ${NARROW_PAGE_SCALE})`,
+          "--pn-nzeribe-w": `calc(${NARROW_NZERIBE.w} * var(--pn-landing-u))`,
+          "--pn-nzeribe-h": `calc(${NARROW_NZERIBE.h} * var(--pn-landing-u))`,
         } as CSSProperties
       }
     >
@@ -38,8 +45,6 @@ export function ProjectNarrowClient({ project }: Props) {
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="107"
-            height="74"
             viewBox="0 0 107 74"
             aria-hidden
           >
