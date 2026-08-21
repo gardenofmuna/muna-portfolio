@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import { useRouter } from "next/navigation";
 
 import { CircularNavWheel } from "@/components/CircularNavWheel";
@@ -11,6 +17,8 @@ import { EgwuRecordsProject } from "@/components/project/projects/EgwuRecordsPro
 import type { ProjectDefinition } from "@/data/projects";
 import {
   NARROW_H,
+  NARROW_PROJECT_CONTENT_W,
+  NARROW_PROJECT_GUTTER_PX,
   NARROW_PROJECT_WHEEL_ENLARGE,
   NARROW_PROJECT_WHEEL_PEEK,
   NARROW_W,
@@ -19,6 +27,8 @@ import {
 } from "@/lib/narrow-stage";
 
 const SCROLL_HIDE_THRESHOLD = 48;
+/** Apply menu show/hide after scroll settles — avoids layout thrash mid-gesture. */
+const SCROLL_IDLE_MS = 140;
 
 type Props = {
   project: ProjectDefinition;
@@ -38,25 +48,44 @@ export function ProjectNarrowClient({ project }: Props) {
   const [viewportW, setViewportW] = useState(390);
   const [chromeBottom, setChromeBottom] = useState(0);
   const userOpenedMenuRef = useRef(false);
+  const scrollIdleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const chromeRafRef = useRef(0);
+  const lastChromeRef = useRef(0);
+  const lastWidthRef = useRef(390);
 
   useEffect(() => {
-    const read = () => {
-      setViewportW(window.innerWidth);
-      setChromeBottom(readChromeBottom());
+    const applyViewport = () => {
+      chromeRafRef.current = 0;
+      const nextW = window.innerWidth;
+      const nextChrome = readChromeBottom();
+      if (nextW !== lastWidthRef.current) {
+        lastWidthRef.current = nextW;
+        setViewportW(nextW);
+      }
+      /* Ignore sub-pixel chrome chatter from iOS URL-bar animation mid-scroll. */
+      if (Math.abs(nextChrome - lastChromeRef.current) >= 2) {
+        lastChromeRef.current = nextChrome;
+        setChromeBottom(nextChrome);
+      }
     };
-    read();
-    window.addEventListener("resize", read);
+
+    const scheduleViewport = () => {
+      if (chromeRafRef.current) return;
+      chromeRafRef.current = requestAnimationFrame(applyViewport);
+    };
+
+    applyViewport();
+    window.addEventListener("resize", scheduleViewport, { passive: true });
     const vv = window.visualViewport;
-    vv?.addEventListener("resize", read);
-    vv?.addEventListener("scroll", read);
+    vv?.addEventListener("resize", scheduleViewport, { passive: true });
     return () => {
-      window.removeEventListener("resize", read);
-      vv?.removeEventListener("resize", read);
-      vv?.removeEventListener("scroll", read);
+      window.removeEventListener("resize", scheduleViewport);
+      vv?.removeEventListener("resize", scheduleViewport);
+      if (chromeRafRef.current) cancelAnimationFrame(chromeRafRef.current);
     };
   }, []);
 
-  const handleScroll = useCallback(() => {
+  const syncMenuToScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
     if (userOpenedMenuRef.current) return;
@@ -67,26 +96,52 @@ export function ProjectNarrowClient({ project }: Props) {
     }
   }, []);
 
+  const handleScroll = useCallback(() => {
+    if (userOpenedMenuRef.current) return;
+    if (scrollIdleTimerRef.current) clearTimeout(scrollIdleTimerRef.current);
+    scrollIdleTimerRef.current = setTimeout(() => {
+      scrollIdleTimerRef.current = null;
+      syncMenuToScroll();
+    }, SCROLL_IDLE_MS);
+  }, [syncMenuToScroll]);
+
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
+
     const unlock = () => {
       userOpenedMenuRef.current = false;
     };
+
+    const onScrollEnd = () => {
+      if (scrollIdleTimerRef.current) {
+        clearTimeout(scrollIdleTimerRef.current);
+        scrollIdleTimerRef.current = null;
+      }
+      syncMenuToScroll();
+    };
+
     el.addEventListener("wheel", unlock, { passive: true });
     el.addEventListener("touchmove", unlock, { passive: true });
+    el.addEventListener("touchend", onScrollEnd, { passive: true });
+    el.addEventListener("scrollend", onScrollEnd as EventListener, {
+      passive: true,
+    });
     return () => {
       el.removeEventListener("wheel", unlock);
       el.removeEventListener("touchmove", unlock);
+      el.removeEventListener("touchend", onScrollEnd);
+      el.removeEventListener("scrollend", onScrollEnd as EventListener);
+      if (scrollIdleTimerRef.current) clearTimeout(scrollIdleTimerRef.current);
     };
-  }, []);
+  }, [syncMenuToScroll]);
 
   const openMenu = useCallback(() => {
     userOpenedMenuRef.current = true;
     setMenuOpen(true);
   }, []);
 
-  /* Artboard → screen: same u as page (vw/859). Peek 194 scales with it. */
+  /* Wheel only: full-bleed vw/859 (page content uses 20px gutters separately). */
   const baseU = Math.max(viewportW / NARROW_W, 0.001);
   const peek = NARROW_PROJECT_WHEEL_PEEK * baseU;
   /* Figma crop enlarged, then slightly reduced for the peek. */
@@ -104,6 +159,8 @@ export function ProjectNarrowClient({ project }: Props) {
       data-menu-state={menuOpen ? "open" : "hidden"}
       style={
         {
+          "--pn-gutter": `${NARROW_PROJECT_GUTTER_PX}px`,
+          "--pn-content-w": NARROW_PROJECT_CONTENT_W,
           "--pn-wheel-peek": `${peek}px`,
           "--pn-chrome-bottom": `${chromeBottom}px`,
         } as CSSProperties
@@ -152,34 +209,34 @@ export function ProjectNarrowClient({ project }: Props) {
         </div>
       </div>
 
-      {menuOpen ? (
-        <div
-          className="project-narrow__wheel"
-          aria-label="Site navigation"
-          style={{ height: peek }}
-        >
-          <div className="project-narrow__wheel-veil" aria-hidden />
-          <div className="project-narrow__wheel-clip">
-            <div
-              className="project-narrow__wheel-stage"
-              style={{
-                width: NARROW_W,
-                height: NARROW_H,
-                transform: `translate(${stageTranslateX}px, ${stageTranslateY}px) scale(${wheelU})`,
+      {/* Keep mounted — remounting mid-scroll caused jank; hide via CSS. */}
+      <div
+        className="project-narrow__wheel"
+        aria-label="Site navigation"
+        aria-hidden={!menuOpen}
+        style={{ height: peek }}
+      >
+        <div className="project-narrow__wheel-veil" aria-hidden />
+        <div className="project-narrow__wheel-clip">
+          <div
+            className="project-narrow__wheel-stage"
+            style={{
+              width: NARROW_W,
+              height: NARROW_H,
+              transform: `translate(${stageTranslateX}px, ${stageTranslateY}px) scale(${wheelU})`,
+            }}
+          >
+            <CircularNavWheel
+              layout="narrow"
+              initialActiveLabel="design"
+              onLabelActivate={(label) => {
+                if (label === "design") return;
+                router.push("/");
               }}
-            >
-              <CircularNavWheel
-                layout="narrow"
-                initialActiveLabel="design"
-                onLabelActivate={(label) => {
-                  if (label === "design") return;
-                  router.push("/");
-                }}
-              />
-            </div>
+            />
           </div>
         </div>
-      ) : null}
+      </div>
     </div>
   );
 }

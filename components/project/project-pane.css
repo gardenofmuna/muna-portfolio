@@ -624,12 +624,16 @@
 
 /*
  * Narrow EGWÚ page — Figma state 1 / state 2 (859×1623).
- * Coordinates from PSD import: left inset 78, numerals 704×38, logos 300 / 267 / 271.
+ * Design content column was 704 artboard px (859 − 78 − 77). Scale that
+ * column into (100vw − 40px) with fixed 20px gutters so layout grows.
+ * Circular nav peek keeps its own vw/859 scale in ProjectNarrowClient.
  */
 .project-narrow-shell {
-  --pn-u: calc(100vw / 859);
-  --pn-inset-left: calc(78 * var(--pn-u));
-  --pn-inset-right: calc(77 * var(--pn-u));
+  --pn-gutter: 20px;
+  --pn-content-w: 704;
+  --pn-u: calc((100vw - 2 * var(--pn-gutter)) / var(--pn-content-w));
+  --pn-inset-left: var(--pn-gutter);
+  --pn-inset-right: var(--pn-gutter);
   position: fixed;
   inset: 0;
 }
@@ -641,6 +645,8 @@
   overflow-y: auto;
   background: #fff;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
 }
 
 .project-narrow__page {
@@ -650,19 +656,20 @@
    * numerals still start @ artboard y=182.
    */
   padding: calc(182 * var(--pn-u)) var(--pn-inset-right) 0 var(--pn-inset-left);
-  max-width: 859px;
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
 }
 
 .project-narrow-shell[data-menu-state="open"] .project-narrow__page {
-  /* Scaled 194 artboard-px peek + browser chrome so content clears the wheel */
+  /* Wheel peek is vw/859 (not page --pn-u); chrome clears the browser toolbar */
   padding-bottom: calc(
-    var(--pn-wheel-peek, calc(194 * var(--pn-u))) + var(--pn-chrome-bottom, 0px)
+    var(--pn-wheel-peek, calc(194 * (100vw / 859))) +
+      var(--pn-chrome-bottom, 0px)
   );
 }
 
 .project-narrow-shell[data-menu-state="hidden"] .project-narrow__page {
-  padding-bottom: calc(48 * var(--pn-u));
+  padding-bottom: calc(24 * var(--pn-u));
 }
 
 /* Fixed wordmark + menu (menu only once scrolling hides the wheel) */
@@ -714,9 +721,9 @@
 }
 
 .project-narrow .project-index-nav {
-  /* numerals 704×38 @ y=182; title @ y=254 → gap 34 */
+  /* I at left gutter, X at right gutter (under menu) */
   width: 100%;
-  max-width: calc(704 * var(--pn-u));
+  max-width: none;
   margin: 0 0 calc(34 * var(--pn-u));
   font-size: calc(32 * var(--pn-u));
   letter-spacing: -0.08em;
@@ -839,7 +846,8 @@
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
   scrollbar-width: none;
-  touch-action: pan-x;
+  /* Allow vertical page scroll to continue when the gesture is mostly Y */
+  touch-action: pan-x pan-y;
 }
 
 .project-hscroll::-webkit-scrollbar {
@@ -898,11 +906,11 @@
 }
 
 .project-narrow .project-footer {
-  /* Figma footer 702×31 @ y=3641 */
-  width: calc(702 * var(--pn-u));
-  max-width: 100%;
+  /* Span gutter to gutter (design was 702 within 704) */
+  width: 100%;
+  max-width: none;
   margin-top: calc(58 * var(--pn-u));
-  margin-bottom: calc(40 * var(--pn-u));
+  margin-bottom: calc(20 * var(--pn-u));
   align-items: center;
   gap: 0;
 }
@@ -947,9 +955,25 @@
   overflow: visible;
   pointer-events: none;
   background: transparent;
+  transition: opacity 0.22s ease, visibility 0.22s ease;
 }
 
-/* Soft white + blur veil — fades out so there's no hard box edge */
+.project-narrow-shell[data-menu-state="hidden"] .project-narrow__wheel {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.project-narrow-shell[data-menu-state="hidden"] .project-narrow__wheel-clip {
+  pointer-events: none;
+}
+
+.project-narrow-shell[data-menu-state="open"] .project-narrow__wheel {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Soft white veil — denser so page content reads less through the peek */
 .project-narrow__wheel-veil {
   position: absolute;
   left: 0;
@@ -960,24 +984,23 @@
   background: linear-gradient(
     to bottom,
     rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.35) 28%,
-    rgba(255, 255, 255, 0.82) 62%,
-    rgba(255, 255, 255, 0.97) 100%
+    rgba(255, 255, 255, 0.55) 22%,
+    rgba(255, 255, 255, 0.92) 52%,
+    #fff 78%,
+    #fff 100%
   );
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
   -webkit-mask-image: linear-gradient(
     to bottom,
     transparent 0%,
-    rgba(0, 0, 0, 0.35) 22%,
-    #000 55%,
+    rgba(0, 0, 0, 0.45) 18%,
+    #000 48%,
     #000 100%
   );
   mask-image: linear-gradient(
     to bottom,
     transparent 0%,
-    rgba(0, 0, 0, 0.35) 22%,
-    #000 55%,
+    rgba(0, 0, 0, 0.45) 18%,
+    #000 48%,
     #000 100%
   );
 }

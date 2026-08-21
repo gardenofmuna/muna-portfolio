@@ -20,6 +20,14 @@ export const U_NARROW_1624 = `(${U_NARROW}) * (${NARROW_H} / 1624)`;
 
 export const NARROW_SIDE_INSET = 32;
 
+/** Mobile EGWÚ project page content gutters (CSS px). Wheel popup is excluded. */
+export const NARROW_PROJECT_GUTTER_PX = 20;
+/**
+ * Design content column width (859 − 78 − 77). Page `--pn-u` maps this into
+ * (100vw − 2×gutter); the wheel still uses full artboard width (NARROW_W).
+ */
+export const NARROW_PROJECT_CONTENT_W = 704;
+
 /** Top-left nzeribe1.webp on Artboard_2 (Figma). */
 export const NARROW_NZERIBE = { x: 32, y: 56, w: 328, h: 70 } as const;
 
