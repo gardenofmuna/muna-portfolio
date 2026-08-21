@@ -48,15 +48,25 @@ export function SiteWordmark({
 
   if (placement === "flow") {
     const className = "project-narrow__wordmark";
+    // Same CSS-px box as the landing artboard wordmark (JS u, not CSS 100vh).
+    const style = {
+      width: NARROW_NZERIBE.w * (u || 1),
+      height: NARROW_NZERIBE.h * (u || 1),
+    };
     if (href) {
       return (
-        <Link href={href} className={className} aria-label="Back to home">
+        <Link
+          href={href}
+          className={className}
+          style={style}
+          aria-label="Back to home"
+        >
           {image}
         </Link>
       );
     }
     return (
-      <div className={className} aria-label="Muna Nzeribe">
+      <div className={className} style={style} aria-label="Muna Nzeribe">
         {image}
       </div>
     );
