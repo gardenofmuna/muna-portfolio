@@ -632,7 +632,7 @@
   --pn-gutter: 20px;
   --pn-content-w: 704;
   --pn-u: calc((100vw - 2 * var(--pn-gutter)) / var(--pn-content-w));
-  /* --pn-landing-u / --pn-nzeribe-* set from NARROW_* in ProjectNarrowClient */
+  /* --pn-nzeribe-h / --pn-menu-* set from useNarrowArtboardMetrics in JS */
   --pn-inset-left: var(--pn-gutter);
   --pn-inset-right: var(--pn-gutter);
   position: fixed;
@@ -686,18 +686,16 @@
 
 .project-narrow__wordmark {
   display: block;
-  /* Match landing SiteWordmark: NARROW_NZERIBE 328×70 × landing u */
-  width: var(--pn-nzeribe-w);
-  height: var(--pn-nzeribe-h);
+  /* Width/height set inline from SiteWordmark via useNarrowArtboardMetrics */
   margin: 0;
 }
 
 .project-narrow__menu-toggle {
-  /* Same height as nzeribe1.webp; width keeps SVG 107×74 aspect */
+  /* Same height as nzeribe1.webp; width from SVG aspect (set in JS) */
   flex-shrink: 0;
   margin-top: 0;
-  width: calc(var(--pn-nzeribe-h) * 107 / 74);
-  height: var(--pn-nzeribe-h);
+  width: var(--pn-menu-w);
+  height: var(--pn-menu-h, var(--pn-nzeribe-h));
   padding: 0;
   border: 0;
   background: transparent;

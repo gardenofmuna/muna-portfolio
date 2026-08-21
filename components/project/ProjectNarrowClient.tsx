@@ -2,25 +2,32 @@
 
 import type { CSSProperties } from "react";
 
+import { useNarrowArtboardMetrics } from "@/components/NarrowArtboard";
 import { SiteWordmark } from "@/components/SiteWordmark";
 import { ProjectHeader } from "@/components/project/ProjectHeader";
 import { ProjectIndexNav } from "@/components/project/ProjectIndexNav";
 import { EgwuRecordsProject } from "@/components/project/projects/EgwuRecordsProject";
 import type { ProjectDefinition } from "@/data/projects";
 import {
-  NARROW_H,
   NARROW_NZERIBE,
-  NARROW_PAGE_SCALE,
   NARROW_PROJECT_CONTENT_W,
   NARROW_PROJECT_GUTTER_PX,
-  NARROW_W,
 } from "@/lib/narrow-stage";
 
 type Props = {
   project: ProjectDefinition;
 };
 
+/** Hamburger SVG viewBox — keep aspect when height tracks the wordmark. */
+const MENU_ASPECT = 107 / 74;
+
 export function ProjectNarrowClient({ project }: Props) {
+  const { u } = useNarrowArtboardMetrics();
+  const scale = u || 1;
+  const nzeribeH = NARROW_NZERIBE.h * scale;
+  const menuH = nzeribeH;
+  const menuW = menuH * MENU_ASPECT;
+
   return (
     <div
       className="project-narrow-shell"
@@ -29,9 +36,9 @@ export function ProjectNarrowClient({ project }: Props) {
         {
           "--pn-gutter": `${NARROW_PROJECT_GUTTER_PX}px`,
           "--pn-content-w": NARROW_PROJECT_CONTENT_W,
-          "--pn-landing-u": `calc(min(100vw / ${NARROW_W}, 100vh / ${NARROW_H}) * ${NARROW_PAGE_SCALE})`,
-          "--pn-nzeribe-w": `calc(${NARROW_NZERIBE.w} * var(--pn-landing-u))`,
-          "--pn-nzeribe-h": `calc(${NARROW_NZERIBE.h} * var(--pn-landing-u))`,
+          "--pn-nzeribe-h": `${nzeribeH}px`,
+          "--pn-menu-w": `${menuW}px`,
+          "--pn-menu-h": `${menuH}px`,
         } as CSSProperties
       }
     >
