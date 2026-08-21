@@ -63,7 +63,9 @@ html, body {
   height: 100%;
   overflow: hidden;
   box-sizing: border-box;
-  background-color: #eeece4;
+  background-color: #ffffff;
+  /* Fill the notch / home-indicator when installed as a web app */
+  min-height: 100dvh;
 }
 
 body {

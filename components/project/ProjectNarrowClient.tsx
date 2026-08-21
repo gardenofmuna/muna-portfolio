@@ -41,12 +41,20 @@ function readChromeBottom(): number {
   return Math.max(0, window.innerHeight - vv.offsetTop - vv.height);
 }
 
+/** Homescreen / installed web app (iOS standalone or display-mode). */
+function readStandalone(): boolean {
+  if (window.matchMedia("(display-mode: standalone)").matches) return true;
+  const nav = window.navigator as Navigator & { standalone?: boolean };
+  return nav.standalone === true;
+}
+
 export function ProjectNarrowClient({ project }: Props) {
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(true);
   const [viewportW, setViewportW] = useState(390);
   const [chromeBottom, setChromeBottom] = useState(0);
+  const [standalone, setStandalone] = useState(false);
   const userOpenedMenuRef = useRef(false);
   const scrollIdleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const chromeRafRef = useRef(0);
@@ -56,8 +64,11 @@ export function ProjectNarrowClient({ project }: Props) {
   useEffect(() => {
     const applyViewport = () => {
       chromeRafRef.current = 0;
-      const nextW = window.innerWidth;
+      const nextW = window.visualViewport?.width
+        ? Math.round(window.visualViewport.width)
+        : window.innerWidth;
       const nextChrome = readChromeBottom();
+      setStandalone(readStandalone());
       if (nextW !== lastWidthRef.current) {
         lastWidthRef.current = nextW;
         setViewportW(nextW);
@@ -76,10 +87,14 @@ export function ProjectNarrowClient({ project }: Props) {
 
     applyViewport();
     window.addEventListener("resize", scheduleViewport, { passive: true });
+    const standaloneMq = window.matchMedia("(display-mode: standalone)");
+    const onDisplayMode = () => setStandalone(readStandalone());
+    standaloneMq.addEventListener?.("change", onDisplayMode);
     const vv = window.visualViewport;
     vv?.addEventListener("resize", scheduleViewport, { passive: true });
     return () => {
       window.removeEventListener("resize", scheduleViewport);
+      standaloneMq.removeEventListener?.("change", onDisplayMode);
       vv?.removeEventListener("resize", scheduleViewport);
       if (chromeRafRef.current) cancelAnimationFrame(chromeRafRef.current);
     };
@@ -157,6 +172,7 @@ export function ProjectNarrowClient({ project }: Props) {
     <div
       className="project-narrow-shell"
       data-menu-state={menuOpen ? "open" : "hidden"}
+      data-display={standalone ? "standalone" : "browser"}
       style={
         {
           "--pn-gutter": `${NARROW_PROJECT_GUTTER_PX}px`,

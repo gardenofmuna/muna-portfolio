@@ -16,12 +16,22 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  themeColor: "#ffffff",
 };
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://munanzeribe.xyz"),
   title: "Muna | Portfolio",
   description: "Hi! Welcome to my Portfolio!",
+  applicationName: "Muna",
+  appleWebApp: {
+    capable: true,
+    title: "Muna",
+    statusBarStyle: "default",
+  },
+  formatDetection: {
+    telephone: false,
+  },
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
