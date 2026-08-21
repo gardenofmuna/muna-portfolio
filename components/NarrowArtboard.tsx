@@ -37,7 +37,7 @@ export function NarrowArtboard({ children }: { children: ReactNode }) {
 
   return (
     <div
-      className="absolute left-0 top-0 overflow-hidden"
+      className="absolute left-0 top-0 overflow-visible"
       style={{
         width: NARROW_W,
         height: NARROW_H,

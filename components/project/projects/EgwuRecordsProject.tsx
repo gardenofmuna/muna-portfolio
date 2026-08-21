@@ -10,9 +10,14 @@ import { EgwuPostersSection } from "@/components/project/projects/egwu/EgwuPoste
 
 type Props = {
   menuState: ProjectMenuState;
+  /** Desktop keeps cover-flow; mobile Figma uses a horizontal strip. */
+  gallery?: "coverflow" | "strip";
 };
 
-export function EgwuRecordsProject({ menuState }: Props) {
+export function EgwuRecordsProject({
+  menuState,
+  gallery = "coverflow",
+}: Props) {
   return (
     <div className="project-sections" data-menu-state={menuState}>
       <ProjectSection id="logo" title="Logo">
@@ -22,10 +27,10 @@ export function EgwuRecordsProject({ menuState }: Props) {
         <EgwuColorsSection />
       </ProjectSection>
       <ProjectSection id="posters" title="Posters">
-        <EgwuPostersSection menuState={menuState} />
+        <EgwuPostersSection menuState={menuState} gallery={gallery} />
       </ProjectSection>
       <ProjectSection id="merchandise" title="Merchandise">
-        <EgwuMerchandiseSection menuState={menuState} />
+        <EgwuMerchandiseSection menuState={menuState} gallery={gallery} />
       </ProjectSection>
       <ProjectSection id="playlist-cover" title="Playlist Cover">
         <EgwuPlaylistSection menuState={menuState} />

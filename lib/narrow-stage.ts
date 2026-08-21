@@ -25,6 +25,18 @@ export const NARROW_NZERIBE = { x: 32, y: 56, w: 328, h: 70 } as const;
 
 /** Fixed CSS-px gap from the mobile viewport left edge to nzeribe1.webp. */
 export const NARROW_NZERIBE_SCREEN_LEFT = 24;
+/** Fixed CSS-px gap from the viewport top — clears PAGE_SCALE crop on short windows. */
+export const NARROW_NZERIBE_SCREEN_TOP = 24;
+
+/**
+ * Project narrow wheel peek — Figma state 1 on 859×1623:
+ * wheel graphic top 1429 → peek 194 artboard px; graphic width 1016 (enlarged past artboard).
+ */
+export const NARROW_PROJECT_WHEEL_PEEK = 194;
+export const NARROW_PROJECT_WHEEL_GRAPHIC_W = 1016;
+
+/** @deprecated use NARROW_PROJECT_WHEEL_PEEK (artboard px, scale with vw/859) */
+export const NARROW_PROJECT_WHEEL_PEEK_PX = NARROW_PROJECT_WHEEL_PEEK;
 
 /** Top of footer link row (from artboard top). */
 export const NARROW_FOOTER_TOP = 1492;
@@ -63,6 +75,10 @@ export const NARROW_WHEEL_FIT_SCALE =
   (NARROW_W - 2 * NARROW_WHEEL_FIT_INSET_PX) / (2 * NARROW_WHEEL_OUTER_R);
 export const NARROW_WHEEL_OUTER_DIAMETER =
   NARROW_W - 2 * NARROW_WHEEL_FIT_INSET_PX;
+
+/** Scale boost so the project peek wheel matches the enlarged Figma crop (1016 / 815). */
+export const NARROW_PROJECT_WHEEL_ENLARGE =
+  NARROW_PROJECT_WHEEL_GRAPHIC_W / NARROW_WHEEL_OUTER_DIAMETER;
 
 /** @deprecated design overflow — use NARROW_WHEEL_FIT_SCALE; path no longer clips. */
 export const NARROW_WHEEL_EDGE_OVERFLOW = 0;

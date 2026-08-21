@@ -18,6 +18,11 @@ type Props = {
    * When set, overrides artboard X so the gap stays constant across screen sizes.
    */
   screenLeft?: number;
+  /**
+   * Fixed CSS-px distance from the viewport top (narrow landing).
+   * Keeps the tilted "nzeribe" clear of PAGE_SCALE letterbox crop.
+   */
+  screenTop?: number;
 };
 
 /** Top-left nzeribe1.webp on Artboard_2 — matches Figma comp. */
@@ -26,8 +31,9 @@ export function SiteWordmark({
   href,
   placement = "artboard",
   screenLeft,
+  screenTop,
 }: Props) {
-  const { u, ox } = useNarrowArtboardMetrics();
+  const { u, ox, oy } = useNarrowArtboardMetrics();
   const image = (
     <Image
       src="/nzeribe1.webp"
@@ -56,17 +62,18 @@ export function SiteWordmark({
     );
   }
 
+  const scale = u || 1;
   const left =
-    screenLeft == null
-      ? NARROW_NZERIBE.x
-      : (screenLeft - ox) / (u || 1);
+    screenLeft == null ? NARROW_NZERIBE.x : (screenLeft - ox) / scale;
+  const top =
+    screenTop == null ? NARROW_NZERIBE.y : (screenTop - oy) / scale;
 
   return (
     <div
-      className="pointer-events-none absolute z-[35] select-none"
+      className="pointer-events-none absolute z-[35] select-none overflow-visible"
       style={{
         left,
-        top: NARROW_NZERIBE.y,
+        top,
         width: NARROW_NZERIBE.w,
         height: NARROW_NZERIBE.h,
       }}

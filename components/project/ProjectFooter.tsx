@@ -105,12 +105,20 @@ export function ProjectFooter({
             ?.scrollTo({ top: 0, behavior: "smooth" });
         }}
       >
-        <img
-          src="/projects/egwu/back-to-top-svgrepo-com.svg"
-          alt=""
-          width={32}
-          height={32}
-        />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="4 8 24 18"
+          width="28"
+          height="21"
+          aria-hidden
+          className="project-footer__top-icon"
+        >
+          <rect x="4" y="8" width="24" height="2" fill="currentColor" />
+          <polygon
+            points="16,14 6,24 7.4,25.4 16,16.8 24.6,25.4 26,24"
+            fill="currentColor"
+          />
+        </svg>
       </button>
       <FooterNav
         align="end"

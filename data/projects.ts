@@ -34,7 +34,7 @@ const EGWU_RECORDS: ProjectDefinition = {
     /* Same accent palette as landing AboutBio */
     { id: "logo", label: "Logo,", color: "#488bdc" },
     { id: "colors", label: "Branding,", color: "#019f4b" },
-    { id: "merchandise", label: "Merchandise", color: "#f9b109" },
+    { id: "merchandise", label: "Merchandise,", color: "#f9b109" },
     { id: "posters", label: "Event Posters,", color: "#fe5418" },
     { id: "playlist-cover", label: "Playlist Covers,", color: "#5d639f" },
   ],

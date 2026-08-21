@@ -18,6 +18,7 @@ import { EGWU_RECORDS_SLUG } from "@/data/projects";
 import {
   NARROW_H,
   NARROW_NZERIBE_SCREEN_LEFT,
+  NARROW_NZERIBE_SCREEN_TOP,
   NARROW_W,
   NARROW_WHEEL_CENTER,
 } from "@/lib/narrow-stage";
@@ -79,7 +80,10 @@ export function HomeNarrow() {
   return (
     <div className="fixed inset-0 overflow-hidden bg-white">
       <NarrowArtboard>
-        <SiteWordmark screenLeft={NARROW_NZERIBE_SCREEN_LEFT} />
+        <SiteWordmark
+          screenLeft={NARROW_NZERIBE_SCREEN_LEFT}
+          screenTop={NARROW_NZERIBE_SCREEN_TOP}
+        />
         <MobileFooterLinks />
         <div
           className="absolute left-0 top-0"

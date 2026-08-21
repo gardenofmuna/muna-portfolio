@@ -610,10 +610,10 @@
   line-height: 0;
 }
 
-.project-footer__top img {
+.project-footer__top-icon {
   display: block;
   width: 32px;
-  height: 32px;
+  height: 24px;
 }
 
 .project-footer__top:hover {
@@ -622,9 +622,20 @@
 
 /* Narrow project page (Artboard_2 / 859-wide mockup) */
 
-.project-narrow {
+/*
+ * Narrow EGWÚ page — Figma state 1 / state 2 (859×1623).
+ * Coordinates from PSD import: left inset 78, numerals 704×38, logos 300 / 267 / 271.
+ */
+.project-narrow-shell {
   --pn-u: calc(100vw / 859);
+  --pn-inset-left: calc(78 * var(--pn-u));
+  --pn-inset-right: calc(77 * var(--pn-u));
   position: fixed;
+  inset: 0;
+}
+
+.project-narrow {
+  position: absolute;
   inset: 0;
   overflow-x: hidden;
   overflow-y: auto;
@@ -634,138 +645,62 @@
 
 .project-narrow__page {
   box-sizing: border-box;
-  padding: calc(56 * var(--pn-u)) calc(32 * var(--pn-u)) calc(220 * var(--pn-u));
+  /*
+   * Top clears fixed header: wordmark band ends ~118, gap to numerals →
+   * numerals still start @ artboard y=182.
+   */
+  padding: calc(182 * var(--pn-u)) var(--pn-inset-right) 0 var(--pn-inset-left);
   max-width: 859px;
   margin: 0 auto;
 }
 
-.project-narrow__wordmark {
-  display: block;
-  width: calc(328 * var(--pn-u));
-  height: calc(70 * var(--pn-u));
-  margin: 0 0 calc(28 * var(--pn-u));
+.project-narrow-shell[data-menu-state="open"] .project-narrow__page {
+  /* Scaled 194 artboard-px peek + browser chrome so content clears the wheel */
+  padding-bottom: calc(
+    var(--pn-wheel-peek, calc(194 * var(--pn-u))) + var(--pn-chrome-bottom, 0px)
+  );
 }
 
-.project-narrow .project-index-nav {
-  margin: 0 0 calc(36 * var(--pn-u));
-  font-size: calc(32 * var(--pn-u));
-  letter-spacing: -0.06em;
-  gap: calc(10 * var(--pn-u));
+.project-narrow-shell[data-menu-state="hidden"] .project-narrow__page {
+  padding-bottom: calc(48 * var(--pn-u));
 }
 
-.project-narrow .project-header {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: calc(22 * var(--pn-u));
-  margin-bottom: calc(48 * var(--pn-u));
-}
-
-.project-narrow .project-header__title {
-  font-size: calc(64 * var(--pn-u));
-  letter-spacing: -0.04em;
-}
-
-.project-narrow .project-header__description {
-  max-width: none;
-  font-size: calc(28 * var(--pn-u));
-  line-height: 1.15;
-}
-
-.project-narrow .project-header__section-links {
-  align-self: flex-start;
-  align-items: flex-start;
-  text-align: left;
-  font-size: calc(28 * var(--pn-u));
-  line-height: 1.15;
-}
-
-.project-narrow .project-section {
-  margin-bottom: calc(56 * var(--pn-u));
-}
-
-.project-narrow .project-section__title {
-  font-size: calc(40 * var(--pn-u));
-  margin-bottom: calc(28 * var(--pn-u));
-}
-
-.project-narrow .project-egwu-logos {
-  grid-template-columns: 1.12fr 1fr;
-  gap: calc(28 * var(--pn-u));
-  width: 100%;
-}
-
-.project-narrow .project-egwu-logos__secondary {
-  margin-top: 0;
-  gap: calc(24 * var(--pn-u));
-}
-
-.project-narrow .project-egwu-logos__primary .project-egwu-logos__image,
-.project-narrow .project-egwu-logos__figure:first-child .project-egwu-logos__image,
-.project-narrow .project-egwu-logos__figure:last-child .project-egwu-logos__image {
-  width: 100%;
-  max-width: none;
-  height: auto;
-}
-
-.project-narrow .project-asset-single--colors,
-.project-narrow .project-asset-single--playlist,
-.project-narrow .project-cover-flow--poster,
-.project-narrow .project-cover-flow--merchandise {
-  width: 100%;
-  max-width: 100%;
-}
-
-.project-narrow .project-cover-flow--poster .project-cover-flow__stage,
-.project-narrow .project-cover-flow--merchandise .project-cover-flow__stage {
-  height: min(68vw, 420px);
-}
-
-.project-narrow .project-cover-flow--poster .project-cover-flow__item {
-  width: min(68vw, 280px);
-  height: min(85vw, 352px);
-  min-width: 0;
-  min-height: 0;
-}
-
-.project-narrow .project-cover-flow--merchandise .project-cover-flow__item {
-  width: min(72vw, 320px);
-  height: min(72vw, 320px);
-  min-width: 0;
-  min-height: 0;
-}
-
-.project-narrow .project-footer {
-  margin-top: calc(40 * var(--pn-u));
-}
-
-.project-narrow__wheel {
+/* Fixed wordmark + menu (menu only once scrolling hides the wheel) */
+.project-narrow__header {
   position: fixed;
+  top: 0;
   left: 0;
   right: 0;
-  bottom: 0;
-  z-index: 40;
-  overflow: hidden;
-  isolation: isolate;
-  clip-path: inset(0);
-  contain: paint;
+  z-index: 45;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  box-sizing: border-box;
+  padding: calc(50 * var(--pn-u)) var(--pn-inset-right) calc(50 * var(--pn-u))
+    var(--pn-inset-left);
+  pointer-events: none;
+  background: #fff;
+}
+
+.project-narrow__header .project-narrow__wordmark,
+.project-narrow__header .project-narrow__menu-toggle {
   pointer-events: auto;
 }
 
-.project-narrow__wheel-stage {
-  position: absolute;
-  left: 0;
-  top: 0;
-  transform-origin: 0 0;
+.project-narrow__wordmark {
+  display: block;
+  /* nzeribe 316×68 @ y=50 */
+  width: calc(316 * var(--pn-u));
+  height: calc(68 * var(--pn-u));
+  margin: 0;
 }
 
 .project-narrow__menu-toggle {
-  position: fixed;
-  left: calc(32 * var(--pn-u));
-  bottom: calc(48 * var(--pn-u));
-  z-index: 40;
-  width: calc(72 * var(--pn-u));
-  height: calc(50 * var(--pn-u));
+  /* Figma state 2: menu @ (715, 60) — 10 artboard px below wordmark top */
+  flex-shrink: 0;
+  margin-top: calc(10 * var(--pn-u));
+  width: calc(67 * var(--pn-u));
+  height: calc(47 * var(--pn-u));
   padding: 0;
   border: 0;
   background: transparent;
@@ -776,6 +711,289 @@
   display: block;
   width: 100%;
   height: 100%;
+}
+
+.project-narrow .project-index-nav {
+  /* numerals 704×38 @ y=182; title @ y=254 → gap 34 */
+  width: 100%;
+  max-width: calc(704 * var(--pn-u));
+  margin: 0 0 calc(34 * var(--pn-u));
+  font-size: calc(32 * var(--pn-u));
+  letter-spacing: -0.08em;
+  gap: 0;
+  justify-content: space-between;
+}
+
+.project-narrow .project-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  /* tags bottom 898 → Logo @ 951 = 53 */
+  margin-bottom: calc(53 * var(--pn-u));
+}
+
+.project-narrow .project-header__description {
+  /* body 647×306 @ y=383 — match PSD text block height */
+  max-width: calc(647 * var(--pn-u));
+  font-size: calc(38 * var(--pn-u));
+  line-height: calc(40 * var(--pn-u));
+  /* tags @ y=712 → 712 − (383+306) = 23 */
+  margin-bottom: calc(23 * var(--pn-u));
+}
+
+.project-narrow .project-header__section-links {
+  align-self: flex-start;
+  align-items: flex-start;
+  text-align: left;
+  max-width: calc(239 * var(--pn-u));
+  font-size: calc(34 * var(--pn-u));
+  line-height: calc(37 * var(--pn-u));
+}
+
+.project-narrow .project-header__title {
+  /* EGWÚ RECORDS 695×80 @ y=254 */
+  max-width: calc(695 * var(--pn-u));
+  font-size: calc(76 * var(--pn-u));
+  line-height: calc(80 * var(--pn-u));
+  letter-spacing: -0.04em;
+  /* desc @ y=383 → 383 − (254+80) = 49 */
+  margin-bottom: calc(49 * var(--pn-u));
+}
+
+.project-narrow .project-section {
+  /* ~64 artboard between section blocks in the tall Figma comp */
+  margin-bottom: calc(64 * var(--pn-u));
+}
+
+.project-narrow .project-section__title {
+  font-size: calc(48 * var(--pn-u));
+  /* primary square @ y=1032 → 1032 − (951+50) = 31 */
+  margin-bottom: calc(31 * var(--pn-u));
+}
+
+.project-narrow #colors.project-section .project-section__title {
+  /* palette @ 1496 − (1397+40) = 59 */
+  margin-bottom: calc(59 * var(--pn-u));
+}
+
+.project-narrow #posters.project-section .project-section__title,
+.project-narrow #merchandise.project-section .project-section__title {
+  /* posters: 1986 − (1894+39) = 53 */
+  margin-bottom: calc(53 * var(--pn-u));
+}
+
+.project-narrow #playlist-cover.project-section .project-section__title {
+  /* cover @ 3142 − (3044+51) = 47 */
+  margin-bottom: calc(47 * var(--pn-u));
+}
+
+.project-narrow .project-egwu-logos {
+  /* primary 300 @ x=78; secondary @ x=470 → gap 92; secondary w ~271 */
+  grid-template-columns: calc(300 * var(--pn-u)) calc(271 * var(--pn-u));
+  gap: calc(92 * var(--pn-u));
+  width: max-content;
+  max-width: 100%;
+  align-items: start;
+}
+
+.project-narrow .project-egwu-logos__secondary {
+  /* wordmark @ y=1003 vs primary @ y=1032 → −29 */
+  margin-top: calc(-29 * var(--pn-u));
+  /* badge @ y=1171 − (1003+114) = 54 */
+  gap: calc(54 * var(--pn-u));
+}
+
+.project-narrow .project-egwu-logos__primary .project-egwu-logos__image {
+  width: calc(300 * var(--pn-u));
+  max-width: calc(300 * var(--pn-u));
+  height: auto;
+}
+
+.project-narrow .project-egwu-logos__figure:first-child .project-egwu-logos__image {
+  width: calc(267 * var(--pn-u));
+  max-width: calc(267 * var(--pn-u));
+  height: auto;
+}
+
+.project-narrow .project-egwu-logos__figure:last-child .project-egwu-logos__image {
+  width: calc(271 * var(--pn-u));
+  max-width: calc(271 * var(--pn-u));
+  height: auto;
+}
+
+.project-narrow .project-asset-single--colors {
+  width: calc(657 * var(--pn-u));
+  max-width: 100%;
+}
+
+.project-narrow .project-asset-single--playlist {
+  width: calc(441 * var(--pn-u));
+  max-width: 100%;
+}
+
+/* Horizontal strip galleries (Figma mobile — peeks off the right edge) */
+.project-hscroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  touch-action: pan-x;
+}
+
+.project-hscroll::-webkit-scrollbar {
+  display: none;
+}
+
+.project-hscroll__track {
+  display: flex;
+  align-items: flex-start;
+  list-style: none;
+  margin: 0;
+  width: max-content;
+  box-sizing: border-box;
+  /* Stay inside page gutters; trailing pad so the last item can clear the right edge */
+  padding-right: calc(24 * var(--pn-u));
+}
+
+.project-hscroll__item {
+  flex-shrink: 0;
+  margin: 0;
+  /* Size from intrinsic image aspect — no crop box */
+  line-height: 0;
+}
+
+.project-hscroll__image {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: none;
+  object-fit: contain;
+  object-position: left top;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.project-hscroll--poster .project-hscroll__track {
+  /* EP1 @ 78 / Layer @ 470 → gap 40 */
+  gap: calc(40 * var(--pn-u));
+}
+
+.project-hscroll--poster .project-hscroll__image {
+  /* Fit height to Figma strip (421); width follows original aspect */
+  height: calc(421 * var(--pn-u));
+  width: auto;
+}
+
+.project-hscroll--merchandise .project-hscroll__track {
+  /* tee @ 78 / next @ 563 → gap 44 */
+  gap: calc(44 * var(--pn-u));
+}
+
+.project-hscroll--merchandise .project-hscroll__image {
+  height: calc(417 * var(--pn-u));
+  width: auto;
+}
+
+.project-narrow .project-footer {
+  /* Figma footer 702×31 @ y=3641 */
+  width: calc(702 * var(--pn-u));
+  max-width: 100%;
+  margin-top: calc(58 * var(--pn-u));
+  margin-bottom: calc(40 * var(--pn-u));
+  align-items: center;
+  gap: 0;
+}
+
+.project-narrow .project-footer__project {
+  display: none;
+}
+
+.project-narrow .project-footer__nav {
+  gap: 0;
+}
+
+.project-narrow .project-footer__label {
+  font-size: calc(28 * var(--pn-u));
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.project-narrow .project-footer__top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Match Back / Next text size */
+  height: calc(28 * var(--pn-u));
+}
+
+.project-narrow .project-footer__top-icon {
+  height: 100%;
+  width: auto;
+}
+
+.project-narrow__wheel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  /* Above mobile browser toolbar (visualViewport), then safe-area */
+  bottom: calc(
+    var(--pn-chrome-bottom, 0px) + env(safe-area-inset-bottom, 0px)
+  );
+  z-index: 40;
+  overflow: visible;
+  pointer-events: none;
+  background: transparent;
+}
+
+/* Soft white + blur veil — fades out so there's no hard box edge */
+.project-narrow__wheel-veil {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: -64px;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.35) 28%,
+    rgba(255, 255, 255, 0.82) 62%,
+    rgba(255, 255, 255, 0.97) 100%
+  );
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.35) 22%,
+    #000 55%,
+    #000 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.35) 22%,
+    #000 55%,
+    #000 100%
+  );
+}
+
+.project-narrow__wheel-clip {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+.project-narrow__wheel-stage {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
