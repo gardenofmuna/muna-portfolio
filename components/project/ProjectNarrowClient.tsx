@@ -20,12 +20,14 @@ type Props = {
 
 /** Hamburger SVG viewBox — keep aspect when height tracks the wordmark. */
 const MENU_ASPECT = 107 / 74;
+/** Slightly smaller than the nzeribe wordmark height. */
+const MENU_HEIGHT_SCALE = 0.85;
 
 export function ProjectNarrowClient({ project }: Props) {
   const { u } = useNarrowArtboardMetrics();
   const scale = u || 1;
   const nzeribeH = NARROW_NZERIBE.h * scale;
-  const menuH = nzeribeH;
+  const menuH = nzeribeH * MENU_HEIGHT_SCALE;
   const menuW = menuH * MENU_ASPECT;
 
   return (
