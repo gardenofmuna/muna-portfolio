@@ -27,7 +27,7 @@ export function ProjectHorizontalStrip({ items, ariaLabel, variant }: Props) {
               width={item.width}
               height={item.height}
               className="project-hscroll__image"
-              sizes={variant === "poster" ? "40vw" : "50vw"}
+              sizes={variant === "poster" ? "72vw" : "90vw"}
               draggable={false}
             />
           </li>

@@ -773,13 +773,9 @@
 }
 
 .project-narrow #posters.project-section .project-section__title,
-.project-narrow #merchandise.project-section .project-section__title {
-  /* posters: 1986 − (1894+39) = 53 */
-  margin-bottom: calc(53 * var(--pn-u));
-}
-
+.project-narrow #merchandise.project-section .project-section__title,
 .project-narrow #playlist-cover.project-section .project-section__title {
-  /* cover @ 3142 − (3044+51) = 47 */
+  /* Shared title → media gap (playlist-cover reference) */
   margin-bottom: calc(47 * var(--pn-u));
 }
 
@@ -823,7 +819,8 @@
 }
 
 .project-narrow .project-asset-single--playlist {
-  width: calc(441 * var(--pn-u));
+  /* Was 441; same +50% then +20% as poster/merch strips */
+  width: calc(793.8 * var(--pn-u));
   max-width: 100%;
 }
 
@@ -850,7 +847,7 @@
   width: max-content;
   box-sizing: border-box;
   /* Stay inside page gutters; trailing pad so the last item can clear the right edge */
-  padding-right: calc(24 * var(--pn-u));
+  padding-right: calc(43.2 * var(--pn-u));
 }
 
 .project-hscroll__item {
@@ -873,23 +870,20 @@
 }
 
 .project-hscroll--poster .project-hscroll__track {
-  /* EP1 @ 78 / Layer @ 470 → gap 40 */
-  gap: calc(40 * var(--pn-u));
+  gap: calc(28 * var(--pn-u));
 }
 
 .project-hscroll--poster .project-hscroll__image {
-  /* Fit height to Figma strip (421); width follows original aspect */
-  height: calc(421 * var(--pn-u));
+  height: calc(757.8 * var(--pn-u));
   width: auto;
 }
 
 .project-hscroll--merchandise .project-hscroll__track {
-  /* tee @ 78 / next @ 563 → gap 44 */
-  gap: calc(44 * var(--pn-u));
+  gap: calc(30 * var(--pn-u));
 }
 
 .project-hscroll--merchandise .project-hscroll__image {
-  height: calc(417 * var(--pn-u));
+  height: calc(750.6 * var(--pn-u));
   width: auto;
 }
 
