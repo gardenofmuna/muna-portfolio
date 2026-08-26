@@ -662,7 +662,7 @@
   margin: 0;
 }
 
-/* Fixed wordmark + hamburger (menu action TBD) */
+/* Fixed wordmark + hamburger */
 .project-narrow__header {
   position: fixed;
   top: 0;
@@ -677,6 +677,31 @@
     var(--pn-inset-left);
   pointer-events: none;
   background: #fff;
+}
+
+.project-narrow-shell[data-menu-state="open"] .project-narrow__header {
+  background: transparent;
+}
+
+.project-narrow-shell[data-menu-state="open"] .project-narrow__wordmark {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Desktop circular nav, uniformly scaled to viewport height. */
+.project-narrow__nav-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  overflow: hidden;
+  background: #fff;
+}
+
+.project-narrow__nav-stage {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: left top;
 }
 
 .project-narrow__header .project-narrow__wordmark,

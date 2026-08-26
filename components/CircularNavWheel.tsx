@@ -38,8 +38,10 @@ import {
   NARROW_LABEL_BAND_PX,
   NARROW_LABEL_INACTIVE,
   NARROW_LABEL_TRACKING_EM,
+  NARROW_PAGE_SCALE,
   NARROW_W,
   NARROW_WHEEL_CENTER,
+  NARROW_WHEEL_R,
 } from "@/lib/narrow-stage";
 
 /** Authored desktop label size in layout coords (×2 into the 2875 master). */
@@ -163,6 +165,21 @@ function snapRotationForIndexContinuous(
 
 /** Tap if total finger travel from touchstart stays under this (px). */
 const TAP_MOVE_PX = 8;
+/** Overlay menu: start spinning sooner so it matches the landing wheel. */
+const NARROW_SPIN_TAP_MOVE_PX = 3;
+
+/**
+ * Drag multiplier so a desktop-geometry wheel (large off-screen hub) rotates
+ * about as far per screen-pixel as the landing-page ring.
+ */
+function narrowLikeDragGain(screenRadiusPx: number): number {
+  const landingU =
+    Math.min(window.innerWidth / NARROW_W, window.innerHeight / NARROW_H) *
+    NARROW_PAGE_SCALE;
+  const landingScreenR = NARROW_WHEEL_R * landingU;
+  if (landingScreenR <= 0 || screenRadiusPx <= 0) return 3.5;
+  return Math.min(5, Math.max(1.8, screenRadiusPx / landingScreenR));
+}
 
 /** Walk the paint stack — finds tangent hit button under screen coords (mouse). */
 function narrowHitIndexAtPoint(clientX: number, clientY: number): number | null {
@@ -273,6 +290,11 @@ export type CircularNavWheelProps = {
    *   2875×1623 master artboard (scales with DesktopStageCanvas; no vw geometry).
    */
   containment?: "viewport" | "nav-zone" | "stage";
+  /**
+   * Desktop overlay on mobile: match the landing-page wheel’s spin feel
+   * (easier finger travel, live highlight, no snap-back hysteresis).
+   */
+  spinFeel?: "desktop" | "narrow";
 };
 
 export function CircularNavWheel({
@@ -283,6 +305,7 @@ export function CircularNavWheel({
   initialActiveLabel,
   layout = "desktop",
   containment = "viewport",
+  spinFeel = "desktop",
 }: CircularNavWheelProps = {}) {
   const isNarrow = layout === "narrow";
   const coarsePointer = useCoarsePointer();
@@ -318,6 +341,10 @@ export function CircularNavWheel({
   isDraggingRef.current = isDragging;
   const isNarrowRef = useRef(isNarrow);
   isNarrowRef.current = isNarrow;
+  const spinFeelRef = useRef(spinFeel);
+  spinFeelRef.current = spinFeel;
+  const rRef = useRef(0);
+  const wRef = useRef(0);
   const labelAnglesRef = useRef(labelAngles);
   labelAnglesRef.current = labelAngles;
   const labelArcsRef = useRef(labelArcs);
@@ -349,6 +376,8 @@ export function CircularNavWheel({
     startY: 0,
     lastAngle: 0,
     moved: false,
+    /** Desktop: nav-item index under pointerdown, used to activate on tap. */
+    startItemIndex: null as number | null,
   });
   /** Narrow hit — touch + mouse: select on pointerdown; pointerup cleans up only. */
   const hitTapRef = useRef<{
@@ -441,6 +470,8 @@ export function CircularNavWheel({
       ? Math.min(DESKTOP_LAYOUT_W, DESKTOP_LAYOUT_H) * 0.88
       : Math.min(w, h) * 0.88;
   ringMetricsRef.current = { ox: originX, oy: originY, r };
+  rRef.current = r;
+  wRef.current = w;
 
   /* Narrow: one label per slot on the ring; desktop: tile repeats for arc density. */
   const repeats = isNarrow
@@ -597,16 +628,17 @@ export function CircularNavWheel({
     const onWheel = (e: WheelEvent) => {
       if (isDraggingRef.current) return;
       e.preventDefault();
-      const rotScale = isNarrowRef.current
+      const rotScale = isNarrowRef.current || spinFeelRef.current === "narrow"
         ? WHEEL_ROT_SCALE
         : coarseRef.current
           ? DESKTOP_WHEEL_ROT_SCALE * 1.9
           : DESKTOP_WHEEL_ROT_SCALE;
       setRotation((prev) => prev + e.deltaY * rotScale);
       if (idle) clearTimeout(idle);
-      const snapMs = isNarrowRef.current
-        ? WHEEL_SNAP_MS
-        : DESKTOP_WHEEL_SNAP_MS;
+      const snapMs =
+        isNarrowRef.current || spinFeelRef.current === "narrow"
+          ? WHEEL_SNAP_MS
+          : DESKTOP_WHEEL_SNAP_MS;
       idle = setTimeout(() => {
         idle = null;
         const φ = rotationRef.current;
@@ -621,7 +653,7 @@ export function CircularNavWheel({
           φ,
           snapFn,
           n,
-          focusedRef.current,
+          spinFeelRef.current === "narrow" ? undefined : focusedRef.current,
         );
         setFocusedIndex(tileIndex);
         setRotation(nextRot);
@@ -808,12 +840,21 @@ export function CircularNavWheel({
     setIsSnapping(false);
     setWheelInteracting(true);
     const p = pointerLocal(e.clientX, e.clientY);
+    const startBtn =
+      e.target instanceof Element
+        ? e.target.closest("button[id^='circular-nav-item-']")
+        : null;
+    const startMatch = /^circular-nav-item-(\d+)$/.exec(startBtn?.id ?? "");
     dragRef.current = {
       pointerId: e.pointerId,
       startX: e.clientX,
       startY: e.clientY,
       lastAngle: Math.atan2(p.y - originY, p.x - originX),
       moved: false,
+      startItemIndex:
+        startMatch != null
+          ? Number.parseInt(startMatch[1] ?? "", 10)
+          : null,
     };
     isDraggingRef.current = true;
     setIsDragging(true);
@@ -821,13 +862,15 @@ export function CircularNavWheel({
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
+    const tapSlop =
+      spinFeel === "narrow" ? NARROW_SPIN_TAP_MOVE_PX : TAP_MOVE_PX;
     const pendingHit = hitTapRef.current;
     if (pendingHit && pendingHit.pointerId === e.pointerId) {
       const travel = Math.hypot(
         e.clientX - pendingHit.startX,
         e.clientY - pendingHit.startY,
       );
-      if (travel < TAP_MOVE_PX) return;
+      if (travel < tapSlop) return;
 
       hitTapRef.current = null;
       setIsSnapping(false);
@@ -839,6 +882,7 @@ export function CircularNavWheel({
         startY: pendingHit.startY,
         lastAngle: Math.atan2(p.y - originY, p.x - originX),
         moved: true,
+        startItemIndex: null,
       };
       isDraggingRef.current = true;
       setIsDragging(true);
@@ -858,24 +902,43 @@ export function CircularNavWheel({
         e.clientX - dragRef.current.startX,
         e.clientY - dragRef.current.startY,
       );
-      if (travel < TAP_MOVE_PX) return;
+      if (travel < tapSlop) return;
       dragRef.current.moved = true;
     }
 
+    let dragGain = 1;
+    if (!isNarrow) {
+      if (spinFeel === "narrow") {
+        const rect = wrapRef.current?.getBoundingClientRect();
+        const layoutW = wRef.current;
+        const radius = rRef.current;
+        const screenR =
+          rect && rect.width > 0 && layoutW > 0
+            ? (radius / layoutW) * rect.width
+            : radius;
+        dragGain = narrowLikeDragGain(screenR);
+      } else if (!coarseRef.current) {
+        dragGain = DESKTOP_DRAG_GAIN;
+      }
+    }
+    const applied = delta * dragGain;
     setRotation((prev) => {
-      const dragGain = isNarrow
-        ? 1
-        : coarseRef.current
-          ? 1
-          : DESKTOP_DRAG_GAIN;
-      const applied = isNarrow ? delta : delta * dragGain;
       const next = prev + applied;
       rotationRef.current = next;
-      if (isNarrow) {
-        syncNarrowTopHover(next);
-      }
       return next;
     });
+    if (isNarrow) {
+      syncNarrowTopHover(rotationRef.current);
+    } else if (spinFeel === "narrow") {
+      const { tileIndex } = nearestDesktopLabelSnap(
+        rotationRef.current,
+        snapRotationForIndexRef.current,
+        NRef.current,
+      );
+      if (tileIndex !== focusedRef.current) {
+        setFocusedIndex(tileIndex);
+      }
+    }
   };
 
   const endPointer = (e: React.PointerEvent) => {
@@ -904,28 +967,32 @@ export function CircularNavWheel({
     }
 
     const wasDragging = isDraggingRef.current;
+    const startX = dragRef.current.startX;
+    const startY = dragRef.current.startY;
+    const startItemIndex = dragRef.current.startItemIndex;
     clearNarrowDragState();
 
     const φ = rotationRef.current;
 
-    const travel = Math.hypot(
-      e.clientX - dragRef.current.startX,
-      e.clientY - dragRef.current.startY,
-    );
-    const isTap = travel < TAP_MOVE_PX;
+    const travel = Math.hypot(e.clientX - startX, e.clientY - startY);
+    const tapSlop =
+      spinFeel === "narrow" ? NARROW_SPIN_TAP_MOVE_PX : TAP_MOVE_PX;
+    const isTap = travel < tapSlop;
 
     if (isTap) {
       if (isNarrow) {
         setWheelInteracting(false);
       } else {
-        const p = pointerLocal(e.clientX, e.clientY);
-        const i = nearestIndexToPointer(p.x, p.y, φ);
+        let i: number;
+        if (startItemIndex != null) {
+          i = startItemIndex;
+        } else {
+          const p = pointerLocal(e.clientX, e.clientY);
+          i = nearestIndexToPointer(p.x, p.y, φ);
+        }
         setFocusedIndex(i);
         setRotation((prev) => snapRotationForIndex(i, prev));
-        const hit = document.elementFromPoint(e.clientX, e.clientY);
-        const btn =
-          hit instanceof Element ? hit.closest("button") : null;
-        if (btn?.id === `circular-nav-item-${i}`) {
+        if (startItemIndex != null) {
           const label = items[i]?.label;
           if (label) onActivateRef.current?.(label);
         }
@@ -937,7 +1004,7 @@ export function CircularNavWheel({
         φ,
         snapRotationForIndex,
         N,
-        focusedRef.current,
+        spinFeel === "narrow" ? undefined : focusedRef.current,
       );
       setFocusedIndex(tileIndex);
       setRotation(nextRot);

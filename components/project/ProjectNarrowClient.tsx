@@ -1,13 +1,21 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type CSSProperties,
+} from "react";
+import { useRouter } from "next/navigation";
 
+import { CircularNavWheel } from "@/components/CircularNavWheel";
 import { useNarrowArtboardMetrics } from "@/components/NarrowArtboard";
 import { SiteWordmark } from "@/components/SiteWordmark";
 import { ProjectHeader } from "@/components/project/ProjectHeader";
 import { ProjectIndexNav } from "@/components/project/ProjectIndexNav";
 import { EgwuRecordsProject } from "@/components/project/projects/EgwuRecordsProject";
 import type { ProjectDefinition } from "@/data/projects";
+import { DESKTOP_LAYOUT_H, DESKTOP_LAYOUT_W } from "@/lib/desktop-stage";
 import {
   NARROW_NZERIBE,
   NARROW_PROJECT_CONTENT_W,
@@ -24,16 +32,50 @@ const MENU_ASPECT = 107 / 74;
 const MENU_HEIGHT_SCALE = 0.85;
 
 export function ProjectNarrowClient({ project }: Props) {
+  const router = useRouter();
   const { u } = useNarrowArtboardMetrics();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [viewportH, setViewportH] = useState(0);
   const scale = u || 1;
   const nzeribeH = NARROW_NZERIBE.h * scale;
   const menuH = nzeribeH * MENU_HEIGHT_SCALE;
   const menuW = menuH * MENU_ASPECT;
+  const navScale =
+    viewportH > 0 ? viewportH / DESKTOP_LAYOUT_H : 0;
+
+  useEffect(() => {
+    const read = () => {
+      setViewportH(window.visualViewport?.height ?? window.innerHeight);
+    };
+    read();
+    window.addEventListener("resize", read);
+    window.visualViewport?.addEventListener("resize", read);
+    return () => {
+      window.removeEventListener("resize", read);
+      window.visualViewport?.removeEventListener("resize", read);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
+
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
 
   return (
     <div
       className="project-narrow-shell"
-      data-menu-state="hidden"
+      data-menu-state={menuOpen ? "open" : "hidden"}
       style={
         {
           "--pn-gutter": `${NARROW_PROJECT_GUTTER_PX}px`,
@@ -49,8 +91,11 @@ export function ProjectNarrowClient({ project }: Props) {
         <button
           type="button"
           className="project-narrow__menu-toggle"
-          aria-label="Open navigation menu"
-          aria-expanded={false}
+          aria-label={
+            menuOpen ? "Close navigation menu" : "Open navigation menu"
+          }
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen((open) => !open)}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -66,7 +111,11 @@ export function ProjectNarrowClient({ project }: Props) {
         </button>
       </header>
 
-      <div className="project-narrow" data-project-scroll="">
+      <div
+        className="project-narrow"
+        data-project-scroll=""
+        inert={menuOpen ? true : undefined}
+      >
         <div className="project-narrow__page">
           <ProjectIndexNav
             activeNumber={project.number}
@@ -76,6 +125,38 @@ export function ProjectNarrowClient({ project }: Props) {
           <EgwuRecordsProject menuState="hidden" gallery="strip" />
         </div>
       </div>
+
+      {menuOpen && navScale > 0 ? (
+        <div
+          className="project-narrow__nav-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Site navigation"
+        >
+          <div
+            className="project-narrow__nav-stage"
+            style={{
+              width: DESKTOP_LAYOUT_W,
+              height: DESKTOP_LAYOUT_H,
+              transform: `scale(${navScale})`,
+            }}
+          >
+            <CircularNavWheel
+              layout="desktop"
+              containment="stage"
+              spinFeel="narrow"
+              initialActiveLabel="design"
+              onLabelActivate={(label) => {
+                if (label === "design") {
+                  closeMenu();
+                  return;
+                }
+                router.push("/");
+              }}
+            />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
