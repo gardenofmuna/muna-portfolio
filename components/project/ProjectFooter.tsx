@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
+import { useInPlaceDesignLink } from "@/components/project/DesignProjectNav";
 import { useProjectScroll } from "@/components/project/ProjectContentPane";
 
 type Props = {
@@ -55,13 +56,30 @@ function FooterNav({
 
   if (href) {
     return (
-      <Link href={href} className={className}>
+      <FooterNavLink className={className} href={href}>
         {inner}
-      </Link>
+      </FooterNavLink>
     );
   }
 
   return <div className={className}>{inner}</div>;
+}
+
+function FooterNavLink({
+  className,
+  href,
+  children,
+}: {
+  className: string;
+  href: string;
+  children: ReactNode;
+}) {
+  const linkProps = useInPlaceDesignLink(href);
+  return (
+    <Link className={className} {...linkProps}>
+      {children}
+    </Link>
+  );
 }
 
 export function ProjectFooter({

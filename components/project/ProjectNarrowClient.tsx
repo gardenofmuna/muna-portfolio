@@ -11,10 +11,14 @@ import { useRouter } from "next/navigation";
 import { CircularNavWheel } from "@/components/CircularNavWheel";
 import { useNarrowArtboardMetrics } from "@/components/NarrowArtboard";
 import { SiteWordmark } from "@/components/SiteWordmark";
+import { DesignProjectNavProvider } from "@/components/project/DesignProjectNav";
 import { ProjectHeader } from "@/components/project/ProjectHeader";
 import { ProjectIndexNav } from "@/components/project/ProjectIndexNav";
 import { ProjectCaseStudy } from "@/components/project/projects/ProjectCaseStudy";
-import type { ProjectDefinition } from "@/data/projects";
+import {
+  getProjectBySlug,
+  type ProjectDefinition,
+} from "@/data/projects";
 import { DESKTOP_LAYOUT_H, DESKTOP_LAYOUT_W } from "@/lib/desktop-stage";
 import {
   NARROW_NZERIBE,
@@ -31,9 +35,10 @@ const MENU_ASPECT = 107 / 74;
 /** Slightly smaller than the nzeribe wordmark height. */
 const MENU_HEIGHT_SCALE = 0.85;
 
-export function ProjectNarrowClient({ project }: Props) {
+export function ProjectNarrowClient({ project: projectProp }: Props) {
   const router = useRouter();
   const { u } = useNarrowArtboardMetrics();
+  const [project, setProject] = useState(projectProp);
   const [menuOpen, setMenuOpen] = useState(false);
   const [viewportH, setViewportH] = useState(0);
   const scale = u || 1;
@@ -72,7 +77,22 @@ export function ProjectNarrowClient({ project }: Props) {
 
   const closeMenu = useCallback(() => setMenuOpen(false), []);
 
+  const onProjectChange = useCallback((next: ProjectDefinition) => {
+    setProject(next);
+  }, []);
+
+  useEffect(() => {
+    const onPop = () => {
+      const match = /^\/design\/([^/]+)/.exec(window.location.pathname);
+      const next = match ? getProjectBySlug(match[1] ?? "") : undefined;
+      if (next) setProject(next);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
   return (
+    <DesignProjectNavProvider onProjectChange={onProjectChange}>
     <div
       className="project-narrow-shell"
       data-menu-state={menuOpen ? "open" : "hidden"}
@@ -162,5 +182,6 @@ export function ProjectNarrowClient({ project }: Props) {
         </div>
       ) : null}
     </div>
+    </DesignProjectNavProvider>
   );
 }

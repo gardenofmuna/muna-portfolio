@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 
+import { useInPlaceDesignLink } from "@/components/project/DesignProjectNav";
 import { getProjectSlugByNumber } from "@/data/projects";
 
 type Props = {
@@ -20,6 +23,23 @@ const ROMAN_NUMERALS = [
   "X",
 ] as const;
 
+function IndexLink({
+  href,
+  className,
+  children,
+}: {
+  href: string;
+  className: string;
+  children: string;
+}) {
+  const linkProps = useInPlaceDesignLink(href);
+  return (
+    <Link className={className} {...linkProps}>
+      {children}
+    </Link>
+  );
+}
+
 export function ProjectIndexNav({ activeNumber, total }: Props) {
   const numerals = ROMAN_NUMERALS.slice(0, total);
 
@@ -35,13 +55,13 @@ export function ProjectIndexNav({ activeNumber, total }: Props) {
 
         if (slug && !isCurrent) {
           return (
-            <Link
+            <IndexLink
               key={numeral}
               href={`/design/${slug}`}
               className={className}
             >
               {numeral}
-            </Link>
+            </IndexLink>
           );
         }
 

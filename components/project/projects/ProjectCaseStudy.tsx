@@ -1,23 +1,9 @@
 "use client";
 
-import dynamic from "next/dynamic";
-
+import { DocNowProject } from "@/components/project/projects/doc-now/DocNowProject";
+import { EgwuRecordsProject } from "@/components/project/projects/EgwuRecordsProject";
 import type { ProjectMenuState } from "@/components/project/ProjectContentPane";
 import { DOC_NOW_SLUG, type ProjectDefinition } from "@/data/projects";
-
-const DocNowProject = dynamic(
-  () =>
-    import("@/components/project/projects/doc-now/DocNowProject").then(
-      (mod) => mod.DocNowProject,
-    ),
-);
-
-const EgwuRecordsProject = dynamic(
-  () =>
-    import("@/components/project/projects/EgwuRecordsProject").then(
-      (mod) => mod.EgwuRecordsProject,
-    ),
-);
 
 type Props = {
   project: ProjectDefinition;

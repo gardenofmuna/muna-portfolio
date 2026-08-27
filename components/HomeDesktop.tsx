@@ -13,6 +13,7 @@ import { FilmHoverGif } from "@/components/FilmHoverGif";
 import { InstallationLottie } from "@/components/InstallationLottie";
 import { PhotosHoverCluster } from "@/components/PhotosHoverCluster";
 import { SelectedWorksHoverGif } from "@/components/SelectedWorksHoverGif";
+import { DesignProjectNavProvider } from "@/components/project/DesignProjectNav";
 import { ProjectHeader } from "@/components/project/ProjectHeader";
 import { ProjectIndexNav } from "@/components/project/ProjectIndexNav";
 import {
@@ -96,6 +97,11 @@ export function HomeDesktop({ initialProject }: Props) {
     }
   }, []);
 
+  const onProjectChange = useCallback((next: ProjectDefinition) => {
+    setEnteredFromLanding(false);
+    setProject(next);
+  }, []);
+
   useEffect(() => {
     const onPop = () => {
       if (window.location.pathname === "/") {
@@ -124,6 +130,7 @@ export function HomeDesktop({ initialProject }: Props) {
   const contactBarRight = m.inset + m.frameW + 25;
 
   return (
+    <DesignProjectNavProvider onProjectChange={onProjectChange}>
     <DesktopStageCanvas>
       <DesktopSiteShell
         layout="stage"
@@ -237,5 +244,6 @@ export function HomeDesktop({ initialProject }: Props) {
         }
       />
     </DesktopStageCanvas>
+    </DesignProjectNavProvider>
   );
 }
