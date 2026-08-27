@@ -443,7 +443,11 @@ export function CoverFlowCarousel({
                   style={
                     {
                       "--cover-flow-mask":
-                        item.kind === "video" ? "none" : `url("${item.src}")`,
+                        item.kind === "video" ||
+                        item.width > 2000 ||
+                        item.height > 2000
+                          ? "none"
+                          : `url("${item.src}")`,
                       "--cover-flow-object-position":
                         item.objectPosition ?? "center",
                     } as CSSProperties

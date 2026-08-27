@@ -2,6 +2,7 @@ import Image from "next/image";
 
 import { CoverFlowCarousel } from "@/components/project/CoverFlowCarousel";
 import type { CoverFlowItem } from "@/components/project/CoverFlowCarousel";
+import { LazyMount } from "@/components/project/LazyMount";
 import type { ProjectMenuState } from "@/components/project/ProjectContentPane";
 import { ProjectFooter } from "@/components/project/ProjectFooter";
 import { ProjectHorizontalStrip } from "@/components/project/ProjectHorizontalStrip";
@@ -91,41 +92,49 @@ export function DocNowProject({ menuState, gallery = "coverflow" }: Props) {
         </figure>
       </ProjectSection>
       <ProjectSection id="posters" title="Posters">
-        <DocNowGallery
-          items={DOC_NOW_POSTERS}
-          ariaLabel="DOC NOW 2025 posters"
-          itemNoun="Poster"
-          gallery={gallery}
-          variant="poster"
-          scrollPin
-        />
+        <LazyMount>
+          <DocNowGallery
+            items={DOC_NOW_POSTERS}
+            ariaLabel="DOC NOW 2025 posters"
+            itemNoun="Poster"
+            gallery={gallery}
+            variant="poster"
+            scrollPin
+          />
+        </LazyMount>
       </ProjectSection>
       <ProjectSection id="festival-program" title="Festival Program">
-        <DocNowGallery
-          items={DOC_NOW_PROGRAM}
-          ariaLabel="DOC NOW 2025 festival program spreads"
-          itemNoun="Program spread"
-          gallery={gallery}
-          variant="poster"
-        />
+        <LazyMount>
+          <DocNowGallery
+            items={DOC_NOW_PROGRAM}
+            ariaLabel="DOC NOW 2025 festival program spreads"
+            itemNoun="Program spread"
+            gallery={gallery}
+            variant="poster"
+          />
+        </LazyMount>
       </ProjectSection>
       <ProjectSection id="social" title="Social Media Assets">
-        <DocNowGallery
-          items={DOC_NOW_SOCIAL}
-          ariaLabel="DOC NOW 2025 social media assets"
-          itemNoun="Social asset"
-          gallery={gallery}
-          variant="poster"
-        />
+        <LazyMount>
+          <DocNowGallery
+            items={DOC_NOW_SOCIAL}
+            ariaLabel="DOC NOW 2025 social media assets"
+            itemNoun="Social asset"
+            gallery={gallery}
+            variant="poster"
+          />
+        </LazyMount>
       </ProjectSection>
       <ProjectSection id="website-design" title="Website Design">
-        <DocNowGallery
-          items={DOC_NOW_WEBSITE}
-          ariaLabel="DOC NOW 2025 website screenshots and recordings"
-          itemNoun="Website view"
-          gallery={gallery}
-          variant="website"
-        />
+        <LazyMount>
+          <DocNowGallery
+            items={DOC_NOW_WEBSITE}
+            ariaLabel="DOC NOW 2025 website screenshots and recordings"
+            itemNoun="Website view"
+            gallery={gallery}
+            variant="website"
+          />
+        </LazyMount>
       </ProjectSection>
       <ProjectFooter
         previousLabel="EGWÚ RECORDS"

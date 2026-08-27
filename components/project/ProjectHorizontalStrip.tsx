@@ -3,7 +3,6 @@
 import Image from "next/image";
 
 import type { CoverFlowItem, CoverFlowVariant } from "@/components/project/CoverFlowCarousel";
-import { ProjectLoopVideo } from "@/components/project/ProjectLoopVideo";
 
 export type HorizontalStripVariant = CoverFlowVariant | "website";
 
@@ -13,12 +12,33 @@ type Props = {
   variant: HorizontalStripVariant;
 };
 
+function isGif(src: string) {
+  return /\.gif(?:$|\?)/i.test(src);
+}
+
+function displaySize(item: CoverFlowItem) {
+  const maxEdge = 1200;
+  const edge = Math.max(item.width, item.height);
+  if (edge <= maxEdge) {
+    return { width: item.width, height: item.height };
+  }
+  const scale = maxEdge / edge;
+  return {
+    width: Math.round(item.width * scale),
+    height: Math.round(item.height * scale),
+  };
+}
+
 function needsUnoptimized(src: string) {
   return /\.(?:svg|gif)(?:$|\?)/i.test(src);
 }
 
 /** Figma mobile: side-by-side gallery that peeks off the right and scrolls horizontally. */
 export function ProjectHorizontalStrip({ items, ariaLabel, variant }: Props) {
+  const visibleItems = items.filter(
+    (item) => item.kind !== "video" && !isGif(item.src),
+  );
+
   return (
     <div
       className={`project-hscroll project-hscroll--${variant}`}
@@ -26,23 +46,15 @@ export function ProjectHorizontalStrip({ items, ariaLabel, variant }: Props) {
       aria-label={ariaLabel}
     >
       <ul className="project-hscroll__track">
-        {items.map((item) => (
-          <li key={item.src} className="project-hscroll__item">
-            {item.kind === "video" ? (
-              <ProjectLoopVideo
-                className="project-hscroll__image project-hscroll__video"
-                src={item.src}
-                alt={item.alt}
-                width={item.width}
-                height={item.height}
-                poster={item.poster}
-              />
-            ) : (
+        {visibleItems.map((item) => {
+          const size = displaySize(item);
+          return (
+            <li key={item.src} className="project-hscroll__item">
               <Image
                 src={item.src}
                 alt={item.alt}
-                width={item.width}
-                height={item.height}
+                width={size.width}
+                height={size.height}
                 className="project-hscroll__image"
                 sizes={
                   variant === "website"
@@ -55,9 +67,9 @@ export function ProjectHorizontalStrip({ items, ariaLabel, variant }: Props) {
                 loading="lazy"
                 unoptimized={needsUnoptimized(item.src)}
               />
-            )}
-          </li>
-        ))}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
