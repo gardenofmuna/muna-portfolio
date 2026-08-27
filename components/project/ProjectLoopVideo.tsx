@@ -14,9 +14,20 @@ type Props = {
   active?: boolean;
 };
 
+function onScreen(el: HTMLElement) {
+  const r = el.getBoundingClientRect();
+  return (
+    r.width > 1 &&
+    r.height > 1 &&
+    r.bottom > 0 &&
+    r.right > 0 &&
+    r.top < innerHeight &&
+    r.left < innerWidth
+  );
+}
+
 /**
  * Looping muted clip that does not attach src until it is on screen.
- * The DOC NOW recordings are 50MB+; mounting them on page load crashes iOS.
  */
 export function ProjectLoopVideo({
   src,
@@ -36,12 +47,24 @@ export function ProjectLoopVideo({
     const el = ref.current;
     if (!el) return;
 
-    const io = new IntersectionObserver(
-      ([entry]) => setInView(entry.isIntersecting),
-      { root: null, rootMargin: "80px", threshold: 0.15 },
+    const check = () => setInView(onScreen(el));
+    const scroller = el.closest<HTMLElement>(
+      ".project-hscroll, [data-project-scroll]",
     );
+
+    check();
+    scroller?.addEventListener("scroll", check, { passive: true });
+    window.addEventListener("scroll", check, { passive: true });
+    const io = new IntersectionObserver(() => {
+      check();
+    }, { root: null, rootMargin: "40px", threshold: 0 });
     io.observe(el);
-    return () => io.disconnect();
+
+    return () => {
+      io.disconnect();
+      scroller?.removeEventListener("scroll", check);
+      window.removeEventListener("scroll", check);
+    };
   }, []);
 
   useEffect(() => {

@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
 import type { CoverFlowItem, CoverFlowVariant } from "@/components/project/CoverFlowCarousel";
+import { ProjectLoopVideo } from "@/components/project/ProjectLoopVideo";
 
 export type HorizontalStripVariant = CoverFlowVariant | "website";
 
@@ -40,9 +41,7 @@ const INITIAL_IMAGES = 2;
 export function ProjectHorizontalStrip({ items, ariaLabel, variant }: Props) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [showAll, setShowAll] = useState(false);
-  const visibleItems = items.filter(
-    (item) => item.kind !== "video" && !isGif(item.src),
-  );
+  const visibleItems = items.filter((item) => !isGif(item.src));
 
   useEffect(() => {
     const el = scrollerRef.current;
@@ -62,18 +61,31 @@ export function ProjectHorizontalStrip({ items, ariaLabel, variant }: Props) {
       <ul className="project-hscroll__track">
         {visibleItems.map((item, index) => {
           const size = displaySize(item);
-          const mountImage = showAll || index < INITIAL_IMAGES;
+          const mountMedia = showAll || index < INITIAL_IMAGES;
           return (
             <li
               key={item.src}
               className="project-hscroll__item"
               style={
-                mountImage
+                mountMedia
                   ? undefined
                   : { aspectRatio: `${item.width} / ${item.height}` }
               }
             >
-              {mountImage ? (
+              {!mountMedia ? null : item.kind === "video" ? (
+                <ProjectLoopVideo
+                  src={item.src}
+                  alt={item.alt}
+                  width={size.width}
+                  height={size.height}
+                  poster={item.poster}
+                  className={
+                    item.height > item.width
+                      ? "project-hscroll__image project-hscroll__video project-hscroll__video--portrait"
+                      : "project-hscroll__image project-hscroll__video"
+                  }
+                />
+              ) : (
                 <Image
                   src={item.src}
                   alt={item.alt}
@@ -93,7 +105,7 @@ export function ProjectHorizontalStrip({ items, ariaLabel, variant }: Props) {
                   quality={70}
                   unoptimized={needsUnoptimized(item.src)}
                 />
-              ) : null}
+              )}
             </li>
           );
         })}
