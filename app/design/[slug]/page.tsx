@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { DesignProjectClient } from "@/components/project/DesignProjectClient";
-import { getProjectBySlug } from "@/data/projects";
+import { PROJECTS, getProjectBySlug } from "@/data/projects";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -19,6 +19,10 @@ export async function generateMetadata({
     title: `${project.title} | Muna | Portfolio`,
     description: project.description,
   };
+}
+
+export async function generateStaticParams() {
+  return Object.keys(PROJECTS).map((slug) => ({ slug }));
 }
 
 export default async function DesignProjectPage({ params }: PageProps) {

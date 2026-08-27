@@ -21,6 +21,7 @@ export type ProjectDefinition = {
 };
 
 export const EGWU_RECORDS_SLUG = "egwu-records";
+export const DOC_NOW_SLUG = "doc-now-2025";
 
 const EGWU_RECORDS: ProjectDefinition = {
   slug: EGWU_RECORDS_SLUG,
@@ -47,12 +48,47 @@ const EGWU_RECORDS: ProjectDefinition = {
   ],
 };
 
+const DOC_NOW_2025: ProjectDefinition = {
+  slug: DOC_NOW_SLUG,
+  number: "II",
+  indexTotal: 10,
+  title: "DOC NOW 2025",
+  description:
+    "Visual identity for Toronto Metropolitan University’s 17th annual Documentary Media festival. Inspired by analog film hardware and contact-sheet grids, the system extends across a logo refresh, posters, festival program, social assets, and the festival website.",
+  sidebarActiveLabel: "design",
+  sectionLinks: [
+    { id: "posters", label: "Posters,", color: "#488bdc" },
+    { id: "logo-refresh", label: "Logo Refresh,", color: "#019f4b" },
+    { id: "website-design", label: "Website Design,", color: "#f9b109" },
+    { id: "festival-program", label: "Festival Program,", color: "#fe5418" },
+    { id: "social", label: "Social Media Assets,", color: "#5d639f" },
+  ],
+  sections: [
+    { id: "logo-refresh", title: "Logo Refresh" },
+    { id: "colors", title: "Colors" },
+    { id: "posters", title: "Posters" },
+    { id: "festival-program", title: "Festival Program" },
+    { id: "social", title: "Social Media Assets" },
+    { id: "website-design", title: "Website Design" },
+  ],
+};
+
 export const PROJECTS: Record<string, ProjectDefinition> = {
   [EGWU_RECORDS_SLUG]: EGWU_RECORDS,
+  [DOC_NOW_SLUG]: DOC_NOW_2025,
+};
+
+export const PROJECTS_BY_NUMBER: Partial<Record<string, string>> = {
+  I: EGWU_RECORDS_SLUG,
+  II: DOC_NOW_SLUG,
 };
 
 export function getProjectBySlug(slug: string): ProjectDefinition | undefined {
   return PROJECTS[slug];
+}
+
+export function getProjectSlugByNumber(number: string): string | undefined {
+  return PROJECTS_BY_NUMBER[number];
 }
 
 export const PROJECT_NAV_LABELS = [
@@ -220,3 +256,194 @@ export const EGWU_PLAYLIST_COVER = {
   width: 1700,
   height: 1700,
 } as const;
+
+const DOC_NOW_DIR = "/projects/DOC NOW 2025";
+
+function docNowSrc(relativePath: string) {
+  return encodeURI(`${DOC_NOW_DIR}/${relativePath}`);
+}
+
+export const DOC_NOW_LOGO = {
+  src: docNowSrc("logo refresh/DOC NOW 2025 LOGO.svg"),
+  alt: "DOC NOW 2025 logo on charcoal square",
+  width: 1080,
+  height: 1080,
+} as const;
+
+export const DOC_NOW_COLORS = {
+  src: docNowSrc("Color Palette Doc Now 2025.webp"),
+  alt: "DOC NOW 2025 color palette with labeled swatches",
+  width: 1575,
+  height: 800,
+} as const;
+
+export const DOC_NOW_POSTERS: CoverFlowItem[] = [
+  {
+    src: docNowSrc("Posters/DOC NOW POSTER 1.webp"),
+    alt: "DOC NOW 2025 festival poster with film-strip grid of portraits and program details",
+    width: 1080,
+    height: 1350,
+  },
+  {
+    src: docNowSrc("Posters/DOC NOW POSTER 2.webp"),
+    alt: "DOC NOW 2025 Bake Sale and second-hand sale poster",
+    width: 2550,
+    height: 3300,
+  },
+  {
+    src: docNowSrc("Posters/DOC NOW POSTER 3.webp"),
+    alt: "DOC NOW 2025 donor package poster with camera and hand grid",
+    width: 2482,
+    height: 3508,
+  },
+];
+
+export const DOC_NOW_PROGRAM: CoverFlowItem[] = [
+  {
+    src: docNowSrc("Festival program/DOCNOW2025PROGRAM-Spread_page-0001.webp"),
+    alt: "DOC NOW 2025 festival program spread 1",
+    width: 10625,
+    height: 13750,
+  },
+  {
+    src: docNowSrc("Festival program/DOCNOW2025PROGRAM-Spread_page-0002.webp"),
+    alt: "DOC NOW 2025 festival program spread 2",
+    width: 10625,
+    height: 6875,
+  },
+  {
+    src: docNowSrc("Festival program/DOCNOW2025PROGRAM-Spread_page-0003.webp"),
+    alt: "DOC NOW 2025 festival program spread 3",
+    width: 10625,
+    height: 6875,
+  },
+  {
+    src: docNowSrc("Festival program/DOCNOW2025PROGRAM-Spread_page-0004.webp"),
+    alt: "DOC NOW 2025 festival program spread 4",
+    width: 14998,
+    height: 9705,
+  },
+  {
+    src: docNowSrc("Festival program/DOCNOW2025PROGRAM-Spread_page-0005.webp"),
+    alt: "DOC NOW 2025 festival program spread 5",
+    width: 14998,
+    height: 9705,
+  },
+  {
+    src: docNowSrc("Festival program/DOCNOW2025PROGRAM-Spread_page-0006.webp"),
+    alt: "DOC NOW 2025 festival program spread 6",
+    width: 14998,
+    height: 9705,
+  },
+  {
+    src: docNowSrc("Festival program/DOCNOW2025PROGRAM-Spread_page-0007.webp"),
+    alt: "DOC NOW 2025 festival program spread 7",
+    width: 10625,
+    height: 13750,
+  },
+];
+
+export const DOC_NOW_SOCIAL: CoverFlowItem[] = [
+  {
+    src: docNowSrc("Social Media Assets/1.webp"),
+    alt: "DOC NOW 2025 social post showcasing artists",
+    width: 1080,
+    height: 1350,
+  },
+  {
+    src: docNowSrc("Social Media Assets/2.webp"),
+    alt: "DOC NOW 2025 social post 2",
+    width: 1080,
+    height: 1350,
+  },
+  {
+    src: docNowSrc("Social Media Assets/3.webp"),
+    alt: "DOC NOW 2025 social post 3",
+    width: 1080,
+    height: 1350,
+  },
+  {
+    src: docNowSrc("Social Media Assets/4.webp"),
+    alt: "DOC NOW 2025 social post 4",
+    width: 1080,
+    height: 1350,
+  },
+  {
+    src: docNowSrc("Social Media Assets/5.webp"),
+    alt: "DOC NOW 2025 social post 5",
+    width: 1080,
+    height: 1350,
+  },
+  {
+    src: docNowSrc("Social Media Assets/6.webp"),
+    alt: "DOC NOW 2025 social post 6",
+    width: 1080,
+    height: 1350,
+  },
+  {
+    src: docNowSrc("Social Media Assets/7.webp"),
+    alt: "DOC NOW 2025 social post 7",
+    width: 1080,
+    height: 1350,
+  },
+  {
+    src: docNowSrc("Social Media Assets/8.webp"),
+    alt: "DOC NOW 2025 social post 8",
+    width: 1080,
+    height: 1350,
+  },
+  {
+    src: docNowSrc("Social Media Assets/DOC NOW ANIMATION.gif"),
+    alt: "DOC NOW 2025 social animation",
+    width: 400,
+    height: 500,
+  },
+];
+
+export const DOC_NOW_WEBSITE: CoverFlowItem[] = [
+  {
+    src: docNowSrc("Website design/1.webp"),
+    alt: "DOC NOW 2025 website screenshot 1",
+    width: 2880,
+    height: 1626,
+  },
+  {
+    src: docNowSrc("Website design/2.webp"),
+    alt: "DOC NOW 2025 website screenshot 2",
+    width: 2880,
+    height: 1626,
+  },
+  {
+    src: docNowSrc("Website design/3.webp"),
+    alt: "DOC NOW 2025 website screenshot 3",
+    width: 2880,
+    height: 1626,
+  },
+  {
+    src: docNowSrc("Website design/4.webp"),
+    alt: "DOC NOW 2025 website screenshot 4",
+    width: 2880,
+    height: 1626,
+  },
+  {
+    src: docNowSrc("Website design/5.webp"),
+    alt: "DOC NOW 2025 website screenshot 5",
+    width: 2880,
+    height: 1626,
+  },
+  {
+    src: docNowSrc("Website design/WEBSITE-RECORDING-DESKTOP.mp4"),
+    alt: "DOC NOW 2025 website desktop recording",
+    width: 2880,
+    height: 1626,
+    kind: "video",
+  },
+  {
+    src: docNowSrc("Website design/WEBSITE-RECORDING-MOBILE.mp4"),
+    alt: "DOC NOW 2025 website mobile recording",
+    width: 1178,
+    height: 2376,
+    kind: "video",
+  },
+];
+

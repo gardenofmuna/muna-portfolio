@@ -1,53 +1,74 @@
 "use client";
 
+import Link from "next/link";
 import { useLayoutEffect, useRef, useState } from "react";
 
 import { useProjectScroll } from "@/components/project/ProjectContentPane";
 
 type Props = {
   previousLabel?: string;
+  previousHref?: string;
   nextLabel?: string;
+  nextHref?: string;
 };
 
 function threeLetters(name: string) {
   return name.replace(/\s+/g, "").slice(0, 3);
 }
 
+/** Same sample as EGWU’s default previous name so Back / Next stay one size. */
+const FOOTER_LABEL_FIT_LETTERS = threeLetters("STUDIO ORRY");
+
 function FooterNav({
   align,
   word,
   projectName,
   fontSize,
+  href,
 }: {
   align: "start" | "end";
   word: string;
   projectName: string;
   fontSize?: number;
+  href?: string;
 }) {
-  return (
-    <div
-      className={
-        align === "end"
-          ? "project-footer__nav project-footer__nav--next"
-          : "project-footer__nav"
-      }
-    >
+  const className =
+    align === "end"
+      ? "project-footer__nav project-footer__nav--next"
+      : "project-footer__nav";
+
+  const inner = (
+    <>
       <p
         className="project-footer__label"
         style={fontSize ? { fontSize: `${fontSize}px` } : undefined}
       >
         {word}
       </p>
-      <p className="project-footer__project project-footer__project--placeholder">
-        {projectName}
-      </p>
-    </div>
+      {projectName ? (
+        <p className="project-footer__project project-footer__project--placeholder">
+          {projectName}
+        </p>
+      ) : null}
+    </>
   );
+
+  if (href) {
+    return (
+      <Link href={href} className={className}>
+        {inner}
+      </Link>
+    );
+  }
+
+  return <div className={className}>{inner}</div>;
 }
 
 export function ProjectFooter({
   previousLabel = "STUDIO ORRY",
+  previousHref,
   nextLabel = "DOC NOW 2025",
+  nextHref,
 }: Props) {
   const scroll = useProjectScroll();
   const threeRef = useRef<HTMLSpanElement>(null);
@@ -71,12 +92,12 @@ export function ProjectFooter({
     const ro = new ResizeObserver(fit);
     ro.observe(three);
     return () => ro.disconnect();
-  }, [previousLabel]);
+  }, []);
 
   return (
     <footer className="project-footer">
       <span ref={threeRef} className="project-footer__measure" aria-hidden>
-        {threeLetters(previousLabel)}
+        {FOOTER_LABEL_FIT_LETTERS}
       </span>
       <span
         ref={probeRef}
@@ -90,6 +111,7 @@ export function ProjectFooter({
         word="Back"
         projectName={previousLabel}
         fontSize={sizePx}
+        href={previousHref}
       />
       <button
         type="button"
@@ -125,6 +147,7 @@ export function ProjectFooter({
         word="Next"
         projectName={nextLabel}
         fontSize={sizePx}
+        href={nextHref}
       />
     </footer>
   );

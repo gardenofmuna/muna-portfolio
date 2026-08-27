@@ -34,9 +34,10 @@ export type CoverFlowItem = {
   scale?: number;
   objectPosition?: string;
   label?: string;
+  kind?: "image" | "video";
 };
 
-export type CoverFlowVariant = "poster" | "merchandise";
+export type CoverFlowVariant = "poster" | "merchandise" | "website";
 
 type CoverFlowCarouselProps = {
   items: CoverFlowItem[];
@@ -44,6 +45,8 @@ type CoverFlowCarouselProps = {
   itemNoun: string;
   initialIndex?: number;
   variant?: CoverFlowVariant;
+  /** When false, skip scroll-pin (extra carousels on the same page). */
+  scrollPin?: boolean;
   /** Pixel offset between adjacent cards — controlled by parent layout state. */
   sideOffset?: number;
   /** Scale for immediate neighbors (offset ±1). */
@@ -76,7 +79,17 @@ const DEFAULT_VARIANT_BEHAVIOR = {
     ...FAN_BEHAVIOR,
     sideOffset: 104,
   },
+  website: {
+    ...FAN_BEHAVIOR,
+    sideOffset: 120,
+    neighbor1Scale: 0.78,
+    centerScale: 1,
+  },
 } as const;
+
+function needsUnoptimized(src: string) {
+  return /\.(?:svg|gif)(?:$|\?)/i.test(src);
+}
 
 const SWIPE_OFFSET_PX = 52;
 const SWIPE_VELOCITY = 320;
@@ -150,6 +163,7 @@ export function CoverFlowCarousel({
   itemNoun,
   initialIndex = 0,
   variant = "poster",
+  scrollPin = true,
   sideOffset,
   neighbor1Scale,
   neighbor2Scale,
@@ -248,6 +262,9 @@ export function CoverFlowCarousel({
     if (!root) return;
     const scroller = root.closest(".project-pane__scroll");
     if (!(scroller instanceof HTMLElement)) return;
+    if (!scrollPin || (variant !== "poster" && variant !== "merchandise")) {
+      return;
+    }
     const sectionId = (variant === "poster"
       ? "posters"
       : "merchandise") as CoverFlowSectionId;
@@ -269,7 +286,7 @@ export function CoverFlowCarousel({
       minStepMs: MIN_STEP_INTERVAL_MS,
       deltaGain: 0.62,
     });
-  }, [goTo, items.length, safari, variant, coarsePointer]);
+  }, [goTo, items.length, safari, variant, coarsePointer, scrollPin]);
 
   const activeItem = items[activeIndex];
   const statusText = activeItem
@@ -423,23 +440,46 @@ export function CoverFlowCarousel({
                   className="project-cover-flow__frame"
                   style={
                     {
-                      "--cover-flow-mask": `url("${item.src}")`,
+                      "--cover-flow-mask":
+                        item.kind === "video" ? "none" : `url("${item.src}")`,
                       "--cover-flow-object-position":
                         item.objectPosition ?? "center",
                     } as CSSProperties
                   }
                 >
-                  <Image
-                    src={item.src}
-                    alt={isActive ? item.alt : ""}
-                    fill
-                    className="project-cover-flow__image"
-                    draggable={false}
-                    sizes={variant === "poster" ? "341px" : "428px"}
-                    style={{
-                      objectPosition: item.objectPosition ?? "center",
-                    }}
-                  />
+                  {item.kind === "video" ? (
+                    <video
+                      className="project-cover-flow__image project-cover-flow__video"
+                      src={item.src}
+                      width={item.width}
+                      height={item.height}
+                      autoPlay={!reduceMotion && isActive}
+                      muted
+                      loop
+                      playsInline
+                      preload="metadata"
+                      aria-label={isActive ? item.alt : undefined}
+                    />
+                  ) : (
+                    <Image
+                      src={item.src}
+                      alt={isActive ? item.alt : ""}
+                      fill
+                      className="project-cover-flow__image"
+                      draggable={false}
+                      sizes={
+                        variant === "website"
+                          ? "560px"
+                          : variant === "poster"
+                            ? "341px"
+                            : "428px"
+                      }
+                      unoptimized={needsUnoptimized(item.src)}
+                      style={{
+                        objectPosition: item.objectPosition ?? "center",
+                      }}
+                    />
+                  )}
                   <div className="project-cover-flow__shade" aria-hidden="true" />
                 </div>
               </motion.figure>

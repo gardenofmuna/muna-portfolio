@@ -1,3 +1,7 @@
+import Link from "next/link";
+
+import { getProjectSlugByNumber } from "@/data/projects";
+
 type Props = {
   activeNumber: string;
   total: number;
@@ -21,19 +25,36 @@ export function ProjectIndexNav({ activeNumber, total }: Props) {
 
   return (
     <nav className="project-index-nav" aria-label="Project index">
-      {numerals.map((numeral) => (
-        <span
-          key={numeral}
-          className={
-            numeral === activeNumber
-              ? "project-index-nav__item project-index-nav__item--active"
-              : "project-index-nav__item"
-          }
-          aria-current={numeral === activeNumber ? "page" : undefined}
-        >
-          {numeral}
-        </span>
-      ))}
+      {numerals.map((numeral) => {
+        const slug = getProjectSlugByNumber(numeral);
+        const className =
+          numeral === activeNumber
+            ? "project-index-nav__item project-index-nav__item--active"
+            : "project-index-nav__item";
+        const isCurrent = numeral === activeNumber;
+
+        if (slug && !isCurrent) {
+          return (
+            <Link
+              key={numeral}
+              href={`/design/${slug}`}
+              className={className}
+            >
+              {numeral}
+            </Link>
+          );
+        }
+
+        return (
+          <span
+            key={numeral}
+            className={className}
+            aria-current={isCurrent ? "page" : undefined}
+          >
+            {numeral}
+          </span>
+        );
+      })}
     </nav>
   );
 }

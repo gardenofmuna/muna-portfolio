@@ -224,6 +224,7 @@
 .project-header__section-link {
   color: inherit;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .project-header__section-link:hover {
@@ -344,6 +345,11 @@
   max-width: 100%;
 }
 
+.project-asset-single--doc-logo {
+  width: 380px;
+  max-width: 100%;
+}
+
 /* Cover Flow */
 
 .project-cover-flow {
@@ -358,9 +364,14 @@
 }
 
 .project-cover-flow--poster,
-.project-cover-flow--merchandise {
+.project-cover-flow--merchandise,
+.project-cover-flow--website {
   width: 496px;
   max-width: 100%;
+}
+
+.project-cover-flow--website {
+  width: 640px;
 }
 
 .project-cover-flow--poster .project-cover-flow__stage {
@@ -370,6 +381,11 @@
 
 .project-cover-flow--merchandise .project-cover-flow__stage {
   height: 480px;
+  overflow: visible;
+}
+
+.project-cover-flow--website .project-cover-flow__stage {
+  height: 360px;
   overflow: visible;
 }
 
@@ -467,19 +483,28 @@
   min-height: 428px;
 }
 
+.project-cover-flow--website .project-cover-flow__item {
+  width: 560px;
+  height: 316px;
+  min-width: 560px;
+  min-height: 316px;
+}
+
 .project-cover-flow__image {
   display: block;
   object-fit: contain;
 }
 
 .project-cover-flow--poster .project-cover-flow__image,
-.project-cover-flow--merchandise .project-cover-flow__image {
+.project-cover-flow--merchandise .project-cover-flow__image,
+.project-cover-flow--website .project-cover-flow__image {
   filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.15));
   transition: filter 0.28s ease;
 }
 
 .project-cover-flow--poster .project-cover-flow__item--active .project-cover-flow__image,
-.project-cover-flow--merchandise .project-cover-flow__item--active .project-cover-flow__image {
+.project-cover-flow--merchandise .project-cover-flow__item--active .project-cover-flow__image,
+.project-cover-flow--website .project-cover-flow__item--active .project-cover-flow__image {
   filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.28));
 }
 
@@ -766,17 +791,20 @@
   align-self: flex-start;
   align-items: flex-start;
   text-align: left;
-  max-width: calc(239 * var(--pn-u));
+  /* EGWU Figma column was 239; too narrow for “Social Media Assets,” */
+  max-width: none;
+  width: max-content;
   font-size: calc(34 * var(--pn-u));
   line-height: calc(37 * var(--pn-u));
 }
 
 .project-narrow .project-header__title {
-  /* EGWÚ RECORDS 695×80 @ y=254 */
-  max-width: calc(695 * var(--pn-u));
+  /* EGWÚ RECORDS 695×80 @ y=254 — keep one line for longer titles too */
+  max-width: 100%;
   font-size: calc(76 * var(--pn-u));
   line-height: calc(80 * var(--pn-u));
   letter-spacing: -0.04em;
+  white-space: nowrap;
   /* desc @ y=383 → 383 − (254+80) = 49 */
   margin-bottom: calc(49 * var(--pn-u));
 }
@@ -849,6 +877,11 @@
   max-width: 100%;
 }
 
+.project-narrow .project-asset-single--doc-logo {
+  width: calc(441 * var(--pn-u));
+  max-width: 100%;
+}
+
 /* Horizontal strip galleries (Figma mobile — peeks off the right edge) */
 .project-hscroll {
   overflow-x: auto;
@@ -910,6 +943,31 @@
 .project-hscroll--merchandise .project-hscroll__image {
   height: calc(750.6 * var(--pn-u));
   width: auto;
+}
+
+.project-hscroll--website .project-hscroll__track {
+  gap: calc(28 * var(--pn-u));
+}
+
+.project-hscroll--website .project-hscroll__image {
+  height: calc(420 * var(--pn-u));
+  width: auto;
+}
+
+.project-hscroll__video::-webkit-media-controls {
+  display: none !important;
+}
+
+.project-cover-flow__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.project-cover-flow__video::-webkit-media-controls {
+  display: none !important;
 }
 
 .project-narrow .project-footer {

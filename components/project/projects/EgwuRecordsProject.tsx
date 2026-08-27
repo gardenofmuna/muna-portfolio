@@ -7,6 +7,7 @@ import { EgwuLogoSection } from "@/components/project/projects/egwu/EgwuLogoSect
 import { EgwuMerchandiseSection } from "@/components/project/projects/egwu/EgwuMerchandiseSection";
 import { EgwuPlaylistSection } from "@/components/project/projects/egwu/EgwuPlaylistSection";
 import { EgwuPostersSection } from "@/components/project/projects/egwu/EgwuPostersSection";
+import { DOC_NOW_SLUG } from "@/data/projects";
 
 type Props = {
   menuState: ProjectMenuState;
@@ -35,7 +36,7 @@ export function EgwuRecordsProject({
       <ProjectSection id="playlist-cover" title="Playlist Cover">
         <EgwuPlaylistSection menuState={menuState} />
       </ProjectSection>
-      <ProjectFooter />
+      <ProjectFooter nextHref={`/design/${DOC_NOW_SLUG}`} />
     </div>
   );
 }

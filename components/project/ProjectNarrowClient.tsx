@@ -13,7 +13,7 @@ import { useNarrowArtboardMetrics } from "@/components/NarrowArtboard";
 import { SiteWordmark } from "@/components/SiteWordmark";
 import { ProjectHeader } from "@/components/project/ProjectHeader";
 import { ProjectIndexNav } from "@/components/project/ProjectIndexNav";
-import { EgwuRecordsProject } from "@/components/project/projects/EgwuRecordsProject";
+import { ProjectCaseStudy } from "@/components/project/projects/ProjectCaseStudy";
 import type { ProjectDefinition } from "@/data/projects";
 import { DESKTOP_LAYOUT_H, DESKTOP_LAYOUT_W } from "@/lib/desktop-stage";
 import {
@@ -122,7 +122,11 @@ export function ProjectNarrowClient({ project }: Props) {
             total={project.indexTotal}
           />
           <ProjectHeader project={project} menuState="hidden" />
-          <EgwuRecordsProject menuState="hidden" gallery="strip" />
+          <ProjectCaseStudy
+            project={project}
+            menuState="hidden"
+            gallery="strip"
+          />
         </div>
       </div>
 

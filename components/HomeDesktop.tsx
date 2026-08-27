@@ -19,7 +19,7 @@ import {
   ProjectContentPane,
   type ProjectMenuState,
 } from "@/components/project/ProjectContentPane";
-import { EgwuRecordsProject } from "@/components/project/projects/EgwuRecordsProject";
+import { ProjectCaseStudy } from "@/components/project/projects/ProjectCaseStudy";
 import {
   DESKTOP_LAYOUT_BIO_LEFT,
   getDesktopStageMetrics,
@@ -163,7 +163,7 @@ export function HomeDesktop({ initialProject }: Props) {
                   />
                 </div>
                 <ProjectHeader project={project} menuState={menuState} />
-                <EgwuRecordsProject menuState={menuState} />
+                <ProjectCaseStudy project={project} menuState={menuState} />
               </ProjectContentPane>
             </div>
           ) : (
