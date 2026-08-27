@@ -24,6 +24,7 @@ import {
   registerCoverFlowScrollPin,
   type CoverFlowSectionId,
 } from "@/components/project/coverFlowScrollPin";
+import { ProjectLoopVideo } from "@/components/project/ProjectLoopVideo";
 
 export type CoverFlowItem = {
   src: string;
@@ -35,6 +36,7 @@ export type CoverFlowItem = {
   objectPosition?: string;
   label?: string;
   kind?: "image" | "video";
+  poster?: string;
 };
 
 export type CoverFlowVariant = "poster" | "merchandise" | "website";
@@ -448,17 +450,14 @@ export function CoverFlowCarousel({
                   }
                 >
                   {item.kind === "video" ? (
-                    <video
+                    <ProjectLoopVideo
                       className="project-cover-flow__image project-cover-flow__video"
                       src={item.src}
+                      alt={item.alt}
                       width={item.width}
                       height={item.height}
-                      autoPlay={!reduceMotion && isActive}
-                      muted
-                      loop
-                      playsInline
-                      preload="metadata"
-                      aria-label={isActive ? item.alt : undefined}
+                      poster={item.poster}
+                      active={isActive}
                     />
                   ) : (
                     <Image

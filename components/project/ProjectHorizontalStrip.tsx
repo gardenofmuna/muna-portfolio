@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useReducedMotion } from "framer-motion";
 
 import type { CoverFlowItem, CoverFlowVariant } from "@/components/project/CoverFlowCarousel";
+import { ProjectLoopVideo } from "@/components/project/ProjectLoopVideo";
 
 export type HorizontalStripVariant = CoverFlowVariant | "website";
 
@@ -19,8 +19,6 @@ function needsUnoptimized(src: string) {
 
 /** Figma mobile: side-by-side gallery that peeks off the right and scrolls horizontally. */
 export function ProjectHorizontalStrip({ items, ariaLabel, variant }: Props) {
-  const reduceMotion = useReducedMotion();
-
   return (
     <div
       className={`project-hscroll project-hscroll--${variant}`}
@@ -31,17 +29,13 @@ export function ProjectHorizontalStrip({ items, ariaLabel, variant }: Props) {
         {items.map((item) => (
           <li key={item.src} className="project-hscroll__item">
             {item.kind === "video" ? (
-              <video
+              <ProjectLoopVideo
                 className="project-hscroll__image project-hscroll__video"
                 src={item.src}
+                alt={item.alt}
                 width={item.width}
                 height={item.height}
-                autoPlay={!reduceMotion}
-                muted
-                loop
-                playsInline
-                preload="metadata"
-                aria-label={item.alt}
+                poster={item.poster}
               />
             ) : (
               <Image
@@ -58,6 +52,7 @@ export function ProjectHorizontalStrip({ items, ariaLabel, variant }: Props) {
                       : "90vw"
                 }
                 draggable={false}
+                loading="lazy"
                 unoptimized={needsUnoptimized(item.src)}
               />
             )}

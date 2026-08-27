@@ -437,6 +437,7 @@ export const DOC_NOW_WEBSITE: CoverFlowItem[] = [
     width: 2880,
     height: 1626,
     kind: "video",
+    poster: docNowSrc("Website design/1.webp"),
   },
   {
     src: docNowSrc("Website design/WEBSITE-RECORDING-MOBILE.mp4"),
@@ -444,6 +445,7 @@ export const DOC_NOW_WEBSITE: CoverFlowItem[] = [
     width: 1178,
     height: 2376,
     kind: "video",
+    poster: docNowSrc("Website design/5.webp"),
   },
 ];
 
