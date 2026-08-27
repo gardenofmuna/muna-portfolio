@@ -63,7 +63,7 @@ export function designSlugFromHref(href?: string) {
 }
 
 /** Left-click replaces the case study in place, like clicking “design”. */
-export function useInPlaceDesignLink(href?: string) {
+export function useInPlaceDesignLink(href: string) {
   const nav = useDesignProjectNav();
   const slug = designSlugFromHref(href);
 
