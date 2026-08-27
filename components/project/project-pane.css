@@ -947,6 +947,8 @@
 
 .project-hscroll--website .project-hscroll__track {
   gap: calc(28 * var(--pn-u));
+  flex-wrap: nowrap;
+  align-items: flex-end;
 }
 
 .project-hscroll--website .project-hscroll__image {
@@ -956,10 +958,6 @@
 
 .project-hscroll--website .project-hscroll__video {
   background: #111;
-}
-
-.project-hscroll--website .project-hscroll__video--portrait {
-  height: calc(757.8 * var(--pn-u));
 }
 
 .project-hscroll__video::-webkit-media-controls {

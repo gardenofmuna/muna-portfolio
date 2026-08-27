@@ -79,11 +79,7 @@ export function ProjectHorizontalStrip({ items, ariaLabel, variant }: Props) {
                   width={size.width}
                   height={size.height}
                   poster={item.poster}
-                  className={
-                    item.height > item.width
-                      ? "project-hscroll__image project-hscroll__video project-hscroll__video--portrait"
-                      : "project-hscroll__image project-hscroll__video"
-                  }
+                  className="project-hscroll__image project-hscroll__video"
                 />
               ) : (
                 <Image
