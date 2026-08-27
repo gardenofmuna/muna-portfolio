@@ -1,6 +1,8 @@
-import Image from "next/image";
+"use client";
 
-import { CoverFlowCarousel } from "@/components/project/CoverFlowCarousel";
+import Image from "next/image";
+import dynamic from "next/dynamic";
+
 import type { CoverFlowItem } from "@/components/project/CoverFlowCarousel";
 import { LazyMount } from "@/components/project/LazyMount";
 import type { ProjectMenuState } from "@/components/project/ProjectContentPane";
@@ -16,6 +18,14 @@ import {
   DOC_NOW_WEBSITE,
   EGWU_RECORDS_SLUG,
 } from "@/data/projects";
+
+const CoverFlowCarousel = dynamic(
+  () =>
+    import("@/components/project/CoverFlowCarousel").then(
+      (mod) => mod.CoverFlowCarousel,
+    ),
+  { ssr: false },
+);
 
 type GalleryMode = "coverflow" | "strip";
 
@@ -92,7 +102,7 @@ export function DocNowProject({ menuState, gallery = "coverflow" }: Props) {
         </figure>
       </ProjectSection>
       <ProjectSection id="posters" title="Posters">
-        <LazyMount>
+        <LazyMount afterScroll minHeight={280}>
           <DocNowGallery
             items={DOC_NOW_POSTERS}
             ariaLabel="DOC NOW 2025 posters"
@@ -104,7 +114,7 @@ export function DocNowProject({ menuState, gallery = "coverflow" }: Props) {
         </LazyMount>
       </ProjectSection>
       <ProjectSection id="festival-program" title="Festival Program">
-        <LazyMount>
+        <LazyMount afterScroll minHeight={280}>
           <DocNowGallery
             items={DOC_NOW_PROGRAM}
             ariaLabel="DOC NOW 2025 festival program spreads"
@@ -115,7 +125,7 @@ export function DocNowProject({ menuState, gallery = "coverflow" }: Props) {
         </LazyMount>
       </ProjectSection>
       <ProjectSection id="social" title="Social Media Assets">
-        <LazyMount>
+        <LazyMount afterScroll minHeight={280}>
           <DocNowGallery
             items={DOC_NOW_SOCIAL}
             ariaLabel="DOC NOW 2025 social media assets"
@@ -126,7 +136,7 @@ export function DocNowProject({ menuState, gallery = "coverflow" }: Props) {
         </LazyMount>
       </ProjectSection>
       <ProjectSection id="website-design" title="Website Design">
-        <LazyMount>
+        <LazyMount afterScroll minHeight={280}>
           <DocNowGallery
             items={DOC_NOW_WEBSITE}
             ariaLabel="DOC NOW 2025 website screenshots and recordings"

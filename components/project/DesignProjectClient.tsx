@@ -1,12 +1,25 @@
 "use client";
 
+import dynamic from "next/dynamic";
+
 import { useLayoutMode } from "@/hooks/useLayoutMode";
 
-import { HomeDesktop } from "@/components/HomeDesktop";
-import { ProjectNarrowClient } from "@/components/project/ProjectNarrowClient";
 import type { ProjectDefinition } from "@/data/projects";
 
 import "./project-pane.css";
+
+const ProjectNarrowClient = dynamic(
+  () =>
+    import("@/components/project/ProjectNarrowClient").then(
+      (mod) => mod.ProjectNarrowClient,
+    ),
+  { ssr: false },
+);
+
+const HomeDesktop = dynamic(
+  () => import("@/components/HomeDesktop").then((mod) => mod.HomeDesktop),
+  { ssr: false },
+);
 
 type Props = {
   project: ProjectDefinition;

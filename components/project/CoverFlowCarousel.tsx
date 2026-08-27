@@ -93,6 +93,15 @@ function needsUnoptimized(src: string) {
   return /\.(?:svg|gif)(?:$|\?)/i.test(src);
 }
 
+function isGif(src: string) {
+  return /\.gif(?:$|\?)/i.test(src);
+}
+
+function canUseCssMask(item: CoverFlowItem) {
+  if (item.kind === "video" || isGif(item.src)) return false;
+  return item.width <= 1200 && item.height <= 1200;
+}
+
 const SWIPE_OFFSET_PX = 52;
 const SWIPE_VELOCITY = 320;
 const POSTER_SCROLL_STEP = 140;
@@ -176,7 +185,9 @@ export function CoverFlowCarousel({
   const regionId = useId();
   const statusId = `${regionId}-status`;
   const rootRef = useRef<HTMLElement>(null);
-  const wrapSlots = true;
+  const wrapSlots = items.every(
+    (item) => item.kind !== "video" && !isGif(item.src),
+  );
   const [activeIndex, setActiveIndex] = useState(() =>
     clampIndex(initialIndex, items.length),
   );
@@ -198,11 +209,14 @@ export function CoverFlowCarousel({
   const stepWrap = useCallback(
     (delta: number) => {
       if (items.length === 0) return;
-      const next = wrapIndex(activeIndexRef.current + delta, items.length);
+      const raw = activeIndexRef.current + delta;
+      const next = wrapSlots
+        ? wrapIndex(raw, items.length)
+        : clampIndex(raw, items.length);
       activeIndexRef.current = next;
       setActiveIndex(next);
     },
-    [items.length],
+    [items.length, wrapSlots],
   );
 
   const goPrevious = useCallback(() => {
@@ -442,28 +456,37 @@ export function CoverFlowCarousel({
                   className="project-cover-flow__frame"
                   style={
                     {
-                      "--cover-flow-mask":
-                        item.kind === "video" ||
-                        item.width > 2000 ||
-                        item.height > 2000
-                          ? "none"
-                          : `url("${item.src}")`,
+                      "--cover-flow-mask": canUseCssMask(item)
+                        ? `url("${item.src}")`
+                        : "none",
                       "--cover-flow-object-position":
                         item.objectPosition ?? "center",
                     } as CSSProperties
                   }
                 >
                   {item.kind === "video" ? (
-                    <ProjectLoopVideo
-                      className="project-cover-flow__image project-cover-flow__video"
-                      src={item.src}
-                      alt={item.alt}
-                      width={item.width}
-                      height={item.height}
-                      poster={item.poster}
-                      active={isActive}
-                    />
-                  ) : (
+                    isActive ? (
+                      <ProjectLoopVideo
+                        className="project-cover-flow__image project-cover-flow__video"
+                        src={item.src}
+                        alt={item.alt}
+                        width={item.width}
+                        height={item.height}
+                        poster={item.poster}
+                        active
+                      />
+                    ) : item.poster ? (
+                      <Image
+                        src={item.poster}
+                        alt=""
+                        fill
+                        className="project-cover-flow__image"
+                        draggable={false}
+                        sizes="560px"
+                        quality={70}
+                      />
+                    ) : null
+                  ) : isGif(item.src) && !isActive ? null : (
                     <Image
                       src={item.src}
                       alt={isActive ? item.alt : ""}
@@ -477,6 +500,7 @@ export function CoverFlowCarousel({
                             ? "341px"
                             : "428px"
                       }
+                      quality={70}
                       unoptimized={needsUnoptimized(item.src)}
                       style={{
                         objectPosition: item.objectPosition ?? "center",

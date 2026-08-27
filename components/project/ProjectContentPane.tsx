@@ -211,6 +211,7 @@ export function ProjectContentPane({
         <div
           ref={scrollRef}
           className="project-pane__scroll"
+          data-project-scroll=""
           onScroll={handleScroll}
         >
           <div

@@ -260,7 +260,7 @@ export const EGWU_PLAYLIST_COVER = {
 const DOC_NOW_DIR = "/projects/DOC NOW 2025";
 
 function docNowSrc(relativePath: string) {
-  return encodeURI(`${DOC_NOW_DIR}/${relativePath}`);
+  return `${DOC_NOW_DIR}/${relativePath}`;
 }
 
 export const DOC_NOW_LOGO = {
@@ -287,14 +287,14 @@ export const DOC_NOW_POSTERS: CoverFlowItem[] = [
   {
     src: docNowSrc("Posters/DOC NOW POSTER 2.webp"),
     alt: "DOC NOW 2025 Bake Sale and second-hand sale poster",
-    width: 2550,
-    height: 3300,
+    width: 1236,
+    height: 1600,
   },
   {
     src: docNowSrc("Posters/DOC NOW POSTER 3.webp"),
     alt: "DOC NOW 2025 donor package poster with camera and hand grid",
-    width: 2482,
-    height: 3508,
+    width: 1132,
+    height: 1600,
   },
 ];
 
@@ -302,44 +302,44 @@ export const DOC_NOW_PROGRAM: CoverFlowItem[] = [
   {
     src: docNowSrc("Festival program/DOCNOW2025PROGRAM-Spread_page-0001.webp"),
     alt: "DOC NOW 2025 festival program spread 1",
-    width: 10625,
-    height: 13750,
+    width: 1236,
+    height: 1600,
   },
   {
     src: docNowSrc("Festival program/DOCNOW2025PROGRAM-Spread_page-0002.webp"),
     alt: "DOC NOW 2025 festival program spread 2",
-    width: 10625,
-    height: 6875,
+    width: 1600,
+    height: 1035,
   },
   {
     src: docNowSrc("Festival program/DOCNOW2025PROGRAM-Spread_page-0003.webp"),
     alt: "DOC NOW 2025 festival program spread 3",
-    width: 10625,
-    height: 6875,
+    width: 1600,
+    height: 1035,
   },
   {
     src: docNowSrc("Festival program/DOCNOW2025PROGRAM-Spread_page-0004.webp"),
     alt: "DOC NOW 2025 festival program spread 4",
-    width: 14998,
-    height: 9705,
+    width: 1600,
+    height: 1035,
   },
   {
     src: docNowSrc("Festival program/DOCNOW2025PROGRAM-Spread_page-0005.webp"),
     alt: "DOC NOW 2025 festival program spread 5",
-    width: 14998,
-    height: 9705,
+    width: 1600,
+    height: 1035,
   },
   {
     src: docNowSrc("Festival program/DOCNOW2025PROGRAM-Spread_page-0006.webp"),
     alt: "DOC NOW 2025 festival program spread 6",
-    width: 14998,
-    height: 9705,
+    width: 1600,
+    height: 1035,
   },
   {
     src: docNowSrc("Festival program/DOCNOW2025PROGRAM-Spread_page-0007.webp"),
     alt: "DOC NOW 2025 festival program spread 7",
-    width: 10625,
-    height: 13750,
+    width: 1236,
+    height: 1600,
   },
 ];
 
@@ -404,46 +404,46 @@ export const DOC_NOW_WEBSITE: CoverFlowItem[] = [
   {
     src: docNowSrc("Website design/1.webp"),
     alt: "DOC NOW 2025 website screenshot 1",
-    width: 2880,
-    height: 1626,
+    width: 1600,
+    height: 903,
   },
   {
     src: docNowSrc("Website design/2.webp"),
     alt: "DOC NOW 2025 website screenshot 2",
-    width: 2880,
-    height: 1626,
+    width: 1600,
+    height: 903,
   },
   {
     src: docNowSrc("Website design/3.webp"),
     alt: "DOC NOW 2025 website screenshot 3",
-    width: 2880,
-    height: 1626,
+    width: 1600,
+    height: 903,
   },
   {
     src: docNowSrc("Website design/4.webp"),
     alt: "DOC NOW 2025 website screenshot 4",
-    width: 2880,
-    height: 1626,
+    width: 1600,
+    height: 903,
   },
   {
     src: docNowSrc("Website design/5.webp"),
     alt: "DOC NOW 2025 website screenshot 5",
-    width: 2880,
-    height: 1626,
+    width: 1600,
+    height: 903,
   },
   {
     src: docNowSrc("Website design/WEBSITE-RECORDING-DESKTOP.mp4"),
     alt: "DOC NOW 2025 website desktop recording",
-    width: 2880,
-    height: 1626,
+    width: 1600,
+    height: 903,
     kind: "video",
     poster: docNowSrc("Website design/1.webp"),
   },
   {
     src: docNowSrc("Website design/WEBSITE-RECORDING-MOBILE.mp4"),
     alt: "DOC NOW 2025 website mobile recording",
-    width: 1178,
-    height: 2376,
+    width: 590,
+    height: 1190,
     kind: "video",
     poster: docNowSrc("Website design/5.webp"),
   },

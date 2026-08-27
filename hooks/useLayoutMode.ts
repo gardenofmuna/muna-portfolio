@@ -7,10 +7,12 @@ import { NARROW_W } from "@/lib/narrow-stage";
 export type LayoutMode = "desktop" | "narrow";
 
 const NARROW_MQ =
-  `(max-width: ${NARROW_W}px), (max-width: 1023px) and (orientation: portrait), (pointer: coarse) and (max-width: 1024px)`;
+  `(max-width: ${NARROW_W}px), (max-width: 1023px) and (orientation: portrait), (pointer: coarse)`;
 
 function readLayoutMode(): LayoutMode {
   if (typeof window === "undefined") return "desktop";
+  // iPhone "Request Desktop Website" reports a large width; it is still a phone.
+  if (navigator.maxTouchPoints > 0) return "narrow";
   if (window.matchMedia(NARROW_MQ).matches) return "narrow";
   return "desktop";
 }
