@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import dynamic from "next/dynamic";
 
 import type { CoverFlowItem } from "@/components/project/CoverFlowCarousel";
 import { LazyMount } from "@/components/project/LazyMount";
@@ -19,60 +18,28 @@ import {
   EGWU_RECORDS_SLUG,
 } from "@/data/projects";
 
-const CoverFlowCarousel = dynamic(
-  () =>
-    import("@/components/project/CoverFlowCarousel").then(
-      (mod) => mod.CoverFlowCarousel,
-    ),
-  { ssr: false },
-);
-
-type GalleryMode = "coverflow" | "strip";
-
 type Props = {
   menuState: ProjectMenuState;
-  gallery?: GalleryMode;
+  gallery?: "coverflow" | "strip";
 };
 
 type DocNowGalleryProps = {
   items: CoverFlowItem[];
   ariaLabel: string;
-  itemNoun: string;
-  gallery: GalleryMode;
-  variant: "poster" | "merchandise" | "website";
-  scrollPin?: boolean;
+  variant: "poster" | "website";
 };
 
-function DocNowGallery({
-  items,
-  ariaLabel,
-  itemNoun,
-  gallery,
-  variant,
-  scrollPin = false,
-}: DocNowGalleryProps) {
-  if (gallery === "strip") {
-    return (
-      <ProjectHorizontalStrip
-        items={items}
-        ariaLabel={ariaLabel}
-        variant={variant === "website" ? "website" : variant}
-      />
-    );
-  }
-
+function DocNowGallery({ items, ariaLabel, variant }: DocNowGalleryProps) {
   return (
-    <CoverFlowCarousel
+    <ProjectHorizontalStrip
       items={items}
       ariaLabel={ariaLabel}
-      itemNoun={itemNoun}
-      variant={variant === "website" ? "website" : variant}
-      scrollPin={scrollPin}
+      variant={variant}
     />
   );
 }
 
-export function DocNowProject({ menuState, gallery = "coverflow" }: Props) {
+export function DocNowProject({ menuState }: Props) {
   return (
     <div className="project-sections" data-menu-state={menuState}>
       <ProjectSection id="logo-refresh" title="Logo Refresh">
@@ -106,10 +73,7 @@ export function DocNowProject({ menuState, gallery = "coverflow" }: Props) {
           <DocNowGallery
             items={DOC_NOW_POSTERS}
             ariaLabel="DOC NOW 2025 posters"
-            itemNoun="Poster"
-            gallery={gallery}
             variant="poster"
-            scrollPin
           />
         </LazyMount>
       </ProjectSection>
@@ -118,8 +82,6 @@ export function DocNowProject({ menuState, gallery = "coverflow" }: Props) {
           <DocNowGallery
             items={DOC_NOW_PROGRAM}
             ariaLabel="DOC NOW 2025 festival program spreads"
-            itemNoun="Program spread"
-            gallery={gallery}
             variant="poster"
           />
         </LazyMount>
@@ -129,8 +91,6 @@ export function DocNowProject({ menuState, gallery = "coverflow" }: Props) {
           <DocNowGallery
             items={DOC_NOW_SOCIAL}
             ariaLabel="DOC NOW 2025 social media assets"
-            itemNoun="Social asset"
-            gallery={gallery}
             variant="poster"
           />
         </LazyMount>
@@ -140,8 +100,6 @@ export function DocNowProject({ menuState, gallery = "coverflow" }: Props) {
           <DocNowGallery
             items={DOC_NOW_WEBSITE}
             ariaLabel="DOC NOW 2025 website screenshots and recordings"
-            itemNoun="Website view"
-            gallery={gallery}
             variant="website"
           />
         </LazyMount>

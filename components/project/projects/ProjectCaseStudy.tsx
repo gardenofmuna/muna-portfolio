@@ -17,7 +17,7 @@ export function ProjectCaseStudy({
   gallery = "coverflow",
 }: Props) {
   if (project.slug === DOC_NOW_SLUG) {
-    return <DocNowProject menuState={menuState} gallery={gallery} />;
+    return <DocNowProject menuState={menuState} />;
   }
 
   return <EgwuRecordsProject menuState={menuState} gallery={gallery} />;

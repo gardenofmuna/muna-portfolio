@@ -961,6 +961,38 @@
   background: #111;
 }
 
+/* Desktop DOC NOW: same sideways strip as phone, sized to the project pane. */
+.project-pane .project-hscroll {
+  scrollbar-width: thin;
+}
+
+.project-pane .project-hscroll::-webkit-scrollbar {
+  display: block;
+  height: 6px;
+}
+
+.project-pane .project-hscroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 3px;
+}
+
+.project-pane .project-hscroll__track {
+  gap: 20px;
+  padding-right: 40px;
+}
+
+.project-pane .project-hscroll--poster .project-hscroll__image {
+  height: 428px;
+}
+
+.project-pane .project-hscroll--website .project-hscroll__track {
+  gap: 20px;
+}
+
+.project-pane .project-hscroll--website .project-hscroll__image {
+  height: 316px;
+}
+
 .project-hscroll__video::-webkit-media-controls {
   display: none !important;
 }

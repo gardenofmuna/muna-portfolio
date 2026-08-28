@@ -92,8 +92,8 @@ export function ProjectHorizontalStrip({ items, ariaLabel, variant }: Props) {
                     variant === "website"
                       ? "(max-width: 900px) 92vw, 560px"
                       : variant === "poster"
-                        ? "72vw"
-                        : "90vw"
+                        ? "(max-width: 900px) 72vw, 342px"
+                        : "(max-width: 900px) 90vw, 428px"
                   }
                   draggable={false}
                   loading="lazy"
