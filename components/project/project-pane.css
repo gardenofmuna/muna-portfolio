@@ -465,6 +465,7 @@
 
 .project-cover-flow__item > span,
 .project-cover-flow__item img,
+.project-cover-flow__frame span,
 .project-cover-flow__frame img {
   overflow: visible !important;
 }

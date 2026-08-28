@@ -99,7 +99,7 @@ function isGif(src: string) {
 
 function canUseCssMask(item: CoverFlowItem) {
   if (item.kind === "video" || isGif(item.src)) return false;
-  return item.width <= 1200 && item.height <= 1200;
+  return Math.max(item.width, item.height) <= 1400;
 }
 
 const SWIPE_OFFSET_PX = 52;
@@ -507,7 +507,9 @@ export function CoverFlowCarousel({
                       }}
                     />
                   )}
-                  <div className="project-cover-flow__shade" aria-hidden="true" />
+                  {canUseCssMask(item) ? (
+                    <div className="project-cover-flow__shade" aria-hidden="true" />
+                  ) : null}
                 </div>
               </motion.figure>
             );
