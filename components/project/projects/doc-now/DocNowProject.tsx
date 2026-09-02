@@ -8,6 +8,7 @@ import type { ProjectMenuState } from "@/components/project/ProjectContentPane";
 import { ProjectFooter } from "@/components/project/ProjectFooter";
 import { ProjectHorizontalStrip } from "@/components/project/ProjectHorizontalStrip";
 import { ProjectSection } from "@/components/project/ProjectSection";
+import { FestivalProgramMedia } from "@/components/project/projects/doc-now/FestivalProgramBook";
 import {
   DOC_NOW_COLORS,
   DOC_NOW_LOGO,
@@ -79,11 +80,7 @@ export function DocNowProject({ menuState }: Props) {
       </ProjectSection>
       <ProjectSection id="festival-program" title="Festival Program">
         <LazyMount afterScroll minHeight={280}>
-          <DocNowGallery
-            items={DOC_NOW_PROGRAM}
-            ariaLabel="DOC NOW 2025 festival program spreads"
-            variant="poster"
-          />
+          <FestivalProgramMedia items={DOC_NOW_PROGRAM} />
         </LazyMount>
       </ProjectSection>
       <ProjectSection id="social" title="Social Media Assets">

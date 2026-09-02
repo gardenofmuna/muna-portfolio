@@ -1183,7 +1183,115 @@
   width: auto;
 }
 
+/* Festival program flipbook — desktop pane only */
+
+.festival-book {
+  position: relative;
+  width: 100%;
+  height: calc(var(--pane-content-w, 659px) * 800 / 1236);
+  outline: none;
+  user-select: none;
+  -webkit-user-select: none;
+  overflow: visible;
+}
+
+.festival-book__stage {
+  width: 100%;
+  height: 100%;
+  transform: translateX(-25%);
+  transition: transform 850ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.festival-book[data-book-shift="open"] .festival-book__stage {
+  transform: translateX(0);
+}
+
+.festival-book[data-book-shift="back"] .festival-book__stage {
+  transform: translateX(25%);
+}
+
+.festival-book:focus-visible {
+  outline: 1px solid #000;
+  outline-offset: 4px;
+}
+
+.festival-book__root,
+.festival-book .stf__parent,
+.festival-book .stf__wrapper {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.festival-book .stf__wrapper {
+  position: relative;
+  /* PageFlip uses padding-bottom for aspect; we already reserve height. */
+  padding-bottom: 0 !important;
+  height: 100%;
+}
+
+.festival-book .stf__block {
+  overflow: visible;
+}
+
+.festival-book__page {
+  overflow: hidden;
+  /* Paper, not #111 — a dark fill reads as a hard crease as the leaf lands. */
+  background: #f3f0ea;
+}
+
+.festival-book .stf__outerShadow,
+.festival-book .stf__innerShadow,
+.festival-book .stf__hardShadow,
+.festival-book .stf__hardInnerShadow {
+  filter: blur(14px);
+  pointer-events: none;
+}
+
+.festival-book__img {
+  display: block;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.festival-book__img--cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.festival-book__img--left,
+.festival-book__img--right {
+  width: 200%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+}
+
+.festival-book__img--right {
+  margin-left: -100%;
+}
+
+.festival-book .stf__item.--simple.--left {
+  box-shadow:
+    -2px 4px 18px rgba(0, 0, 0, 0.04),
+    -8px 14px 40px rgba(0, 0, 0, 0.05),
+    -14px 24px 64px rgba(0, 0, 0, 0.03);
+}
+
+.festival-book .stf__item.--simple.--right {
+  box-shadow:
+    2px 4px 18px rgba(0, 0, 0, 0.04),
+    8px 14px 40px rgba(0, 0, 0, 0.05),
+    14px 24px 64px rgba(0, 0, 0, 0.03);
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .festival-book__stage {
+    transition: none;
+  }
+
   .project-pane {
     transition: none !important;
   }
