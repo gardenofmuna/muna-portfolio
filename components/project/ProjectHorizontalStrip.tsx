@@ -32,8 +32,10 @@ function needsUnoptimized(src: string) {
 }
 
 function syncEdgeFades(scroller: HTMLElement, wrap: HTMLElement) {
-  const max = scroller.scrollWidth - scroller.clientWidth;
-  const left = scroller.scrollLeft;
+  const port =
+    wrap.scrollWidth - wrap.clientWidth > 4 ? wrap : scroller;
+  const max = port.scrollWidth - port.clientWidth;
+  const left = port.scrollLeft;
   wrap.toggleAttribute("data-fade-left", left > 4);
   wrap.toggleAttribute("data-fade-right", max > 4 && max - left > 4);
 }
@@ -52,10 +54,10 @@ export function ProjectHorizontalStrip({ items, ariaLabel, variant }: Props) {
     sync();
 
     scroller.addEventListener("scroll", sync, { passive: true });
+    wrap.addEventListener("scroll", sync, { passive: true });
+    window.addEventListener("resize", sync);
     const ro = new ResizeObserver(sync);
-    ro.observe(scroller);
-    const track = scroller.firstElementChild;
-    if (track instanceof HTMLElement) ro.observe(track);
+    ro.observe(wrap);
 
     const imgs = [...scroller.querySelectorAll("img")];
     imgs.forEach((img) => {
@@ -64,10 +66,12 @@ export function ProjectHorizontalStrip({ items, ariaLabel, variant }: Props) {
 
     return () => {
       scroller.removeEventListener("scroll", sync);
+      wrap.removeEventListener("scroll", sync);
+      window.removeEventListener("resize", sync);
       ro.disconnect();
       imgs.forEach((img) => img.removeEventListener("load", sync));
     };
-  }, [items]);
+  }, [items, variant]);
 
   return (
     <div ref={wrapRef} className="project-hscroll-wrap">

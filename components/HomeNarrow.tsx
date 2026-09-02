@@ -24,6 +24,7 @@ import {
   NARROW_H,
   NARROW_W,
   NARROW_WHEEL_CENTER,
+  narrowLandingWheelScale,
 } from "@/lib/narrow-stage";
 
 import "./home-narrow.css";
@@ -43,14 +44,13 @@ type Props = {
  * (no route remount, no cream/yellow flash).
  */
 export function HomeNarrow({ initialProject }: Props) {
-  const { u } = useNarrowArtboardMetrics();
+  const { u, vw } = useNarrowArtboardMetrics();
   const [activeLabel, setActiveLabel] = useState(
     initialProject ? "design" : "contact",
   );
   const [hoverNavLabel, setHoverNavLabel] = useState<string | null>(null);
   const [wheelInteracting, setWheelInteracting] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
-  const [viewportW, setViewportW] = useState(0);
   const [project, setProject] = useState<ProjectDefinition | null>(
     initialProject ?? null,
   );
@@ -65,13 +65,6 @@ export function HomeNarrow({ initialProject }: Props) {
     sync();
     mq.addEventListener("change", sync);
     return () => mq.removeEventListener("change", sync);
-  }, []);
-
-  useEffect(() => {
-    const read = () => setViewportW(window.innerWidth);
-    read();
-    window.addEventListener("resize", read);
-    return () => window.removeEventListener("resize", read);
   }, []);
 
   const openDesignProject = useCallback(() => {
@@ -143,15 +136,10 @@ export function HomeNarrow({ initialProject }: Props) {
       : `opacity ${fadeMs}ms cubic-bezier(0.22, 1, 0.36, 1), transform ${fadeMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
     transform: showAboutBio ? "translateY(0)" : "translateY(12px)",
   } as const;
-  const landingWheelScale = useMemo(() => {
-    if (!viewportW || !u) return 1;
-    const currentGroupWidth = NARROW_W * u;
-    if (currentGroupWidth <= 0) return 1;
-    const isTabletScaleUp = currentGroupWidth < viewportW - 16;
-    const sideInset = isTabletScaleUp ? 28 : 16;
-    const scale = (viewportW - sideInset) / currentGroupWidth;
-    return isTabletScaleUp ? scale * 0.88 : scale;
-  }, [u, viewportW]);
+  const landingWheelScale = useMemo(
+    () => narrowLandingWheelScale(vw, u),
+    [u, vw],
+  );
 
   const projectOpen = project != null;
   const mountLanding = !projectOpen || enteredFromLanding || !initialProject;

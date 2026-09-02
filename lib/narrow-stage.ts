@@ -15,14 +15,16 @@ export function narrowArtboardScale(vw: number, vh: number): number {
   return Math.min(vw / NARROW_W, vh / NARROW_H) * NARROW_PAGE_SCALE;
 }
 
-/** Grow/shrink the landing ring so side inset matches phone; tablet may scale above 1. */
+/** Grow/shrink the landing ring so labels sit ~8px from each phone edge. */
 export function narrowLandingWheelScale(viewportW: number, artboardU: number) {
   const currentGroupWidth = NARROW_W * artboardU;
   if (!viewportW || !artboardU || currentGroupWidth <= 0) return 1;
-  const isTabletScaleUp = currentGroupWidth < viewportW - 16;
-  const sideInset = isTabletScaleUp ? 28 : 16;
+  /* Width, not letterbox gaps — Chrome’s toolbar shrinks height and was
+     wrongly treated as a tablet, which left large side margins. */
+  const isTablet = viewportW >= 700;
+  const sideInset = isTablet ? 28 : 16;
   const scale = (viewportW - sideInset) / currentGroupWidth;
-  return isTabletScaleUp ? scale * 0.88 : scale;
+  return isTablet ? scale * 0.9 : scale;
 }
 
 /** Bridge 1624-tall desktop assets onto this artboard height. */

@@ -11,7 +11,8 @@ import {
   type ReactNode,
 } from "react";
 
-import { getDesktopStageMetrics } from "@/lib/desktop-stage";
+import { DesktopStageViewContext } from "@/components/DesktopStageCanvas";
+import { DESKTOP_LAYOUT_W, getDesktopStageMetrics } from "@/lib/desktop-stage";
 import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 
 export type ProjectMenuState = "open" | "hidden";
@@ -62,7 +63,12 @@ export function ProjectContentPane({
     innerH: 0,
   });
   const [reduceMotion, setReduceMotion] = useState(false);
+  const [easeScale, setEaseScale] = useState(false);
   const coarsePointer = useCoarsePointer();
+  const menuStateRef = useRef(menuState);
+  const stageView = useContext(DesktopStageViewContext);
+  const layoutW = stageView.layoutW || DESKTOP_LAYOUT_W;
+  const stageScale = stageView.scale;
 
   useLayoutEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -72,40 +78,91 @@ export function ProjectContentPane({
     return () => mq.removeEventListener("change", sync);
   }, []);
 
-  const updateSmart = useCallback(() => {
-    const pane = paneRef.current;
-    const inner = innerRef.current;
-    if (!pane || !inner) return;
-    const m = getDesktopStageMetrics();
-    const shell = pane.closest(".desktop-site-shell");
-    const shellW =
-      shell instanceof HTMLElement
-        ? shell.clientWidth
-        : pane.clientWidth + m.navZoneOpen + m.signatureZone;
-    const baseW = Math.max(1, shellW - m.navZoneOpen - m.signatureZone);
-    const hiddenW = Math.max(1, shellW - m.navZoneClosed - m.signatureZone);
-    const scale = menuState === "hidden" ? hiddenW / baseW : 1;
-    setSmart({
-      scale,
-      baseW,
-      innerH: inner.offsetHeight,
-    });
+  useEffect(() => {
+    if (menuStateRef.current === menuState) return undefined;
+    menuStateRef.current = menuState;
+    setEaseScale(true);
+    const t = window.setTimeout(() => setEaseScale(false), 450);
+    return () => window.clearTimeout(t);
   }, [menuState]);
+
+  const updateSmart = useCallback(() => {
+    const inner = innerRef.current;
+    if (!inner) return;
+    const m = getDesktopStageMetrics();
+    const baseW = Math.max(1, layoutW - m.navZoneOpen - m.signatureZone);
+    const hiddenW = Math.max(1, layoutW - m.navZoneClosed - m.signatureZone);
+    const scale = menuState === "hidden" ? hiddenW / baseW : 1;
+    const innerH = inner.offsetHeight;
+    setSmart((prev) => {
+      if (prev.scale === scale && prev.baseW === baseW && prev.innerH === innerH) {
+        return prev;
+      }
+      return { scale, baseW, innerH };
+    });
+  }, [layoutW, menuState]);
 
   useLayoutEffect(() => {
     updateSmart();
-    const pane = paneRef.current;
     const inner = innerRef.current;
-    if (!pane || !inner) return;
+    if (!inner) return;
     const ro = new ResizeObserver(updateSmart);
-    ro.observe(pane);
     ro.observe(inner);
-    window.addEventListener("resize", updateSmart);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener("resize", updateSmart);
+    return () => ro.disconnect();
+  }, [updateSmart]);
+
+  const skipClipKickRef = useRef(true);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return undefined;
+
+    const bustOverflowClip = () => {
+      /* Drop the scrollport clip for one frame so it is recreated in the
+         current stage scale. A same-frame scrollTop nudge is optimized away. */
+      const targets = [
+        el,
+        ...el.querySelectorAll(".project-hscroll-wrap, .project-hscroll"),
+      ];
+      for (const node of targets) {
+        if (!(node instanceof HTMLElement)) continue;
+        node.style.overflow = "visible";
+        void node.offsetHeight;
+      }
+      requestAnimationFrame(() => {
+        for (const node of targets) {
+          if (!(node instanceof HTMLElement)) continue;
+          node.style.removeProperty("overflow");
+        }
+      });
     };
-  }, [updateSmart, menuState]);
+
+    let raf = 0;
+    let timer = 0;
+    const schedule = () => {
+      if (skipClipKickRef.current) return;
+      cancelAnimationFrame(raf);
+      window.clearTimeout(timer);
+      raf = requestAnimationFrame(() => {
+        raf = requestAnimationFrame(bustOverflowClip);
+      });
+      timer = window.setTimeout(bustOverflowClip, 80);
+    };
+
+    if (skipClipKickRef.current) {
+      skipClipKickRef.current = false;
+    } else {
+      schedule();
+    }
+
+    window.addEventListener("resize", schedule);
+    window.visualViewport?.addEventListener("resize", schedule);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.clearTimeout(timer);
+      window.removeEventListener("resize", schedule);
+      window.visualViewport?.removeEventListener("resize", schedule);
+    };
+  }, [stageScale, layoutW]);
 
   const scaleRef = useRef(1);
   const userOpenedMenuRef = useRef(false);
@@ -198,8 +255,19 @@ export function ProjectContentPane({
     scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  const transition = reduceMotion ? "none" : `transform ${SMART_EASE}, height ${SMART_EASE}`;
+  const transition =
+    reduceMotion || !easeScale
+      ? "none"
+      : `transform ${SMART_EASE}, height ${SMART_EASE}`;
   const bleed = menuState === "hidden" ? INNER_BLEED : 0;
+  const metrics = getDesktopStageMetrics();
+  const paneContentW =
+    smart.baseW > 0
+      ? Math.max(
+          1,
+          smart.baseW - metrics.projectGutter - metrics.projectGutterRight,
+        )
+      : undefined;
 
   return (
     <ProjectScrollContext.Provider value={{ scrollToTop }}>
@@ -236,6 +304,9 @@ export function ProjectContentPane({
                 transform: `scale(${smart.scale})`,
                 transformOrigin: `${bleed}px top`,
                 transition,
+                ["--pane-content-w" as string]: paneContentW
+                  ? `${paneContentW}px`
+                  : undefined,
               }}
             >
               {children}

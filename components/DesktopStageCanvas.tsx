@@ -43,6 +43,7 @@ type StageView = {
 export const DesktopStageViewContext = createContext({
   mode: "expand" as StageFitMode,
   scale: 1,
+  layoutW: DESKTOP_LAYOUT_W,
   wheelLayoutH: DESKTOP_LAYOUT_H,
 });
 
@@ -117,13 +118,14 @@ export function DesktopStageCanvas({ children, className }: Props) {
         : { left: 0, top: 0 };
 
   return (
-    <DesktopStageViewContext.Provider
-      value={{
-        mode: view.mode,
-        scale: view.scale,
-        wheelLayoutH: view.wheelLayoutH,
-      }}
-    >
+      <DesktopStageViewContext.Provider
+        value={{
+          mode: view.mode,
+          scale: view.scale,
+          layoutW: view.layoutW,
+          wheelLayoutH: view.wheelLayoutH,
+        }}
+      >
       <div
         className={`fixed inset-0 z-0 overflow-hidden bg-white ${className ?? ""}`}
         data-stage-mode={view.mode}
@@ -137,7 +139,6 @@ export function DesktopStageCanvas({ children, className }: Props) {
             top: offset.top,
             transform: `scale(${view.scale})`,
             transformOrigin: "top left",
-            willChange: "transform",
             overflow: view.mode === "fit" ? "visible" : "hidden",
           }}
           suppressHydrationWarning

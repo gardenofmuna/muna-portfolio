@@ -92,6 +92,9 @@
    * Artboard 9 open composition — a smart object.
    * Width is locked in JS; hidden menu scales this from top-left.
    */
+  --website-still-h: calc(
+    (var(--pane-content-w, 659px) - 8px - 52px) * 903 / 1600
+  );
   position: absolute;
   top: 0;
   left: 0;
@@ -270,6 +273,19 @@
 #posters.project-section .project-section__title,
 #merchandise.project-section .project-section__title {
   margin-bottom: 24px;
+}
+
+/* DOC NOW desktop: every heading uses the Posters title → gallery gap. */
+.project-pane .project-sections--doc-now .project-section__title {
+  margin-bottom: 24px;
+}
+
+.project-pane .project-sections--doc-now #posters.project-section {
+  margin-bottom: 53.5px;
+}
+
+.project-narrow .project-sections--doc-now #posters.project-section {
+  margin-bottom: calc(64 * var(--pn-u));
 }
 
 /* Logo — equal quadrant gaps in both menu states */
@@ -941,27 +957,31 @@
 
 .project-hscroll__track {
   display: flex;
+  flex-wrap: nowrap !important;
   align-items: flex-start;
   list-style: none;
   margin: 0;
+  padding: 0;
   width: max-content;
+  max-width: none;
   box-sizing: border-box;
-  /* Stay inside page gutters; trailing pad so the last item can clear the right edge */
-  padding-right: calc(43.2 * var(--pn-u));
 }
 
 .project-hscroll__item {
-  flex-shrink: 0;
+  flex: 0 0 auto;
   margin: 0;
+  width: auto;
+  max-width: none;
   /* Size from intrinsic image aspect — no crop box */
   line-height: 0;
 }
 
-.project-hscroll__image {
+.project-hscroll__image,
+.project-hscroll img,
+.project-hscroll video {
   display: block;
   width: auto;
-  height: auto;
-  max-width: none;
+  max-width: none !important;
   object-fit: contain;
   object-position: left top;
   pointer-events: none;
@@ -969,101 +989,144 @@
   -webkit-user-drag: none;
 }
 
-.project-hscroll--poster .project-hscroll__track {
+.project-narrow .project-hscroll__track {
+  /* Stay inside page gutters; trailing pad so the last item can clear the right edge */
+  padding-right: calc(43.2 * var(--pn-u));
+}
+
+.project-narrow .project-hscroll--poster .project-hscroll__track {
   gap: calc(28 * var(--pn-u));
 }
 
-.project-hscroll--poster .project-hscroll__image {
+.project-narrow .project-hscroll--poster .project-hscroll__image {
   height: calc(757.8 * var(--pn-u));
   width: auto;
+  max-width: none;
 }
 
-.project-hscroll--merchandise .project-hscroll__track {
+.project-narrow .project-hscroll--merchandise .project-hscroll__track {
   gap: calc(30 * var(--pn-u));
 }
 
-.project-hscroll--merchandise .project-hscroll__image {
+.project-narrow .project-hscroll--merchandise .project-hscroll__image {
   height: calc(750.6 * var(--pn-u));
   width: auto;
+  max-width: none;
 }
 
-.project-hscroll--website .project-hscroll__track {
+.project-narrow .project-hscroll--website .project-hscroll__track {
   gap: calc(28 * var(--pn-u));
   flex-wrap: nowrap;
-  align-items: flex-end;
+  align-items: flex-start;
 }
 
-.project-hscroll--website .project-hscroll__image {
+.project-narrow .project-hscroll--website .project-hscroll__image {
   height: calc(420 * var(--pn-u));
   width: auto;
+  max-width: none;
 }
 
 .project-hscroll--website .project-hscroll__video {
   background: #111;
 }
 
-/* Desktop DOC NOW: same sideways strip as phone, sized to the project pane. */
+/* Desktop DOC NOW: same sideways strip as phone, sized to the project pane.
+ * Edge fade is a white overlay (not a mask) so images cannot be clipped. */
 .project-pane .project-hscroll-wrap {
-  --hscroll-mask: linear-gradient(#fff, #fff);
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: visible;
 }
 
-.project-pane .project-hscroll-wrap[data-fade-right]:not([data-fade-left]) {
-  --hscroll-mask: linear-gradient(
+.project-pane .project-hscroll-wrap::before,
+.project-pane .project-hscroll-wrap::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.project-pane .project-hscroll-wrap::before {
+  left: 0;
+  background: linear-gradient(
     to right,
-    #fff 0%,
-    #fff calc(100% - 40px),
-    rgba(255, 255, 255, 0.88) calc(100% - 16px),
-    rgba(255, 255, 255, 0.65) 100%
+    rgba(255, 255, 255, 0.35) 0%,
+    rgba(255, 255, 255, 0.12) 16px,
+    rgba(255, 255, 255, 0) 40px
   );
 }
 
-.project-pane .project-hscroll-wrap[data-fade-left]:not([data-fade-right]) {
-  --hscroll-mask: linear-gradient(
-    to right,
-    rgba(255, 255, 255, 0.65) 0%,
-    rgba(255, 255, 255, 0.88) 16px,
-    #fff 40px,
-    #fff 100%
+.project-pane .project-hscroll-wrap::after {
+  right: 0;
+  background: linear-gradient(
+    to left,
+    rgba(255, 255, 255, 0.35) 0%,
+    rgba(255, 255, 255, 0.12) 16px,
+    rgba(255, 255, 255, 0) 40px
   );
 }
 
-.project-pane .project-hscroll-wrap[data-fade-left][data-fade-right] {
-  --hscroll-mask: linear-gradient(
-    to right,
-    rgba(255, 255, 255, 0.65) 0%,
-    rgba(255, 255, 255, 0.88) 16px,
-    #fff 40px,
-    #fff calc(100% - 40px),
-    rgba(255, 255, 255, 0.88) calc(100% - 16px),
-    rgba(255, 255, 255, 0.65) 100%
-  );
+.project-pane .project-hscroll-wrap[data-fade-left]::before,
+.project-pane .project-hscroll-wrap[data-fade-right]::after {
+  opacity: 1;
 }
 
 .project-pane .project-hscroll {
-  -webkit-mask-image: var(--hscroll-mask);
-  mask-image: var(--hscroll-mask);
-  mask-mode: alpha;
-  -webkit-mask-size: 100% 100%;
-  mask-size: 100% 100%;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
+  overflow-x: auto;
+  overflow-y: visible;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  height: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.project-pane .project-hscroll::-webkit-scrollbar {
+  display: none;
 }
 
 .project-pane .project-hscroll__track {
   gap: 8px;
   padding-right: 40px;
+  flex-wrap: nowrap !important;
+  width: max-content;
+}
+
+.project-pane .project-hscroll--poster .project-hscroll__item {
+  height: 428px;
 }
 
 .project-pane .project-hscroll--poster .project-hscroll__image {
-  height: 428px;
+  height: 428px !important;
+  width: auto !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: contain;
+}
+
+.project-pane .project-hscroll--website .project-hscroll__item {
+  height: var(--website-still-h, 340px);
 }
 
 .project-pane .project-hscroll--website .project-hscroll__track {
   gap: 8px;
+  align-items: flex-start;
 }
 
 .project-pane .project-hscroll--website .project-hscroll__image {
-  height: 428px;
+  height: var(--website-still-h, 340px) !important;
+  width: auto !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: contain;
+  object-position: left top;
 }
 
 .project-hscroll__video::-webkit-media-controls {

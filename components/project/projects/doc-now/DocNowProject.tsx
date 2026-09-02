@@ -41,7 +41,7 @@ function DocNowGallery({ items, ariaLabel, variant }: DocNowGalleryProps) {
 
 export function DocNowProject({ menuState }: Props) {
   return (
-    <div className="project-sections" data-menu-state={menuState}>
+    <div className="project-sections project-sections--doc-now" data-menu-state={menuState}>
       <ProjectSection id="logo-refresh" title="Logo Refresh">
         <figure className="project-asset-single project-asset-single--doc-logo">
           <Image
