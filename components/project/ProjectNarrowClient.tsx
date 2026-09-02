@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useState,
-  type CSSProperties,
-} from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 
 import { CircularNavWheel } from "@/components/CircularNavWheel";
 import { useNarrowArtboardMetrics } from "@/components/NarrowArtboard";
@@ -15,19 +9,21 @@ import { DesignProjectNavProvider } from "@/components/project/DesignProjectNav"
 import { ProjectHeader } from "@/components/project/ProjectHeader";
 import { ProjectIndexNav } from "@/components/project/ProjectIndexNav";
 import { ProjectCaseStudy } from "@/components/project/projects/ProjectCaseStudy";
-import {
-  getProjectBySlug,
-  type ProjectDefinition,
-} from "@/data/projects";
+import { type ProjectDefinition } from "@/data/projects";
 import { DESKTOP_LAYOUT_H, DESKTOP_LAYOUT_W } from "@/lib/desktop-stage";
 import {
   NARROW_NZERIBE,
   NARROW_PROJECT_CONTENT_W,
-  NARROW_PROJECT_GUTTER_PX,
 } from "@/lib/narrow-stage";
+
+import "./project-pane.css";
 
 type Props = {
   project: ProjectDefinition;
+  hideWordmark?: boolean;
+  onGoHome?: () => void;
+  onMenuOpenChange?: (open: boolean) => void;
+  onProjectChange?: (project: ProjectDefinition) => void;
 };
 
 /** Hamburger SVG viewBox — keep aspect when height tracks the wordmark. */
@@ -35,12 +31,19 @@ const MENU_ASPECT = 107 / 74;
 /** Slightly smaller than the nzeribe wordmark height. */
 const MENU_HEIGHT_SCALE = 0.85;
 
-export function ProjectNarrowClient({ project: projectProp }: Props) {
-  const router = useRouter();
+export function ProjectNarrowClient({
+  project,
+  hideWordmark = false,
+  onGoHome,
+  onMenuOpenChange,
+  onProjectChange,
+}: Props) {
   const { u } = useNarrowArtboardMetrics();
-  const [project, setProject] = useState(projectProp);
   const [menuOpen, setMenuOpen] = useState(false);
   const [viewportH, setViewportH] = useState(0);
+  const headerRef = useRef<HTMLElement>(null);
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const headerScrolledRef = useRef(false);
   const scale = u || 1;
   const nzeribeH = NARROW_NZERIBE.h * scale;
   const menuH = nzeribeH * MENU_HEIGHT_SCALE;
@@ -62,6 +65,27 @@ export function ProjectNarrowClient({ project: projectProp }: Props) {
   }, []);
 
   useEffect(() => {
+    onMenuOpenChange?.(menuOpen);
+  }, [menuOpen, onMenuOpenChange]);
+
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    const header = headerRef.current;
+    if (!scroller || !header) return;
+
+    const sync = () => {
+      const next = scroller.scrollTop > 8;
+      if (next === headerScrolledRef.current) return;
+      headerScrolledRef.current = next;
+      header.toggleAttribute("data-scrolled", next);
+    };
+
+    sync();
+    scroller.addEventListener("scroll", sync, { passive: true });
+    return () => scroller.removeEventListener("scroll", sync);
+  }, [project.slug]);
+
+  useEffect(() => {
     if (!menuOpen) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -77,28 +101,26 @@ export function ProjectNarrowClient({ project: projectProp }: Props) {
 
   const closeMenu = useCallback(() => setMenuOpen(false), []);
 
-  const onProjectChange = useCallback((next: ProjectDefinition) => {
-    setProject(next);
-  }, []);
+  const handleProjectChange = useCallback(
+    (next: ProjectDefinition) => {
+      onProjectChange?.(next);
+    },
+    [onProjectChange],
+  );
 
-  useEffect(() => {
-    const onPop = () => {
-      const match = /^\/design\/([^/]+)/.exec(window.location.pathname);
-      const next = match ? getProjectBySlug(match[1] ?? "") : undefined;
-      if (next) setProject(next);
-    };
-    window.addEventListener("popstate", onPop);
-    return () => window.removeEventListener("popstate", onPop);
-  }, []);
+  const goHome = useCallback(() => {
+    closeMenu();
+    onGoHome?.();
+  }, [closeMenu, onGoHome]);
 
   return (
-    <DesignProjectNavProvider onProjectChange={onProjectChange}>
+    <DesignProjectNavProvider onProjectChange={handleProjectChange}>
     <div
       className="project-narrow-shell"
       data-menu-state={menuOpen ? "open" : "hidden"}
+      data-hide-wordmark={hideWordmark ? "" : undefined}
       style={
         {
-          "--pn-gutter": `${NARROW_PROJECT_GUTTER_PX}px`,
           "--pn-content-w": NARROW_PROJECT_CONTENT_W,
           "--pn-nzeribe-h": `${nzeribeH}px`,
           "--pn-menu-w": `${menuW}px`,
@@ -106,8 +128,14 @@ export function ProjectNarrowClient({ project: projectProp }: Props) {
         } as CSSProperties
       }
     >
-      <header className="project-narrow__header">
-        <SiteWordmark href="/" placement="flow" />
+      <header ref={headerRef} className="project-narrow__header">
+        {hideWordmark ? null : (
+          <SiteWordmark href="/" placement="flow" onClick={(event) => {
+            if (!onGoHome) return;
+            event.preventDefault();
+            goHome();
+          }} />
+        )}
         <button
           type="button"
           className="project-narrow__menu-toggle"
@@ -132,6 +160,7 @@ export function ProjectNarrowClient({ project: projectProp }: Props) {
       </header>
 
       <div
+        ref={scrollerRef}
         className="project-narrow"
         data-project-scroll=""
         inert={menuOpen ? true : undefined}
@@ -175,7 +204,7 @@ export function ProjectNarrowClient({ project: projectProp }: Props) {
                   closeMenu();
                   return;
                 }
-                router.push("/");
+                goHome();
               }}
             />
           </div>

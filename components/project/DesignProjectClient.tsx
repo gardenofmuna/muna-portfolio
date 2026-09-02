@@ -2,19 +2,12 @@
 
 import dynamic from "next/dynamic";
 
+import { HomeNarrow } from "@/components/HomeNarrow";
 import { useLayoutMode } from "@/hooks/useLayoutMode";
 
 import type { ProjectDefinition } from "@/data/projects";
 
 import "./project-pane.css";
-
-const ProjectNarrowClient = dynamic(
-  () =>
-    import("@/components/project/ProjectNarrowClient").then(
-      (mod) => mod.ProjectNarrowClient,
-    ),
-  { ssr: false },
-);
 
 const HomeDesktop = dynamic(
   () => import("@/components/HomeDesktop").then((mod) => mod.HomeDesktop),
@@ -33,7 +26,7 @@ export function DesignProjectClient({ project }: Props) {
   }
 
   if (mode === "narrow") {
-    return <ProjectNarrowClient project={project} />;
+    return <HomeNarrow initialProject={project} />;
   }
 
   return <HomeDesktop initialProject={project} />;

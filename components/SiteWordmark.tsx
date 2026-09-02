@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import type { MouseEventHandler } from "react";
 
 import { useNarrowArtboardMetrics } from "@/components/NarrowArtboard";
 import { NARROW_NZERIBE } from "@/lib/narrow-stage";
@@ -23,6 +24,7 @@ type Props = {
    * Keeps the tilted "nzeribe" clear of PAGE_SCALE letterbox crop.
    */
   screenTop?: number;
+  onClick?: MouseEventHandler<HTMLAnchorElement>;
 };
 
 /** Top-left nzeribe1.webp on Artboard_2 — matches Figma comp. */
@@ -32,6 +34,7 @@ export function SiteWordmark({
   placement = "artboard",
   screenLeft,
   screenTop,
+  onClick,
 }: Props) {
   const { u, ox, oy } = useNarrowArtboardMetrics();
   const image = (
@@ -60,6 +63,7 @@ export function SiteWordmark({
           className={className}
           style={style}
           aria-label="Back to home"
+          onClick={onClick}
         >
           {image}
         </Link>

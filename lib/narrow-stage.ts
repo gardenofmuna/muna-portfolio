@@ -15,6 +15,16 @@ export function narrowArtboardScale(vw: number, vh: number): number {
   return Math.min(vw / NARROW_W, vh / NARROW_H) * NARROW_PAGE_SCALE;
 }
 
+/** Grow/shrink the landing ring so side inset matches phone; tablet may scale above 1. */
+export function narrowLandingWheelScale(viewportW: number, artboardU: number) {
+  const currentGroupWidth = NARROW_W * artboardU;
+  if (!viewportW || !artboardU || currentGroupWidth <= 0) return 1;
+  const isTabletScaleUp = currentGroupWidth < viewportW - 16;
+  const sideInset = isTabletScaleUp ? 28 : 16;
+  const scale = (viewportW - sideInset) / currentGroupWidth;
+  return isTabletScaleUp ? scale * 0.88 : scale;
+}
+
 /** Bridge 1624-tall desktop assets onto this artboard height. */
 export const U_NARROW_1624 = `(${U_NARROW}) * (${NARROW_H} / 1624)`;
 
@@ -31,8 +41,8 @@ export const NARROW_PROJECT_CONTENT_W = 704;
 /** Top-left nzeribe1.webp on Artboard_2 (Figma). */
 export const NARROW_NZERIBE = { x: 32, y: 56, w: 328, h: 70 } as const;
 
-/** Fixed CSS-px gap from the mobile viewport left edge to nzeribe1.webp. */
-export const NARROW_NZERIBE_SCREEN_LEFT = 24;
+/** Left edge of nzeribe1.webp — same as project content / header padding. */
+export const NARROW_NZERIBE_SCREEN_LEFT = NARROW_PROJECT_GUTTER_PX;
 /** Fixed CSS-px gap from the viewport top — clears PAGE_SCALE crop on short windows. */
 export const NARROW_NZERIBE_SCREEN_TOP = 24;
 

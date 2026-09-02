@@ -63,7 +63,7 @@ html, body {
   height: 100%;
   overflow: hidden;
   box-sizing: border-box;
-  background-color: #eeece4;
+  background-color: #fff;
 }
 
 body {
@@ -87,7 +87,7 @@ img {
   position: fixed;
   inset: 0;
   overflow: hidden;
-  background-color: #eeece4;
+  background-color: #fff;
 }
 
 *, *::before, *::after {

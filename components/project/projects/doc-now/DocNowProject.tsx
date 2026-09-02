@@ -50,7 +50,7 @@ export function DocNowProject({ menuState }: Props) {
             width={DOC_NOW_LOGO.width}
             height={DOC_NOW_LOGO.height}
             className="project-asset-single__image"
-            sizes="(max-width: 900px) 70vw, 380px"
+            sizes="(max-width: 900px) 70vw, 240px"
             unoptimized
             priority
           />

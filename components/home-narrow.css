@@ -1,0 +1,57 @@
+.narrow-app {
+  --narrow-gutter: 20px;
+}
+
+@media (min-width: 700px) {
+  .narrow-app {
+    --narrow-gutter: 52px;
+  }
+}
+
+.narrow-persist-wordmark {
+  position: fixed;
+  left: var(--narrow-gutter);
+  top: 24px;
+  z-index: 46;
+  pointer-events: auto;
+}
+
+.narrow-persist-wordmark[data-hidden] {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.narrow-landing {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  transition: opacity 480ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.narrow-landing[data-hidden] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.narrow-project-fade {
+  animation: narrow-project-fade 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes narrow-project-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .narrow-landing {
+    transition: none;
+  }
+
+  .narrow-project-fade {
+    animation: none;
+  }
+}

@@ -174,7 +174,7 @@ export function CoverFlowCarousel({
   itemNoun,
   initialIndex = 0,
   variant = "poster",
-  scrollPin = true,
+  scrollPin = false,
   sideOffset,
   neighbor1Scale,
   neighbor2Scale,
