@@ -44,7 +44,7 @@ export function MobileFooterLinks({
   return (
     <nav
       aria-label="Contact links"
-      className="pointer-events-auto fixed left-0 right-0 z-[46] flex flex-row items-center justify-center"
+      className="pointer-events-auto absolute left-0 right-0 z-[46] flex flex-row items-center justify-center"
       style={{
         bottom: NARROW_CHROME_SCREEN_PAD,
         gap: NARROW_FOOTER_LINK_GAP_PX * scale,
