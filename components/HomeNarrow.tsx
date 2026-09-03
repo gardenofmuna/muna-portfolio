@@ -7,9 +7,7 @@ import { CircularNavWheel } from "@/components/CircularNavWheel";
 import { DesignCluster } from "@/components/DesignCluster";
 import { InstallationLottie } from "@/components/InstallationLottie";
 import { MobileFooterLinks } from "@/components/MobileFooterLinks";
-import {
-  NarrowWheelFit,
-} from "@/components/NarrowArtboard";
+import { NarrowWheelFit } from "@/components/NarrowArtboard";
 import { PhotosHoverCluster } from "@/components/PhotosHoverCluster";
 import { CvPressHoverAccordion } from "@/components/CvPressHoverAccordion";
 import { FilmHoverGif } from "@/components/FilmHoverGif";
@@ -181,15 +179,15 @@ export function HomeNarrow({ initialProject }: Props) {
           <CvPressHoverAccordion visible={showCvPress} layout="narrow" />
           <SelectedWorksHoverGif visible={showSelectedWorks} layout="narrow" />
           <PhotosHoverCluster visible={showPhotos} variant="narrow" />
-            <NarrowCenterPopup visible={showAboutBio} style={bioFadeStyle}>
-              <AboutBio
-                visible={showAboutBio}
-                embedded
-                narrowStage
-                hubCentered
-                whiteBodyText={previewLabel === "contact"}
-              />
-            </NarrowCenterPopup>
+          <NarrowCenterPopup visible={showAboutBio} style={bioFadeStyle}>
+            <AboutBio
+              visible={showAboutBio}
+              embedded
+              narrowStage
+              hubCentered
+              whiteBodyText={previewLabel === "contact"}
+            />
+          </NarrowCenterPopup>
         </NarrowWheelFit>
       </div>
       ) : null}

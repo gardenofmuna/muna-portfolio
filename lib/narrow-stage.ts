@@ -33,27 +33,43 @@ export function narrowLandingChrome(artboardU: number, viewportH: number) {
   };
 }
 
-/** Grow/shrink the landing ring so labels sit ~8px from each phone edge. */
+/** Tablet layout matches design-page --narrow-gutter. */
+export const NARROW_TABLET_MIN_PX = 700;
+export const NARROW_TABLET_GUTTER_PX = 52;
+
+export function narrowGutterPx(viewportW: number) {
+  return viewportW >= NARROW_TABLET_MIN_PX
+    ? NARROW_TABLET_GUTTER_PX
+    : NARROW_PROJECT_GUTTER_PX;
+}
+
+/** Side inset for the landing ring — 8px on phones; tablet matches design gutter. */
+export const NARROW_LANDING_WHEEL_INSET_PX = 8;
+
+export function narrowLandingWheelInsetPx(viewportW: number) {
+  return viewportW >= NARROW_TABLET_MIN_PX
+    ? NARROW_TABLET_GUTTER_PX
+    : NARROW_LANDING_WHEEL_INSET_PX;
+}
+
+/**
+ * Landing wheel scale (artboard 859 → CSS px).
+ * Phone: 8px from each side. Tablet: same 52px gutter as design pages.
+ * Height shrinks the circle so it stays between logo and footer.
+ */
 export function narrowLandingWheelScale(
   viewportW: number,
   artboardU: number,
   viewportH = 0,
 ) {
-  const currentGroupWidth = NARROW_W * artboardU;
-  if (!viewportW || !artboardU || currentGroupWidth <= 0) return 1;
-  /* Width, not letterbox gaps — Chrome’s toolbar shrinks height and was
-     wrongly treated as a tablet, which left large side margins. */
-  const isTablet = viewportW >= 700;
-  const sideInset = isTablet ? 28 : 16;
-  const widthScale = (viewportW - sideInset) / currentGroupWidth;
-
-  if (viewportH > 0) {
+  if (!viewportW) return 0;
+  const widthScale =
+    (viewportW - 2 * narrowLandingWheelInsetPx(viewportW)) / NARROW_W;
+  if (viewportH > 0 && artboardU > 0) {
     const { availableH } = narrowLandingChrome(artboardU, viewportH);
-    const heightScale = availableH / currentGroupWidth;
-    if (heightScale < widthScale) return heightScale;
+    return Math.min(widthScale, availableH / NARROW_W);
   }
-
-  return isTablet ? widthScale * 0.9 : widthScale;
+  return widthScale;
 }
 
 /** Bridge 1624-tall desktop assets onto this artboard height. */

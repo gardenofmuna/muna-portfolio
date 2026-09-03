@@ -17,14 +17,11 @@ type Props = {
 };
 
 /**
- * Landing footer — linkedin / insta / email, pinned to the viewport bottom
- * so the wheel can sit on the midpoint between this row and the wordmark.
+ * Quadrant 3 — linkedin / insta / email, a fixed 24px from the viewport bottom.
  */
-export function MobileFooterLinks({
-  inverted = false,
-}: Props) {
+export function MobileFooterLinks({ inverted = false }: Props) {
   const { u, vw } = useNarrowArtboardMetrics();
-  const scale = vw > 0 && u > 0 ? u : 0;
+  const scale = vw > 0 && u > 0 ? u : 1;
   const ink = inverted ? "#fff" : "#000";
   const stroke = inverted ? "#fff" : "#000";
 
@@ -48,7 +45,6 @@ export function MobileFooterLinks({
       style={{
         bottom: NARROW_CHROME_SCREEN_PAD,
         gap: NARROW_FOOTER_LINK_GAP_PX * scale,
-        visibility: scale > 0 ? "visible" : "hidden",
       }}
     >
       {CONTACT_LINKS.map(({ label, href, external }) => (
