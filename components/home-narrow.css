@@ -1,6 +1,8 @@
 .narrow-app {
   --narrow-gutter: 20px;
   --narrow-chrome-pad: 24px;
+  position: absolute;
+  inset: 0;
 }
 
 @media (min-width: 700px) {

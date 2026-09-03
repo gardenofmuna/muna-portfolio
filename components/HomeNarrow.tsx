@@ -134,7 +134,7 @@ export function HomeNarrow({ initialProject }: Props) {
   const mountLanding = !projectOpen || enteredFromLanding || !initialProject;
 
   return (
-    <div className="narrow-app fixed inset-0 overflow-hidden bg-white">
+    <div className="narrow-app overflow-hidden bg-white">
       <div
         className="narrow-persist-wordmark"
         data-hidden={menuOpen ? "" : undefined}
