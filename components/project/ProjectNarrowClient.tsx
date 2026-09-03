@@ -22,7 +22,6 @@ type Props = {
   project: ProjectDefinition;
   hideWordmark?: boolean;
   onGoHome?: () => void;
-  onMenuOpenChange?: (open: boolean) => void;
   onProjectChange?: (project: ProjectDefinition) => void;
 };
 
@@ -35,7 +34,6 @@ export function ProjectNarrowClient({
   project,
   hideWordmark = false,
   onGoHome,
-  onMenuOpenChange,
   onProjectChange,
 }: Props) {
   const { u } = useNarrowArtboardMetrics();
@@ -63,10 +61,6 @@ export function ProjectNarrowClient({
       window.visualViewport?.removeEventListener("resize", read);
     };
   }, []);
-
-  useEffect(() => {
-    onMenuOpenChange?.(menuOpen);
-  }, [menuOpen, onMenuOpenChange]);
 
   useEffect(() => {
     const scroller = scrollerRef.current;
@@ -118,7 +112,7 @@ export function ProjectNarrowClient({
     <div
       className="project-narrow-shell"
       data-menu-state={menuOpen ? "open" : "hidden"}
-      data-hide-wordmark={hideWordmark ? "" : undefined}
+      data-hide-wordmark={hideWordmark || menuOpen ? "" : undefined}
       style={
         {
           "--pn-content-w": NARROW_PROJECT_CONTENT_W,
@@ -143,7 +137,9 @@ export function ProjectNarrowClient({
             menuOpen ? "Close navigation menu" : "Open navigation menu"
           }
           aria-expanded={menuOpen}
-          onClick={() => setMenuOpen((open) => !open)}
+          onClick={() => {
+            setMenuOpen((open) => !open);
+          }}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

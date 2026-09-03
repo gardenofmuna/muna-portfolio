@@ -60,8 +60,7 @@
   --nav-navy: #474a68;     /* shape_7 - contact */
 }
 
-/* Viewport reset. #__next is position:fixed; inset:0 — the visual viewport
-   pin (if needed) is applied on #__next itself, not via 100svh. */
+/* Viewport reset – no 100vw/100vh (avoids scrollbar gap). Background on both html and body. */
 html, body {
   margin: 0;
   padding: 0;
@@ -88,7 +87,7 @@ img {
   pointer-events: auto;
 }
 
-/* Fill the ICB on all four edges. No viewport units. */
+/* Root app container – fixed + inset:0 pins to all four edges, no viewport units */
 #__next {
   position: fixed;
   inset: 0;

@@ -757,13 +757,13 @@
   top: 0;
   left: 0;
   right: 0;
-  z-index: 45;
+  z-index: 50;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   box-sizing: border-box;
-  padding: calc(50 * var(--pn-u)) var(--pn-inset-right) calc(50 * var(--pn-u))
-    var(--pn-inset-left);
+  padding: var(--narrow-chrome-pad, 24px) var(--pn-inset-right)
+    var(--narrow-chrome-pad, 24px) var(--pn-inset-left);
   pointer-events: none;
   background: #fff;
   box-shadow: none;
@@ -803,7 +803,12 @@
   box-shadow: none;
 }
 
+.project-narrow-shell[data-menu-state="open"] {
+  z-index: 40;
+}
+
 .project-narrow-shell[data-menu-state="open"] .project-narrow__wordmark {
+  /* Keep the flex slot so the hamburger does not jump left. */
   visibility: hidden;
   pointer-events: none;
 }
@@ -837,13 +842,17 @@
 .project-narrow__wordmark {
   display: block;
   /* Width/height set inline from SiteWordmark via useNarrowArtboardMetrics */
-  margin: 0;
+  margin: 0 auto 0 0;
 }
 
 .project-narrow__menu-toggle {
-  /* Same height as nzeribe1.webp; width from SVG aspect (set in JS) */
+  /* Pin to the right gutter so hiding the wordmark cannot shift it. */
+  position: absolute;
+  top: 50%;
+  right: var(--pn-inset-right);
+  transform: translateY(-50%);
   flex-shrink: 0;
-  margin-top: 0;
+  margin: 0;
   width: var(--pn-menu-w);
   height: var(--pn-menu-h, var(--pn-nzeribe-h));
   padding: 0;

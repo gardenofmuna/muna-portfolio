@@ -56,7 +56,7 @@ export function SiteWordmark({
     const style = {
       width: NARROW_NZERIBE.w * scale,
       height: NARROW_NZERIBE.h * scale,
-      visibility: (scale > 0 ? "visible" : "hidden") as "visible" | "hidden",
+      ...(scale > 0 ? {} : { visibility: "hidden" as const }),
     };
     if (href) {
       return (

@@ -28,18 +28,15 @@ const DESIGN_PROJECT_PATH = `/design/${EGWU_RECORDS_SLUG}`;
 type Props = {
   /** Direct visit to a project URL — same shell, already in project view. */
   initialProject?: ProjectDefinition;
-  /** False while CSS-hidden on the homepage so the other layout owns input. */
-  interactive?: boolean;
 };
 
 /**
  * Artboard_2 (859×1623): centered wheel, wordmark, footer links always on,
  * about/contact bio in wheel hub — no page scroll.
  *
- * Tapping “design” keeps the wordmark mounted and fills the rest in place
- * (no route remount, no cream/yellow flash).
+ * Project pages own the wordmark in the header so it can hide with the menu.
  */
-export function HomeNarrow({ initialProject, interactive = true }: Props) {
+export function HomeNarrow({ initialProject }: Props) {
   const [activeLabel, setActiveLabel] = useState(
     initialProject ? "design" : "contact",
   );
@@ -50,7 +47,6 @@ export function HomeNarrow({ initialProject, interactive = true }: Props) {
     initialProject ?? null,
   );
   const [enteredFromLanding, setEnteredFromLanding] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
   const projectRef = useRef(project);
   projectRef.current = project;
 
@@ -81,7 +77,6 @@ export function HomeNarrow({ initialProject, interactive = true }: Props) {
   const goToLanding = useCallback(() => {
     setProject(null);
     setEnteredFromLanding(false);
-    setMenuOpen(false);
     document.title = "Muna | Portfolio";
     if (window.location.pathname !== "/") {
       window.history.pushState(null, "", "/");
@@ -94,12 +89,10 @@ export function HomeNarrow({ initialProject, interactive = true }: Props) {
   }, []);
 
   useEffect(() => {
-    if (!interactive) return;
     const onPop = () => {
       if (window.location.pathname === "/") {
         setProject(null);
         setEnteredFromLanding(false);
-        setMenuOpen(false);
         document.title = "Muna | Portfolio";
         return;
       }
@@ -111,7 +104,7 @@ export function HomeNarrow({ initialProject, interactive = true }: Props) {
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
-  }, [interactive]);
+  }, []);
 
   /** While spinning, only the label at 12 o'clock previews — no stacked hovers. */
   const previewLabel =
@@ -137,24 +130,12 @@ export function HomeNarrow({ initialProject, interactive = true }: Props) {
   const mountLanding = !projectOpen || enteredFromLanding || !initialProject;
 
   return (
-    <div className="narrow-app overflow-hidden bg-white">
-      <div
-        className="narrow-persist-wordmark"
-        data-hidden={menuOpen ? "" : undefined}
-      >
-        <SiteWordmark
-          placement="flow"
-          href={projectOpen ? "/" : undefined}
-          onClick={
-            projectOpen
-              ? (event) => {
-                  event.preventDefault();
-                  goToLanding();
-                }
-              : undefined
-          }
-        />
+    <div className="narrow-app fixed inset-0 overflow-hidden bg-white">
+      {projectOpen ? null : (
+      <div className="narrow-persist-wordmark">
+        <SiteWordmark placement="flow" />
       </div>
+      )}
       {mountLanding ? (
       <div
         className="narrow-landing"
@@ -166,7 +147,6 @@ export function HomeNarrow({ initialProject, interactive = true }: Props) {
         <NarrowWheelFit>
           <CircularNavWheel
             layout="narrow"
-            interactive={interactive}
             initialActiveLabel={initialProject ? "design" : "contact"}
             onActiveLabelChange={setActiveLabel}
             onHoverLabelChange={setHoverNavLabel}
@@ -205,9 +185,7 @@ export function HomeNarrow({ initialProject, interactive = true }: Props) {
         >
           <ProjectNarrowClient
             project={project}
-            hideWordmark
             onGoHome={goToLanding}
-            onMenuOpenChange={setMenuOpen}
             onProjectChange={onProjectChange}
           />
         </div>

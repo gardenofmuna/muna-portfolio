@@ -1,8 +1,6 @@
 .narrow-app {
   --narrow-gutter: 20px;
   --narrow-chrome-pad: 24px;
-  position: absolute;
-  inset: 0;
 }
 
 @media (min-width: 700px) {
@@ -15,7 +13,7 @@
   position: absolute;
   left: var(--narrow-gutter);
   top: var(--narrow-chrome-pad);
-  z-index: 46;
+  z-index: 15;
   pointer-events: auto;
 }
 
@@ -25,11 +23,6 @@
   overflow: visible;
   pointer-events: none;
   z-index: 10;
-}
-
-.narrow-persist-wordmark[data-hidden] {
-  visibility: hidden;
-  pointer-events: none;
 }
 
 .narrow-landing {

@@ -2,7 +2,6 @@
 
 import { useSyncExternalStore, type ReactNode } from "react";
 
-import { VISUAL_VIEWPORT_EVENT } from "@/lib/pin-visual-viewport";
 import {
   NARROW_H,
   NARROW_W,
@@ -21,36 +20,25 @@ type Metrics = {
   vy: number;
 };
 
-/** SSR / first paint — iPhone 14 CSS px. Avoid 0×0 so the wheel and wordmark scale in HTML. */
-const SSR_VIEWPORT = { vw: 390, vh: 844 };
+const INITIAL: Metrics = {
+  u: 1,
+  ox: 0,
+  oy: 0,
+  vw: 0,
+  vh: 0,
+  vx: 0,
+  vy: 0,
+};
 
-function metricsFromSize(
-  vw: number,
-  vh: number,
-  vx = 0,
-  vy = 0,
-): Metrics {
-  const u = narrowArtboardScale(vw, vh);
-  return {
-    u,
-    ox: (vw - NARROW_W * u) / 2 + vx,
-    oy: (vh - NARROW_H * u) / 2 + vy,
-    vw,
-    vh,
-    vx,
-    vy,
-  };
-}
+let cached: Metrics = INITIAL;
 
-const SSR_METRICS = metricsFromSize(SSR_VIEWPORT.vw, SSR_VIEWPORT.vh);
-
-let cached: Metrics = SSR_METRICS;
-
-/** Size of #__next (inset:0 ICB). Not innerHeight, visualViewport, or svh. */
+/**
+ * Layout size for chrome (logo / footer type). Real phones ignore Safari’s
+ * first-load ~980px innerWidth. Preview panes use the pane, not the monitor.
+ */
 function readViewport() {
-  const shell = document.getElementById("__next");
-  let vw = shell?.clientWidth || document.documentElement.clientWidth || 0;
-  let vh = shell?.clientHeight || document.documentElement.clientHeight || 0;
+  let vw = document.documentElement.clientWidth || window.innerWidth || 0;
+  let vh = document.documentElement.clientHeight || window.innerHeight || 0;
   const screenMin = Math.min(screen.width, screen.height) || 0;
   const phone = screenMin > 0 && screenMin <= 500;
   if (phone && vw > screenMin * 1.35) vw = screenMin;
@@ -60,8 +48,16 @@ function readViewport() {
 
 function metricsFromViewport(): Metrics {
   const { vw, vh, vx, vy } = readViewport();
-  if (vw <= 0 || vh <= 0) return SSR_METRICS;
-  return metricsFromSize(vw, vh, vx, vy);
+  const u = vw > 0 && vh > 0 ? narrowArtboardScale(vw, vh) : 1;
+  return {
+    u,
+    ox: (vw - NARROW_W * u) / 2 + vx,
+    oy: (vh - NARROW_H * u) / 2 + vy,
+    vw,
+    vh,
+    vx,
+    vy,
+  };
 }
 
 function sameMetrics(a: Metrics, b: Metrics) {
@@ -84,25 +80,18 @@ function getSnapshot(): Metrics {
 }
 
 function getServerSnapshot(): Metrics {
-  return SSR_METRICS;
+  return INITIAL;
 }
 
 function subscribe(onStoreChange: () => void) {
   const onChange = () => onStoreChange();
-  const vv = window.visualViewport;
   window.addEventListener("resize", onChange);
   window.addEventListener("orientationchange", onChange);
   window.addEventListener("pageshow", onChange);
-  window.addEventListener(VISUAL_VIEWPORT_EVENT, onChange);
-  vv?.addEventListener("resize", onChange);
-  vv?.addEventListener("scroll", onChange);
   return () => {
     window.removeEventListener("resize", onChange);
     window.removeEventListener("orientationchange", onChange);
     window.removeEventListener("pageshow", onChange);
-    window.removeEventListener(VISUAL_VIEWPORT_EVENT, onChange);
-    vv?.removeEventListener("resize", onChange);
-    vv?.removeEventListener("scroll", onChange);
   };
 }
 
@@ -111,7 +100,7 @@ export function useNarrowArtboardMetrics(): Metrics {
 }
 
 /**
- * Letterboxes Artboard_2 (859×1623) centered in #__next.
+ * Letterboxes Artboard_2 (859×1623) centered in the viewport.
  * Used by project pages for wordmark sizing — not the landing wheel.
  */
 export function NarrowArtboard({ children }: { children: ReactNode }) {
@@ -132,7 +121,10 @@ export function NarrowArtboard({ children }: { children: ReactNode }) {
   );
 }
 
-/** Wheel + hub, scaled and centered in #__next (logo / footer stay on the shell). */
+/**
+ * Quadrant 2: circular nav + hub, 8px side inset on phones (52px on tablet),
+ * centered between the logo and footer.
+ */
 export function NarrowWheelFit({ children }: { children: ReactNode }) {
   const { vw, vh, u } = useNarrowArtboardMetrics();
   const s = vw > 0 && vh > 0 ? narrowLandingWheelScale(vw, u, vh) : 0;
@@ -147,7 +139,6 @@ export function NarrowWheelFit({ children }: { children: ReactNode }) {
         style={{
           width: NARROW_W,
           height: NARROW_H,
-          visibility: s > 0 ? "visible" : "hidden",
           transform: `translate(${ox}px, ${oy}px) scale(${s || 1})`,
           transformOrigin: "0 0",
         }}

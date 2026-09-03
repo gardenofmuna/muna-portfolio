@@ -36,6 +36,8 @@ export function narrowLandingChrome(artboardU: number, viewportH: number) {
 /** Tablet layout matches design-page --narrow-gutter. */
 export const NARROW_TABLET_MIN_PX = 700;
 export const NARROW_TABLET_GUTTER_PX = 52;
+/** Landing ring side inset on phones (logo/footer keep the design-page gutter). */
+export const NARROW_WHEEL_GUTTER_MOBILE_PX = 8;
 
 export function narrowGutterPx(viewportW: number) {
   return viewportW >= NARROW_TABLET_MIN_PX
@@ -43,18 +45,15 @@ export function narrowGutterPx(viewportW: number) {
     : NARROW_PROJECT_GUTTER_PX;
 }
 
-/** Side inset for the landing ring — 8px on phones; tablet matches design gutter. */
-export const NARROW_LANDING_WHEEL_INSET_PX = 8;
-
-export function narrowLandingWheelInsetPx(viewportW: number) {
+export function narrowWheelGutterPx(viewportW: number) {
   return viewportW >= NARROW_TABLET_MIN_PX
     ? NARROW_TABLET_GUTTER_PX
-    : NARROW_LANDING_WHEEL_INSET_PX;
+    : NARROW_WHEEL_GUTTER_MOBILE_PX;
 }
 
 /**
  * Landing wheel scale (artboard 859 → CSS px).
- * Phone: 8px from each side. Tablet: same 52px gutter as design pages.
+ * Phone ring sits 8px from each edge; tablet matches the 52px design gutter.
  * Height shrinks the circle so it stays between logo and footer.
  */
 export function narrowLandingWheelScale(
@@ -64,7 +63,7 @@ export function narrowLandingWheelScale(
 ) {
   if (!viewportW) return 0;
   const widthScale =
-    (viewportW - 2 * narrowLandingWheelInsetPx(viewportW)) / NARROW_W;
+    (viewportW - 2 * narrowWheelGutterPx(viewportW)) / NARROW_W;
   if (viewportH > 0 && artboardU > 0) {
     const { availableH } = narrowLandingChrome(artboardU, viewportH);
     return Math.min(widthScale, availableH / NARROW_W);

@@ -295,8 +295,6 @@ export type CircularNavWheelProps = {
    * (easier finger travel, live highlight, no snap-back hysteresis).
    */
   spinFeel?: "desktop" | "narrow";
-  /** Skip window/wheel listeners while this layout is CSS-hidden. */
-  interactive?: boolean;
 };
 
 export function CircularNavWheel({
@@ -308,7 +306,6 @@ export function CircularNavWheel({
   layout = "desktop",
   containment = "viewport",
   spinFeel = "desktop",
-  interactive = true,
 }: CircularNavWheelProps = {}) {
   const isNarrow = layout === "narrow";
   const coarsePointer = useCoarsePointer();
@@ -423,7 +420,6 @@ export function CircularNavWheel({
       setSize({ w: NARROW_W, h: NARROW_H });
       return;
     }
-    if (!interactive) return;
     if (useStageContainment) {
       setSize({ w: DESKTOP_LAYOUT_W, h: stageWheelH });
       return;
@@ -456,7 +452,7 @@ export function CircularNavWheel({
       ro.disconnect();
       window.removeEventListener("resize", read);
     };
-  }, [isNarrow, interactive, useNavZoneContainment, useStageContainment, stageWheelH]);
+  }, [isNarrow, useNavZoneContainment, useStageContainment, stageWheelH]);
 
   const { w, h } = size;
   const arcSpacing = TARGET_ARC_SPACING_PX;
@@ -630,7 +626,6 @@ export function CircularNavWheel({
   }, [selectNarrowIndex, setWheelInteracting]);
 
   useEffect(() => {
-    if (!interactive) return;
     const el = wrapRef.current;
     if (!el) return;
     let idle: ReturnType<typeof setTimeout> | null = null;
@@ -673,7 +668,7 @@ export function CircularNavWheel({
       el.removeEventListener("wheel", onWheel);
       if (idle) clearTimeout(idle);
     };
-  }, [interactive]);
+  }, []);
 
   useEffect(() => {
     setFocusedIndex((i) => clamp(i, 0, N - 1));
@@ -711,21 +706,21 @@ export function CircularNavWheel({
 
   /** Tap overlays are authored at rotation 0; the rotator wrapper applies wheel angle. */
   useLayoutEffect(() => {
-    if (!isNarrow || !interactive || !ringLayout.ready) return;
+    if (!isNarrow || !ringLayout.ready) return;
     requestAnimationFrame(() => {
       requestAnimationFrame(() => updateHitOverlays());
     });
-  }, [isNarrow, interactive, ringLayout.ready, labelArcsVersion, updateHitOverlays]);
+  }, [isNarrow, ringLayout.ready, labelArcsVersion, updateHitOverlays]);
 
   useEffect(() => {
-    if (!isNarrow || !interactive) return;
+    if (!isNarrow) return;
     const onResize = () => {
       if (isDraggingRef.current) return;
       updateHitOverlaysRef.current();
     };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
-  }, [isNarrow, interactive]);
+  }, [isNarrow]);
 
   useEffect(
     () => () => {
@@ -744,7 +739,6 @@ export function CircularNavWheel({
   }, [isNarrow, w, h, snapRotationForIndex, labelAngles, ringLayout.radius]);
 
   useEffect(() => {
-    if (!interactive) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
       const el = e.target;
@@ -774,7 +768,7 @@ export function CircularNavWheel({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [interactive, N, isNarrow, selectNarrowIndex, snapRotationForIndex]);
+  }, [N, isNarrow, selectNarrowIndex, snapRotationForIndex]);
 
   const onItemEnter = (i: number) => {
     setHoveredIndex(i);
@@ -816,7 +810,6 @@ export function CircularNavWheel({
   };
 
   const onPointerDownCapture = (e: React.PointerEvent) => {
-    if (!interactive) return;
     if (e.pointerType === "mouse" && e.button !== 0) return;
     if (isNarrow) {
       const idx =
@@ -873,7 +866,6 @@ export function CircularNavWheel({
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
-    if (!interactive) return;
     const tapSlop =
       spinFeel === "narrow" ? NARROW_SPIN_TAP_MOVE_PX : TAP_MOVE_PX;
     const pendingHit = hitTapRef.current;

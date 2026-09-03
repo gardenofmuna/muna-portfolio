@@ -1,11 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-
-import { PinVisualViewport } from "@/components/PinVisualViewport";
-
 import "./globals.css";
-import "@/components/home-layout.css";
-import "@/components/photos-hover-cluster.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -90,7 +85,6 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <div id="__next">
-          <PinVisualViewport />
           {children}
         </div>
       </body>

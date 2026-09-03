@@ -38,8 +38,6 @@ const DESIGN_PROJECT_PATH = `/design/${EGWU_RECORDS_SLUG}`;
 type Props = {
   /** Direct visit to a project URL — same shell, already in project view. */
   initialProject?: ProjectDefinition;
-  /** False while CSS-hidden on the homepage so the other layout owns input. */
-  interactive?: boolean;
 };
 
 /**
@@ -50,7 +48,7 @@ type Props = {
  * Clicking “design” keeps this shell and wheel mounted; the middle and
  * signature quadrants fill with the project in place (no route remount).
  */
-export function HomeDesktop({ initialProject, interactive = true }: Props) {
+export function HomeDesktop({ initialProject }: Props) {
   const [activeLabel, setActiveLabel] = useState(
     initialProject ? "design" : "contact",
   );
@@ -105,7 +103,6 @@ export function HomeDesktop({ initialProject, interactive = true }: Props) {
   }, []);
 
   useEffect(() => {
-    if (!interactive) return;
     const onPop = () => {
       if (window.location.pathname === "/") {
         setProject(null);
@@ -121,7 +118,7 @@ export function HomeDesktop({ initialProject, interactive = true }: Props) {
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
-  }, [interactive]);
+  }, []);
 
   const previewLabel = hoverNavLabel ?? activeLabel;
   const isContact = !projectOpen && previewLabel === "contact";
@@ -134,7 +131,7 @@ export function HomeDesktop({ initialProject, interactive = true }: Props) {
 
   return (
     <DesignProjectNavProvider onProjectChange={onProjectChange}>
-    <DesktopStageCanvas interactive={interactive}>
+    <DesktopStageCanvas>
       <DesktopSiteShell
         layout="stage"
         showPolaroid={!projectOpen}
@@ -145,7 +142,6 @@ export function HomeDesktop({ initialProject, interactive = true }: Props) {
           <CircularNavWheel
             layout="desktop"
             containment="stage"
-            interactive={interactive}
             initialActiveLabel={initialProject ? "design" : "contact"}
             onActiveLabelChange={setActiveLabel}
             onHoverLabelChange={setHoverNavLabel}

@@ -27,8 +27,6 @@ import {
 type Props = {
   children: ReactNode;
   className?: string;
-  /** Skip window resize while CSS-hidden on the homepage. */
-  interactive?: boolean;
 };
 
 type StageView = {
@@ -54,11 +52,7 @@ export const DesktopStageViewContext = createContext({
  * right padding; crop only when the window goes square / too narrow.
  * Nav wheel always fills the viewport height.
  */
-export function DesktopStageCanvas({
-  children,
-  className,
-  interactive = true,
-}: Props) {
+export function DesktopStageCanvas({ children, className }: Props) {
   const [view, setView] = useState<StageView>({
     mode: "expand",
     scale: 1,
@@ -73,7 +67,6 @@ export function DesktopStageCanvas({
   const alignXRef = useRef<StageCropAlignX>("left");
 
   useLayoutEffect(() => {
-    if (!interactive) return;
     const update = () => {
       const next = readWindowFrame();
       const mode = desktopStageFitMode(next.width, next.height);
@@ -106,7 +99,7 @@ export function DesktopStageCanvas({
     update();
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
-  }, [interactive]);
+  }, []);
 
   const offset =
     view.mode === "crop"

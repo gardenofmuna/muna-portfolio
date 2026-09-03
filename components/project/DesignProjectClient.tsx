@@ -22,7 +22,7 @@ export function DesignProjectClient({ project }: Props) {
   const { mode, ready } = useLayoutMode();
 
   if (!ready) {
-    return <div className="absolute inset-0 bg-white" aria-hidden />;
+    return <div className="fixed inset-0 bg-white" aria-hidden />;
   }
 
   if (mode === "narrow") {
