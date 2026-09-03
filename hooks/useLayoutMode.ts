@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 
 import { NARROW_W } from "@/lib/narrow-stage";
 
@@ -33,7 +33,7 @@ export function useLayoutMode(): {
   const [mode, setMode] = useState<LayoutMode>("desktop");
   const [ready, setReady] = useState(false);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const mq = window.matchMedia(NARROW_MQ);
     const sync = () => setMode(readLayoutMode());
     sync();

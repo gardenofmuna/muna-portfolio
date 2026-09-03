@@ -10,7 +10,12 @@ type Props = {
 export function ProjectHeader({ project, menuState }: Props) {
   return (
     <header className="project-header" data-menu-state={menuState}>
-      <h1 className="project-header__title">{project.title}</h1>
+      <h1
+        className="project-header__title"
+        data-long={project.title.replace(/\s/g, "").length > 13 ? "" : undefined}
+      >
+        {project.title}
+      </h1>
       <p className="project-header__description project-body-copy">
         {project.description}
       </p>

@@ -16,6 +16,7 @@ import {
   DOC_NOW_PROGRAM,
   DOC_NOW_SOCIAL,
   DOC_NOW_WEBSITE,
+  DEVAULT_PRESENTS_SLUG,
   EGWU_RECORDS_SLUG,
 } from "@/data/projects";
 
@@ -104,7 +105,8 @@ export function DocNowProject({ menuState }: Props) {
       <ProjectFooter
         previousLabel="EGWÚ RECORDS"
         previousHref={`/design/${EGWU_RECORDS_SLUG}`}
-        nextLabel=""
+        nextLabel="DEVAULT"
+        nextHref={`/design/${DEVAULT_PRESENTS_SLUG}`}
       />
     </div>
   );

@@ -315,7 +315,11 @@ export function CircularNavWheel({
   const labelAngles = ringLayout.labelAngles;
   const labelArcs = ringLayout.labelArcs;
   const wrapRef = useRef<HTMLDivElement>(null);
-  const [size, setSize] = useState({ w: 1200, h: 800 });
+  const [size, setSize] = useState(() =>
+    layout === "narrow"
+      ? { w: NARROW_W, h: NARROW_H }
+      : { w: 1200, h: 800 },
+  );
   const [rotation, setRotation] = useState(() =>
     layout === "narrow" ? initialNarrowRotation(initialActiveLabel) : 0,
   );
@@ -1034,7 +1038,7 @@ export function CircularNavWheel({
   const desktopRootClass = useClippedDesktopRoot
     ? "absolute left-0 top-0 touch-none select-none bg-transparent"
     : isNarrow
-      ? "absolute inset-0 touch-none select-none bg-transparent"
+      ? "absolute left-0 top-0 touch-none select-none bg-transparent"
       : "fixed inset-0 touch-none select-none bg-transparent";
 
   return (
@@ -1044,6 +1048,12 @@ export function CircularNavWheel({
       style={{
         zIndex: isNarrow ? 10 : 1,
         touchAction: "none",
+        ...(isNarrow
+          ? {
+              width: NARROW_W,
+              height: NARROW_H,
+            }
+          : null),
         ...(useStageContainment
           ? {
               width: DESKTOP_LAYOUT_W,
@@ -1063,13 +1073,16 @@ export function CircularNavWheel({
       onPointerCancel={endPointer}
     >
       {isNarrow ? (
+        <>
         <div
-          className="absolute left-0 top-0"
+          className="pointer-events-none absolute overflow-visible"
           style={{
+            left: ox - NARROW_W / 2,
+            top: oy - NARROW_W / 2,
             width: NARROW_W,
-            height: NARROW_H,
+            height: NARROW_W,
             transform: `rotate(${rotDeg}deg)`,
-            transformOrigin: `${ox}px ${oy}px`,
+            transformOrigin: "center center",
             transition:
               isDragging || reduceMotion
                 ? "none"
@@ -1079,12 +1092,21 @@ export function CircularNavWheel({
           }}
         >
         <svg
-          className="absolute inset-0 overflow-visible"
+          className="overflow-visible"
           width={NARROW_W}
-          height={NARROW_H}
-          viewBox={`0 0 ${NARROW_W} ${NARROW_H}`}
+          height={NARROW_W}
+          viewBox={`${ox - NARROW_W / 2} ${oy - NARROW_W / 2} ${NARROW_W} ${NARROW_W}`}
+          preserveAspectRatio="xMidYMid meet"
           aria-label="Portfolio sections"
-          style={{ pointerEvents: "none" }}
+          style={{
+            display: "block",
+            width: NARROW_W,
+            height: NARROW_W,
+            maxWidth: "none",
+            maxHeight: "none",
+            aspectRatio: "1 / 1",
+            pointerEvents: "none",
+          }}
         >
           <defs>
             <path id="narrow-nav-ring" d={narrowRingPath} fill="none" />
@@ -1139,9 +1161,21 @@ export function CircularNavWheel({
             </text>
           </g>
         </svg>
+        </div>
         <div
           className="pointer-events-none absolute left-0 top-0 z-[1]"
-          style={{ width: NARROW_W, height: NARROW_H }}
+          style={{
+            width: NARROW_W,
+            height: NARROW_H,
+            transform: `rotate(${rotDeg}deg)`,
+            transformOrigin: `${ox}px ${oy}px`,
+            transition:
+              isDragging || reduceMotion
+                ? "none"
+                : isSnapping
+                  ? `transform ${NARROW_SNAP_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`
+                  : "none",
+          }}
           aria-hidden
         >
           {hitOverlays.map((o) => (
@@ -1169,7 +1203,7 @@ export function CircularNavWheel({
             />
           ))}
         </div>
-        </div>
+        </>
       ) : (
         <div
           className="absolute inset-0 overflow-visible"

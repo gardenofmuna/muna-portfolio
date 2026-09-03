@@ -22,6 +22,7 @@ export type ProjectDefinition = {
 
 export const EGWU_RECORDS_SLUG = "egwu-records";
 export const DOC_NOW_SLUG = "doc-now-2025";
+export const DEVAULT_PRESENTS_SLUG = "devault-presents";
 
 const EGWU_RECORDS: ProjectDefinition = {
   slug: EGWU_RECORDS_SLUG,
@@ -73,14 +74,38 @@ const DOC_NOW_2025: ProjectDefinition = {
   ],
 };
 
+const DEVAULT_PRESENTS: ProjectDefinition = {
+  slug: DEVAULT_PRESENTS_SLUG,
+  number: "III",
+  indexTotal: 10,
+  title: "DEVAULT PRESENTS",
+  description:
+    "Ongoing graphic design and art direction for Devault Presents, a Nigerian culture and music podcast and its parent brand Devault Magazine. The identity spans bold logos, episode-specific poster art, and the Devault Settings playlist series, pulling from cassette culture, vinyl sleeves, and retro print references for each drop.",
+  sidebarActiveLabel: "design",
+  sectionLinks: [
+    { id: "logo", label: "Logo,", color: "#019f4b" },
+    { id: "posters", label: "Posters,", color: "#488bdc" },
+    { id: "playlist-cover", label: "Playlist Cover Art,", color: "#fe5418" },
+    { id: "podcast-cover", label: "Podcast Cover Art,", color: "#f9b109" },
+  ],
+  sections: [
+    { id: "logo", title: "Logo" },
+    { id: "posters", title: "Posters" },
+    { id: "playlist-cover", title: "Playlist Cover Art" },
+    { id: "podcast-cover", title: "Podcast Cover Art" },
+  ],
+};
+
 export const PROJECTS: Record<string, ProjectDefinition> = {
   [EGWU_RECORDS_SLUG]: EGWU_RECORDS,
   [DOC_NOW_SLUG]: DOC_NOW_2025,
+  [DEVAULT_PRESENTS_SLUG]: DEVAULT_PRESENTS,
 };
 
 export const PROJECTS_BY_NUMBER: Partial<Record<string, string>> = {
   I: EGWU_RECORDS_SLUG,
   II: DOC_NOW_SLUG,
+  III: DEVAULT_PRESENTS_SLUG,
 };
 
 export function getProjectBySlug(slug: string): ProjectDefinition | undefined {
@@ -437,7 +462,6 @@ export const DOC_NOW_WEBSITE: CoverFlowItem[] = [
     width: 1280,
     height: 722,
     kind: "video",
-    poster: docNowSrc("Website design/1.webp"),
   },
   {
     src: docNowSrc("Website design/WEBSITE-RECORDING-MOBILE.mp4"),
@@ -445,7 +469,240 @@ export const DOC_NOW_WEBSITE: CoverFlowItem[] = [
     width: 634,
     height: 1280,
     kind: "video",
-    poster: docNowSrc("Website design/5.webp"),
+  },
+];
+
+const DEVAULT_DIR = "/projects/DEVAULT PRESENTS";
+
+function devaultSrc(relativePath: string) {
+  return `${DEVAULT_DIR}/${relativePath}`;
+}
+
+export const DEVAULT_LOGOS = [
+  {
+    src: devaultSrc("Logo/DP LOGO 2.webp"),
+    alt: "Devault Presents sans-serif wordmark on black",
+    width: 1788,
+    height: 233,
+  },
+] as const;
+
+export const DEVAULT_POSTERS: CoverFlowItem[] = [
+  {
+    src: devaultSrc("Posters/ EPISODE 1.webp"),
+    alt: "Devault Presents episode 1 poster",
+    width: 1080,
+    height: 1350,
+  },
+  {
+    src: devaultSrc("Posters/EPISODE 2.webp"),
+    alt: "Devault Presents episode 2 poster",
+    width: 1000,
+    height: 1000,
+  },
+  {
+    src: devaultSrc("Posters/EPISODE 3.webp"),
+    alt: "Devault Presents episode 3 poster",
+    width: 1080,
+    height: 1350,
+  },
+  {
+    src: devaultSrc("Posters/EPISODE 4.webp"),
+    alt: "Devault Presents episode 4 poster",
+    width: 1080,
+    height: 1350,
+  },
+  {
+    src: devaultSrc("Posters/EPISODE 5.webp"),
+    alt: "Devault Presents episode 5 poster",
+    width: 1080,
+    height: 1350,
+  },
+  {
+    src: devaultSrc("Posters/EPISODE 6.webp"),
+    alt: "Devault Presents episode 6 poster",
+    width: 1080,
+    height: 1350,
+  },
+  {
+    src: devaultSrc("Posters/EPISODE 7.webp"),
+    alt: "Devault Presents episode 7 poster",
+    width: 1080,
+    height: 1350,
+  },
+  {
+    src: devaultSrc("Posters/DP SEASON 2 EPISODE 1.webp"),
+    alt: "Devault Presents season 2 episode 1 poster",
+    width: 1080,
+    height: 1350,
+  },
+  {
+    src: devaultSrc("Posters/DP S02 EP2.webp"),
+    alt: "Devault Presents season 2 episode 2 poster",
+    width: 1080,
+    height: 1350,
+  },
+  {
+    src: devaultSrc("Posters/DP S02E03.webp"),
+    alt: "Devault Presents season 2 episode 3 poster",
+    width: 1080,
+    height: 1350,
+  },
+  {
+    src: devaultSrc("Posters/DP WTF is Going ON 1.webp"),
+    alt: "Devault Presents WTF is Going On poster",
+    width: 1080,
+    height: 1350,
+  },
+];
+
+export const DEVAULT_PLAYLIST: CoverFlowItem[] = [
+  {
+    src: devaultSrc("Playlist Cover Art/DS OO1 PLAYLIST COVER.webp"),
+    alt: "Devault Settings 001 playlist cover",
+    width: 1000,
+    height: 1000,
+  },
+  {
+    src: devaultSrc("Playlist Cover Art/DS 001 PLAYLIST LIST.webp"),
+    alt: "Devault Settings 001 tracklist",
+    width: 2000,
+    height: 1000,
+  },
+  {
+    src: devaultSrc("Playlist Cover Art/DS 002 v1.webp"),
+    alt: "Devault Settings 002 playlist cover",
+    width: 5000,
+    height: 5000,
+  },
+  {
+    src: devaultSrc("Playlist Cover Art/DS 002 V2.webp"),
+    alt: "Devault Settings 002 playlist cover alternate",
+    width: 5000,
+    height: 5000,
+  },
+  {
+    src: devaultSrc("Playlist Cover Art/DS 002 TRACKLIST.webp"),
+    alt: "Devault Settings 002 tracklist",
+    width: 2000,
+    height: 1000,
+  },
+  {
+    src: devaultSrc("Playlist Cover Art/DS 003 II.webp"),
+    alt: "Devault Settings 003 playlist cover",
+    width: 1000,
+    height: 1000,
+  },
+  {
+    src: devaultSrc("Playlist Cover Art/DS 003 TRACKLIST.webp"),
+    alt: "Devault Settings 003 tracklist",
+    width: 2000,
+    height: 1000,
+  },
+  {
+    src: devaultSrc("Playlist Cover Art/DS 004.webp"),
+    alt: "Devault Settings 004 playlist cover",
+    width: 1080,
+    height: 1080,
+  },
+  {
+    src: devaultSrc("Playlist Cover Art/DS 004 TRACKLIST.webp"),
+    alt: "Devault Settings 004 tracklist",
+    width: 2160,
+    height: 1080,
+  },
+  {
+    src: devaultSrc("Playlist Cover Art/DS 005.webp"),
+    alt: "Devault Settings 005 playlist cover",
+    width: 1080,
+    height: 1080,
+  },
+  {
+    src: devaultSrc("Playlist Cover Art/DS 005 TRACKLIST.webp"),
+    alt: "Devault Settings 005 tracklist",
+    width: 2159,
+    height: 1080,
+  },
+  {
+    src: devaultSrc("Playlist Cover Art/DS 006.webp"),
+    alt: "Devault Settings 006 playlist cover",
+    width: 1080,
+    height: 1080,
+  },
+  {
+    src: devaultSrc("Playlist Cover Art/DS 006 TRACKLIST 2.webp"),
+    alt: "Devault Settings 006 tracklist",
+    width: 1530,
+    height: 1080,
+  },
+  {
+    src: devaultSrc("Playlist Cover Art/DS OO7 PLAYLIST COVER.webp"),
+    alt: "Devault Settings 007 playlist cover",
+    width: 1080,
+    height: 1080,
+  },
+  {
+    src: devaultSrc("Playlist Cover Art/DS 007 PLAYLIST LIST.webp"),
+    alt: "Devault Settings 007 tracklist",
+    width: 2160,
+    height: 1080,
+  },
+  {
+    src: devaultSrc("Playlist Cover Art/DS OO8 PLAYLIST COVER.webp"),
+    alt: "Devault Settings 008 playlist cover",
+    width: 1080,
+    height: 1080,
+  },
+  {
+    src: devaultSrc("Playlist Cover Art/DS 008 PLAYLIST LIST.webp"),
+    alt: "Devault Settings 008 tracklist",
+    width: 2160,
+    height: 1080,
+  },
+  {
+    src: devaultSrc("Playlist Cover Art/DS OO9 PLAYLIST COVER.webp"),
+    alt: "Devault Settings 009 playlist cover",
+    width: 1080,
+    height: 1080,
+  },
+  {
+    src: devaultSrc("Playlist Cover Art/DS 009 PLAYLIST LIST.webp"),
+    alt: "Devault Settings 009 tracklist",
+    width: 2160,
+    height: 1080,
+  },
+  {
+    src: devaultSrc("Playlist Cover Art/DS O11 PLAYLIST COVER.webp"),
+    alt: "Devault Settings 011 playlist cover",
+    width: 4096,
+    height: 4096,
+  },
+  {
+    src: devaultSrc("Playlist Cover Art/DS 011 PLAYLIST LIST.webp"),
+    alt: "Devault Settings 011 tracklist",
+    width: 2160,
+    height: 1080,
+  },
+];
+
+export const DEVAULT_PODCAST: CoverFlowItem[] = [
+  {
+    src: devaultSrc("Podcast Cover Art/Podcast Cover 1.webp"),
+    alt: "Devault Presents podcast cover 1",
+    width: 1080,
+    height: 1080,
+  },
+  {
+    src: devaultSrc("Podcast Cover Art/Podcast Cover 2.webp"),
+    alt: "Devault Presents podcast cover 2",
+    width: 1080,
+    height: 1080,
+  },
+  {
+    src: devaultSrc("Podcast Cover Art/Podcast Cover 3.webp"),
+    alt: "Devault Presents podcast cover 3",
+    width: 1080,
+    height: 1080,
   },
 ];
 

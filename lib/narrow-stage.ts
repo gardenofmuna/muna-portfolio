@@ -15,16 +15,45 @@ export function narrowArtboardScale(vw: number, vh: number): number {
   return Math.min(vw / NARROW_W, vh / NARROW_H) * NARROW_PAGE_SCALE;
 }
 
+/** Screen padding for the landing wordmark (top) and footer (bottom). */
+export const NARROW_CHROME_SCREEN_PAD = 24;
+
+/** Band between the landing header and footer — wheel hub sits at midY. */
+export function narrowLandingChrome(artboardU: number, viewportH: number) {
+  const u = Math.max(artboardU, 0);
+  const headerBottom = NARROW_CHROME_SCREEN_PAD + NARROW_NZERIBE.h * u;
+  const footerH = NARROW_FOOTER_FONT_PX * u * 1.15;
+  const footerTop = viewportH - NARROW_CHROME_SCREEN_PAD - footerH;
+  const availableH = Math.max(160, footerTop - headerBottom);
+  return {
+    headerBottom,
+    footerTop,
+    availableH,
+    midY: (headerBottom + footerTop) / 2,
+  };
+}
+
 /** Grow/shrink the landing ring so labels sit ~8px from each phone edge. */
-export function narrowLandingWheelScale(viewportW: number, artboardU: number) {
+export function narrowLandingWheelScale(
+  viewportW: number,
+  artboardU: number,
+  viewportH = 0,
+) {
   const currentGroupWidth = NARROW_W * artboardU;
   if (!viewportW || !artboardU || currentGroupWidth <= 0) return 1;
   /* Width, not letterbox gaps — Chrome’s toolbar shrinks height and was
      wrongly treated as a tablet, which left large side margins. */
   const isTablet = viewportW >= 700;
   const sideInset = isTablet ? 28 : 16;
-  const scale = (viewportW - sideInset) / currentGroupWidth;
-  return isTablet ? scale * 0.9 : scale;
+  const widthScale = (viewportW - sideInset) / currentGroupWidth;
+
+  if (viewportH > 0) {
+    const { availableH } = narrowLandingChrome(artboardU, viewportH);
+    const heightScale = availableH / currentGroupWidth;
+    if (heightScale < widthScale) return heightScale;
+  }
+
+  return isTablet ? widthScale * 0.9 : widthScale;
 }
 
 /** Bridge 1624-tall desktop assets onto this artboard height. */

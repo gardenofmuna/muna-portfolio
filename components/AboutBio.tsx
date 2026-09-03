@@ -235,8 +235,9 @@ export function AboutBio({
     lineHeight,
     fontFamily: '"LTC Garamont Display OT", "Times New Roman", serif',
     color: bodyInk,
+    WebkitTextFillColor: bodyInk,
     textAlign: (hubCentered ? "center" : "left") as "center" | "left",
-    whiteSpace: hubCentered ? "normal" : "nowrap",
+    whiteSpace: "nowrap",
     ...(hubCentered ? { width: "100%" } : {}),
   } as const;
 

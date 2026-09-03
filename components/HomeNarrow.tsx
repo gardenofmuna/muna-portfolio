@@ -1,13 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { AboutBio } from "@/components/AboutBio";
 import { CircularNavWheel } from "@/components/CircularNavWheel";
 import { DesignCluster } from "@/components/DesignCluster";
 import { InstallationLottie } from "@/components/InstallationLottie";
 import { MobileFooterLinks } from "@/components/MobileFooterLinks";
-import { NarrowArtboard, useNarrowArtboardMetrics } from "@/components/NarrowArtboard";
+import {
+  NarrowWheelFit,
+} from "@/components/NarrowArtboard";
 import { PhotosHoverCluster } from "@/components/PhotosHoverCluster";
 import { CvPressHoverAccordion } from "@/components/CvPressHoverAccordion";
 import { FilmHoverGif } from "@/components/FilmHoverGif";
@@ -20,12 +22,6 @@ import {
   getProjectBySlug,
   type ProjectDefinition,
 } from "@/data/projects";
-import {
-  NARROW_H,
-  NARROW_W,
-  NARROW_WHEEL_CENTER,
-  narrowLandingWheelScale,
-} from "@/lib/narrow-stage";
 
 import "./home-narrow.css";
 
@@ -44,7 +40,6 @@ type Props = {
  * (no route remount, no cream/yellow flash).
  */
 export function HomeNarrow({ initialProject }: Props) {
-  const { u, vw } = useNarrowArtboardMetrics();
   const [activeLabel, setActiveLabel] = useState(
     initialProject ? "design" : "contact",
   );
@@ -136,10 +131,6 @@ export function HomeNarrow({ initialProject }: Props) {
       : `opacity ${fadeMs}ms cubic-bezier(0.22, 1, 0.36, 1), transform ${fadeMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
     transform: showAboutBio ? "translateY(0)" : "translateY(12px)",
   } as const;
-  const landingWheelScale = useMemo(
-    () => narrowLandingWheelScale(vw, u),
-    [u, vw],
-  );
 
   const projectOpen = project != null;
   const mountLanding = !projectOpen || enteredFromLanding || !initialProject;
@@ -170,35 +161,26 @@ export function HomeNarrow({ initialProject }: Props) {
         aria-hidden={projectOpen}
         inert={projectOpen ? true : undefined}
       >
-        <NarrowArtboard>
-          <MobileFooterLinks />
-          <div
-            className="absolute left-0 top-0"
-            style={{
-              width: NARROW_W,
-              height: NARROW_H,
-              transform: `scale(${landingWheelScale})`,
-              transformOrigin: `${NARROW_WHEEL_CENTER.x}px ${NARROW_WHEEL_CENTER.y}px`,
+        <MobileFooterLinks />
+        <NarrowWheelFit>
+          <CircularNavWheel
+            layout="narrow"
+            initialActiveLabel={initialProject ? "design" : "contact"}
+            onActiveLabelChange={setActiveLabel}
+            onHoverLabelChange={setHoverNavLabel}
+            onWheelInteractingChange={setWheelInteracting}
+            onLabelActivate={(label) => {
+              if (label === "design") {
+                openDesignProject();
+              }
             }}
-          >
-            <CircularNavWheel
-              layout="narrow"
-              initialActiveLabel={initialProject ? "design" : "contact"}
-              onActiveLabelChange={setActiveLabel}
-              onHoverLabelChange={setHoverNavLabel}
-              onWheelInteractingChange={setWheelInteracting}
-              onLabelActivate={(label) => {
-                if (label === "design") {
-                  openDesignProject();
-                }
-              }}
-            />
-            <DesignCluster visible={showDesign} variant="narrow" />
-            <InstallationLottie visible={showInstallation} layout="narrow" />
-            <FilmHoverGif visible={showFilm} layout="narrow" />
-            <CvPressHoverAccordion visible={showCvPress} layout="narrow" />
-            <SelectedWorksHoverGif visible={showSelectedWorks} layout="narrow" />
-            <PhotosHoverCluster visible={showPhotos} variant="narrow" />
+          />
+          <DesignCluster visible={showDesign} variant="narrow" />
+          <InstallationLottie visible={showInstallation} layout="narrow" />
+          <FilmHoverGif visible={showFilm} layout="narrow" />
+          <CvPressHoverAccordion visible={showCvPress} layout="narrow" />
+          <SelectedWorksHoverGif visible={showSelectedWorks} layout="narrow" />
+          <PhotosHoverCluster visible={showPhotos} variant="narrow" />
             <NarrowCenterPopup visible={showAboutBio} style={bioFadeStyle}>
               <AboutBio
                 visible={showAboutBio}
@@ -208,8 +190,7 @@ export function HomeNarrow({ initialProject }: Props) {
                 whiteBodyText={previewLabel === "contact"}
               />
             </NarrowCenterPopup>
-          </div>
-        </NarrowArtboard>
+        </NarrowWheelFit>
       </div>
       ) : null}
       {project ? (

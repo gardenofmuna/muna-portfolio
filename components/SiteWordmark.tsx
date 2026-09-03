@@ -36,7 +36,8 @@ export function SiteWordmark({
   screenTop,
   onClick,
 }: Props) {
-  const { u, ox, oy } = useNarrowArtboardMetrics();
+  const { u, ox, oy, vw } = useNarrowArtboardMetrics();
+  const scale = vw > 0 && u > 0 ? u : 0;
   const image = (
     <Image
       src="/nzeribe1.webp"
@@ -53,8 +54,9 @@ export function SiteWordmark({
     const className = "project-narrow__wordmark";
     // Same CSS-px box as the landing artboard wordmark (JS u, not CSS 100vh).
     const style = {
-      width: NARROW_NZERIBE.w * (u || 1),
-      height: NARROW_NZERIBE.h * (u || 1),
+      width: NARROW_NZERIBE.w * scale,
+      height: NARROW_NZERIBE.h * scale,
+      visibility: (scale > 0 ? "visible" : "hidden") as "visible" | "hidden",
     };
     if (href) {
       return (
@@ -76,11 +78,10 @@ export function SiteWordmark({
     );
   }
 
-  const scale = u || 1;
   const left =
-    screenLeft == null ? NARROW_NZERIBE.x : (screenLeft - ox) / scale;
+    screenLeft == null ? NARROW_NZERIBE.x : (screenLeft - ox) / (scale || 1);
   const top =
-    screenTop == null ? NARROW_NZERIBE.y : (screenTop - oy) / scale;
+    screenTop == null ? NARROW_NZERIBE.y : (screenTop - oy) / (scale || 1);
 
   return (
     <div

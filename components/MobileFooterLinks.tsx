@@ -1,13 +1,14 @@
 "use client";
 
 import { CONTACT_LINKS } from "@/lib/contact-links";
+import { useNarrowArtboardMetrics } from "@/components/NarrowArtboard";
 import {
+  NARROW_CHROME_SCREEN_PAD,
   NARROW_FOOTER_FONT_PX,
   NARROW_FOOTER_LINK_GAP_PX,
-  NARROW_FOOTER_TOP,
 } from "@/lib/narrow-stage";
 
-const FAUX_STROKE = "0.85px";
+const FAUX_STROKE = "0.45px";
 const TRACKING_EM = -0.05;
 
 type Props = {
@@ -16,19 +17,22 @@ type Props = {
 };
 
 /**
- * Artboard_2 footer — linkedin / insta / email always visible on narrow layout.
+ * Landing footer — linkedin / insta / email, pinned to the viewport bottom
+ * so the wheel can sit on the midpoint between this row and the wordmark.
  */
 export function MobileFooterLinks({
   inverted = false,
 }: Props) {
+  const { u, vw } = useNarrowArtboardMetrics();
+  const scale = vw > 0 && u > 0 ? u : 0;
   const ink = inverted ? "#fff" : "#000";
   const stroke = inverted ? "#fff" : "#000";
 
   const linkBase = {
     fontFamily: '"LTC Garamont Display OT", "Times New Roman", serif',
     fontStyle: "italic" as const,
-    fontWeight: 500,
-    fontSize: NARROW_FOOTER_FONT_PX,
+    fontWeight: 400,
+    fontSize: NARROW_FOOTER_FONT_PX * scale,
     lineHeight: 1.15,
     letterSpacing: `${TRACKING_EM}em`,
     color: ink,
@@ -40,12 +44,11 @@ export function MobileFooterLinks({
   return (
     <nav
       aria-label="Contact links"
-      className="pointer-events-auto absolute z-[35] flex flex-row items-center justify-center"
+      className="pointer-events-auto fixed left-0 right-0 z-[46] flex flex-row items-center justify-center"
       style={{
-        left: 0,
-        right: 0,
-        top: NARROW_FOOTER_TOP,
-        gap: NARROW_FOOTER_LINK_GAP_PX,
+        bottom: NARROW_CHROME_SCREEN_PAD,
+        gap: NARROW_FOOTER_LINK_GAP_PX * scale,
+        visibility: scale > 0 ? "visible" : "hidden",
       }}
     >
       {CONTACT_LINKS.map(({ label, href, external }) => (

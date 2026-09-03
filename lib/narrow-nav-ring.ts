@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 import {
   NARROW_H,
   NARROW_LABEL_TRACKING_EM,
@@ -61,10 +59,6 @@ export type NarrowRingLayout = {
   labelArcs: NarrowLabelArc[];
   ready: boolean;
 };
-
-function ptToPx(pt: number): number {
-  return pt * (96 / 72);
-}
 
 /**
  * Chromium-measured word widths along the ring path (Arial 800, locked ring type).
@@ -387,23 +381,6 @@ function staticRingLayout(): NarrowRingLayout {
   };
 }
 
-const FONT_LOAD_TIMEOUT_MS = 2000;
-
-async function waitForRingFonts(): Promise<void> {
-  const load = document.fonts.load(
-    `800 ${ptToPx(NARROW_RING_FONT_SIZE_PT)}px "Arial MT Std"`,
-  );
-  const timeout = new Promise<void>((resolve) => {
-    window.setTimeout(resolve, FONT_LOAD_TIMEOUT_MS);
-  });
-  try {
-    await Promise.race([load, timeout]);
-    await Promise.race([document.fonts.ready, timeout]);
-  } catch {
-    /* fall through — measure with fallback stack */
-  }
-}
-
 export function measureNarrowRingLayout(): NarrowRingLayout {
   const base = staticRingLayout();
 
@@ -425,30 +402,10 @@ export function measureNarrowRingLayout(): NarrowRingLayout {
   };
 }
 
-export function useNarrowRingLayout(enabled: boolean): NarrowRingLayout {
-  const [layout, setLayout] = useState<NarrowRingLayout>(staticRingLayout);
-
-  useEffect(() => {
-    if (!enabled) return;
-    let cancelled = false;
-
-    const run = async () => {
-      await waitForRingFonts();
-      if (cancelled) return;
-      try {
-        setLayout(measureNarrowRingLayout());
-      } catch {
-        if (!cancelled) setLayout(staticRingLayout());
-      }
-    };
-
-    run();
-    return () => {
-      cancelled = true;
-    };
-  }, [enabled]);
-
-  return layout;
+export function useNarrowRingLayout(_enabled: boolean): NarrowRingLayout {
+  /* Baked layout only. Live Safari textPath measure ran after first paint and
+     could replace a circle with an oval until the next refresh. */
+  return staticRingLayout();
 }
 
 export function narrowLabelAngle(

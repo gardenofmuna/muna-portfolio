@@ -92,8 +92,9 @@ export function ProjectHorizontalStrip({ items, ariaLabel, variant }: Props) {
                     alt={item.alt}
                     width={size.width}
                     height={size.height}
-                    poster={item.poster}
+                    poster={variant === "website" ? undefined : item.poster}
                     className="project-hscroll__image project-hscroll__video"
+                    togglePlayback={variant === "website"}
                   />
                 ) : (
                   <Image
