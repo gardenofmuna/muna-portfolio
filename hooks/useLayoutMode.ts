@@ -6,7 +6,8 @@ import { NARROW_W } from "@/lib/narrow-stage";
 
 export type LayoutMode = "desktop" | "narrow";
 
-const NARROW_MQ =
+/** Phone + portrait tablet. Keep in sync with components/home-layout.css. */
+export const NARROW_MQ =
   `(max-width: ${NARROW_W}px), (max-width: 1023px) and (orientation: portrait)`;
 
 function isPhone() {
@@ -16,26 +17,36 @@ function isPhone() {
   return /iPhone|iPod|Android.+Mobile/i.test(navigator.userAgent);
 }
 
+function readCssLayoutMode(): LayoutMode {
+  if (typeof window === "undefined") return "desktop";
+  return window.matchMedia(NARROW_MQ).matches ? "narrow" : "desktop";
+}
+
 function readLayoutMode(): LayoutMode {
   if (typeof window === "undefined") return "desktop";
   // iPhone "Request Desktop Website" inflates innerWidth; screen size does not.
   if (isPhone()) return "narrow";
-  if (window.matchMedia(NARROW_MQ).matches) return "narrow";
-  return "desktop";
+  return readCssLayoutMode();
 }
 
 /** Desktop 1440 layout vs Artboard_2 narrow (859×1623). */
 export function useLayoutMode(): {
   mode: LayoutMode;
+  /** MatchMedia only — same rule as the homepage CSS switch. */
+  cssMode: LayoutMode;
   /** False until client has read matchMedia — keeps SSR and hydration aligned. */
   ready: boolean;
 } {
   const [mode, setMode] = useState<LayoutMode>("desktop");
+  const [cssMode, setCssMode] = useState<LayoutMode>("desktop");
   const [ready, setReady] = useState(false);
 
   useLayoutEffect(() => {
     const mq = window.matchMedia(NARROW_MQ);
-    const sync = () => setMode(readLayoutMode());
+    const sync = () => {
+      setCssMode(mq.matches ? "narrow" : "desktop");
+      setMode(readLayoutMode());
+    };
     sync();
     setReady(true);
     mq.addEventListener("change", sync);
@@ -48,7 +59,7 @@ export function useLayoutMode(): {
     };
   }, []);
 
-  return { mode, ready };
+  return { mode, cssMode, ready };
 }
 
 export { readLayoutMode };

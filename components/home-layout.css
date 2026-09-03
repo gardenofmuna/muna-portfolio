@@ -1,0 +1,28 @@
+/* Inverse of NARROW_MQ in hooks/useLayoutMode.ts (859px artboard, portrait ≤1023). */
+.home-narrow-root,
+.home-desktop-root {
+  position: absolute;
+  inset: 0;
+}
+
+.home-desktop-root {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .home-narrow-root {
+    display: none;
+  }
+  .home-desktop-root {
+    display: block;
+  }
+}
+
+@media (min-width: 860px) and (orientation: landscape) {
+  .home-narrow-root {
+    display: none;
+  }
+  .home-desktop-root {
+    display: block;
+  }
+}

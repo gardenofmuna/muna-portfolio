@@ -28,6 +28,8 @@ const DESIGN_PROJECT_PATH = `/design/${EGWU_RECORDS_SLUG}`;
 type Props = {
   /** Direct visit to a project URL — same shell, already in project view. */
   initialProject?: ProjectDefinition;
+  /** False while CSS-hidden on the homepage so the other layout owns input. */
+  interactive?: boolean;
 };
 
 /**
@@ -37,7 +39,7 @@ type Props = {
  * Tapping “design” keeps the wordmark mounted and fills the rest in place
  * (no route remount, no cream/yellow flash).
  */
-export function HomeNarrow({ initialProject }: Props) {
+export function HomeNarrow({ initialProject, interactive = true }: Props) {
   const [activeLabel, setActiveLabel] = useState(
     initialProject ? "design" : "contact",
   );
@@ -92,6 +94,7 @@ export function HomeNarrow({ initialProject }: Props) {
   }, []);
 
   useEffect(() => {
+    if (!interactive) return;
     const onPop = () => {
       if (window.location.pathname === "/") {
         setProject(null);
@@ -108,7 +111,7 @@ export function HomeNarrow({ initialProject }: Props) {
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
-  }, []);
+  }, [interactive]);
 
   /** While spinning, only the label at 12 o'clock previews — no stacked hovers. */
   const previewLabel =
@@ -163,6 +166,7 @@ export function HomeNarrow({ initialProject }: Props) {
         <NarrowWheelFit>
           <CircularNavWheel
             layout="narrow"
+            interactive={interactive}
             initialActiveLabel={initialProject ? "design" : "contact"}
             onActiveLabelChange={setActiveLabel}
             onHoverLabelChange={setHoverNavLabel}

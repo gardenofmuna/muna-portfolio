@@ -1,0 +1,30 @@
+.photos-cluster {
+  --photos-fan-x: 110px;
+  --photos-spread-x: 0px;
+  --photos-wing-ms: 420ms;
+}
+
+.photos-cluster__wing {
+  position: absolute;
+  right: auto;
+  bottom: 0;
+  left: 50%;
+  transform-origin: center bottom;
+  transition: transform var(--photos-wing-ms) cubic-bezier(0.22, 1, 0.56, 1);
+}
+
+.photos-cluster__wing--left {
+  transform: translateX(
+      calc(-50% - var(--photos-fan-x) - var(--photos-spread-x))
+    )
+    rotate(-17deg);
+}
+
+.photos-cluster__wing--right {
+  transform: translateX(calc(-50% + var(--photos-fan-x) + var(--photos-spread-x)))
+    rotate(17deg);
+}
+
+.photos-cluster__wing--front {
+  transform: translateX(-50%);
+}

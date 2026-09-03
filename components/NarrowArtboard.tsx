@@ -21,17 +21,30 @@ type Metrics = {
   vy: number;
 };
 
-const INITIAL: Metrics = {
-  u: 1,
-  ox: 0,
-  oy: 0,
-  vw: 0,
-  vh: 0,
-  vx: 0,
-  vy: 0,
-};
+/** SSR / first paint — iPhone 14 CSS px. Avoid 0×0 so the wheel and wordmark scale in HTML. */
+const SSR_VIEWPORT = { vw: 390, vh: 844 };
 
-let cached: Metrics = INITIAL;
+function metricsFromSize(
+  vw: number,
+  vh: number,
+  vx = 0,
+  vy = 0,
+): Metrics {
+  const u = narrowArtboardScale(vw, vh);
+  return {
+    u,
+    ox: (vw - NARROW_W * u) / 2 + vx,
+    oy: (vh - NARROW_H * u) / 2 + vy,
+    vw,
+    vh,
+    vx,
+    vy,
+  };
+}
+
+const SSR_METRICS = metricsFromSize(SSR_VIEWPORT.vw, SSR_VIEWPORT.vh);
+
+let cached: Metrics = SSR_METRICS;
 
 /** Size of #__next (inset:0 ICB). Not innerHeight, visualViewport, or svh. */
 function readViewport() {
@@ -47,16 +60,8 @@ function readViewport() {
 
 function metricsFromViewport(): Metrics {
   const { vw, vh, vx, vy } = readViewport();
-  const u = vw > 0 && vh > 0 ? narrowArtboardScale(vw, vh) : 1;
-  return {
-    u,
-    ox: (vw - NARROW_W * u) / 2 + vx,
-    oy: (vh - NARROW_H * u) / 2 + vy,
-    vw,
-    vh,
-    vx,
-    vy,
-  };
+  if (vw <= 0 || vh <= 0) return SSR_METRICS;
+  return metricsFromSize(vw, vh, vx, vy);
 }
 
 function sameMetrics(a: Metrics, b: Metrics) {
@@ -79,7 +84,7 @@ function getSnapshot(): Metrics {
 }
 
 function getServerSnapshot(): Metrics {
-  return INITIAL;
+  return SSR_METRICS;
 }
 
 function subscribe(onStoreChange: () => void) {
