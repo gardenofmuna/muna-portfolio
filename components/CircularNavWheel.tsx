@@ -888,10 +888,21 @@ export function CircularNavWheel({
     setIsSnapping(false);
     setWheelInteracting(true);
     const p = pointerLocal(e.clientX, e.clientY);
-    const startBtn =
+    let startBtn =
       e.target instanceof Element
         ? e.target.closest("button[id^='circular-nav-item-']")
         : null;
+    // Scaled overlay: iOS sometimes targets the wrap; resolve the word under the finger.
+    if (!startBtn && spinFeel === "narrow" && typeof document !== "undefined") {
+      for (const node of document.elementsFromPoint(e.clientX, e.clientY)) {
+        if (!(node instanceof Element)) continue;
+        const btn = node.closest("button[id^='circular-nav-item-']");
+        if (btn && el.contains(btn)) {
+          startBtn = btn;
+          break;
+        }
+      }
+    }
     const startMatch = /^circular-nav-item-(\d+)$/.exec(startBtn?.id ?? "");
     if (spinFeel === "narrow") {
       paintOverlayHot(focusedRef.current);
@@ -1067,12 +1078,14 @@ export function CircularNavWheel({
             rotEl.style.transform = `rotate(${nextRot}rad)`;
           }
 
+          // Already in the middle → activate. Otherwise just snap it there.
           if (alreadyCentered) {
             const label = items[i]?.label;
             if (label) onActivateRef.current?.(label);
           }
           setWheelInteracting(false);
         }
+      } else {
         let i: number;
         if (startItemIndex != null) {
           i = startItemIndex;
