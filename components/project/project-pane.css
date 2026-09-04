@@ -808,6 +808,7 @@
 .project-narrow-shell[data-menu-state="open"] .project-narrow__header {
   background: transparent;
   box-shadow: none;
+  z-index: 60;
 }
 
 .project-narrow-shell[data-menu-state="open"] {
@@ -824,9 +825,12 @@
 .project-narrow__nav-overlay {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  z-index: 55;
   overflow: hidden;
   background: #fff;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .project-narrow__nav-stage {
@@ -834,6 +838,18 @@
   left: 0;
   top: 0;
   transform-origin: left top;
+  touch-action: none;
+}
+
+/* One active label only — never React color + DOM color at once. */
+.project-narrow__nav-overlay .overlay-nav-rotator [id^="circular-nav-item-"] {
+  color: #a3a3a3;
+}
+
+.project-narrow__nav-overlay
+  .overlay-nav-rotator
+  [id^="circular-nav-item-"][data-active] {
+  color: #000000;
 }
 
 .project-narrow__header[data-hide-wordmark],

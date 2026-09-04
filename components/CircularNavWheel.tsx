@@ -38,10 +38,8 @@ import {
   NARROW_LABEL_BAND_PX,
   NARROW_LABEL_INACTIVE,
   NARROW_LABEL_TRACKING_EM,
-  NARROW_PAGE_SCALE,
   NARROW_W,
   NARROW_WHEEL_CENTER,
-  NARROW_WHEEL_R,
 } from "@/lib/narrow-stage";
 
 /** Authored desktop label size in layout coords (×2 into the 2875 master). */
@@ -165,20 +163,12 @@ function snapRotationForIndexContinuous(
 
 /** Tap if total finger travel from touchstart stays under this (px). */
 const TAP_MOVE_PX = 8;
-/** Overlay menu: start spinning sooner so it matches the landing wheel. */
-const NARROW_SPIN_TAP_MOVE_PX = 3;
 
-/**
- * Drag multiplier so a desktop-geometry wheel (large off-screen hub) rotates
- * about as far per screen-pixel as the landing-page ring.
- */
-function narrowLikeDragGain(screenRadiusPx: number): number {
-  const landingU =
-    Math.min(window.innerWidth / NARROW_W, window.innerHeight / NARROW_H) *
-    NARROW_PAGE_SCALE;
-  const landingScreenR = NARROW_WHEEL_R * landingU;
-  if (landingScreenR <= 0 || screenRadiusPx <= 0) return 3.5;
-  return Math.min(5, Math.max(1.8, screenRadiusPx / landingScreenR));
+function unwrapAngleDelta(next: number, prev: number) {
+  let delta = next - prev;
+  if (delta > Math.PI) delta -= Math.PI * 2;
+  if (delta < -Math.PI) delta += Math.PI * 2;
+  return delta;
 }
 
 /** Walk the paint stack — finds tangent hit button under screen coords (mouse). */
@@ -315,6 +305,7 @@ export function CircularNavWheel({
   const labelAngles = ringLayout.labelAngles;
   const labelArcs = ringLayout.labelArcs;
   const wrapRef = useRef<HTMLDivElement>(null);
+  const rotatorRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState(() =>
     layout === "narrow"
       ? { w: NARROW_W, h: NARROW_H }
@@ -338,7 +329,11 @@ export function CircularNavWheel({
   });
   const [reduceMotion, setReduceMotion] = useState(false);
   const focusedRef = useRef(0);
-  focusedRef.current = focusedIndex;
+  // During overlay drag, paintOverlayHot owns focusedRef — don't clobber it
+  // on every parent re-render or the snap/tap path reads a stale center.
+  if (!isDragging || spinFeel !== "narrow") {
+    focusedRef.current = focusedIndex;
+  }
   const rotationRef = useRef(0);
   rotationRef.current = rotation;
   const isDraggingRef = useRef(false);
@@ -379,6 +374,7 @@ export function CircularNavWheel({
     startX: 0,
     startY: 0,
     lastAngle: 0,
+    lastClientY: 0,
     moved: false,
     /** Desktop: nav-item index under pointerdown, used to activate on tap. */
     startItemIndex: null as number | null,
@@ -389,6 +385,10 @@ export function CircularNavWheel({
     startX: number;
     startY: number;
   } | null>(null);
+  /** After a slide, ignore the iOS click that would fire on the label under the finger. */
+  const skipNextActivateRef = useRef(false);
+  /** Overlay menu: hot tile painted via DOM during drag (no React re-render). */
+  const overlayHotRef = useRef<number | null>(null);
   const snapTimeoutRef = useRef<number | null>(null);
   const snapGenerationRef = useRef(0);
 
@@ -398,6 +398,43 @@ export function CircularNavWheel({
     isDraggingRef.current = false;
     setIsDragging(false);
   }, []);
+
+  const paintOverlayHot = useCallback((tileIndex: number) => {
+    const root = rotatorRef.current;
+    if (!root) return;
+    // Always clear every mark first — otherwise short taps / ref resets
+    // leave multiple [data-active] blacks on screen.
+    root.querySelectorAll("[data-active]").forEach((el) => {
+      el.removeAttribute("data-active");
+    });
+    root
+      .querySelector(`#circular-nav-item-${tileIndex}`)
+      ?.setAttribute("data-active", "");
+    overlayHotRef.current = tileIndex;
+    focusedRef.current = tileIndex;
+  }, []);
+
+  const applyOverlayRotation = useCallback((φ: number) => {
+    rotationRef.current = φ;
+    const el = rotatorRef.current;
+    if (el) {
+      el.style.transition = "none";
+      el.style.transform = `rotate(${φ}rad)`;
+    }
+  }, []);
+
+  // Idle + after drag: one painter owns the black label (never React props —
+  // leftover DOM attributes were stacking into multiple blacks).
+  useLayoutEffect(() => {
+    if (isNarrow || spinFeel !== "narrow" || isDragging) return;
+    paintOverlayHot(focusedIndex);
+  }, [focusedIndex, isDragging, isNarrow, spinFeel, paintOverlayHot]);
+
+  // While dragging, React is not writing data-active; keep the live mark.
+  useLayoutEffect(() => {
+    if (isNarrow || spinFeel !== "narrow" || !isDragging) return;
+    paintOverlayHot(overlayHotRef.current ?? focusedRef.current);
+  }, [isDragging, isNarrow, spinFeel, paintOverlayHot]);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -770,15 +807,21 @@ export function CircularNavWheel({
     return () => window.removeEventListener("keydown", onKey);
   }, [N, isNarrow, selectNarrowIndex, snapRotationForIndex]);
 
+  /** Desktop mouse only — iOS fake hover must not snap the overlay mid-drag. */
+  const allowDesktopHoverSnap = () =>
+    !isDraggingRef.current &&
+    !isNarrowRef.current &&
+    spinFeelRef.current !== "narrow" &&
+    !coarseRef.current;
+
   const onItemEnter = (i: number) => {
     setHoveredIndex(i);
-    if (!isDragging && !isNarrow) {
-      const nextLabel = i % LABELS.length;
-      const curLabel = focusedRef.current % LABELS.length;
-      if (nextLabel !== curLabel) {
-        setFocusedIndex(i);
-        setRotation((prev) => snapRotationForIndex(i, prev));
-      }
+    if (!allowDesktopHoverSnap()) return;
+    const nextLabel = i % LABELS.length;
+    const curLabel = focusedRef.current % LABELS.length;
+    if (nextLabel !== curLabel) {
+      setFocusedIndex(i);
+      setRotation((prev) => snapRotationForIndex(i, prev));
     }
   };
 
@@ -841,6 +884,7 @@ export function CircularNavWheel({
     }
     const el = wrapRef.current;
     if (!el) return;
+    e.preventDefault();
     setIsSnapping(false);
     setWheelInteracting(true);
     const p = pointerLocal(e.clientX, e.clientY);
@@ -849,16 +893,29 @@ export function CircularNavWheel({
         ? e.target.closest("button[id^='circular-nav-item-']")
         : null;
     const startMatch = /^circular-nav-item-(\d+)$/.exec(startBtn?.id ?? "");
+    // Overlay labels are pointer-events-none — resolve the tapped row by
+    // geometry so a finger-up can snap that exact label to center.
+    const overlayTapIndex =
+      spinFeel === "narrow"
+        ? nearestIndexToPointer(p.x, p.y, rotationRef.current)
+        : null;
+    if (spinFeel === "narrow") {
+      paintOverlayHot(focusedRef.current);
+      if (rotatorRef.current) rotatorRef.current.style.transition = "none";
+    }
     dragRef.current = {
       pointerId: e.pointerId,
       startX: e.clientX,
       startY: e.clientY,
       lastAngle: Math.atan2(p.y - originY, p.x - originX),
+      lastClientY: e.clientY,
       moved: false,
       startItemIndex:
-        startMatch != null
-          ? Number.parseInt(startMatch[1] ?? "", 10)
-          : null,
+        overlayTapIndex != null
+          ? overlayTapIndex
+          : startMatch != null
+            ? Number.parseInt(startMatch[1] ?? "", 10)
+            : null,
     };
     isDraggingRef.current = true;
     setIsDragging(true);
@@ -866,15 +923,13 @@ export function CircularNavWheel({
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
-    const tapSlop =
-      spinFeel === "narrow" ? NARROW_SPIN_TAP_MOVE_PX : TAP_MOVE_PX;
     const pendingHit = hitTapRef.current;
     if (pendingHit && pendingHit.pointerId === e.pointerId) {
       const travel = Math.hypot(
         e.clientX - pendingHit.startX,
         e.clientY - pendingHit.startY,
       );
-      if (travel < tapSlop) return;
+      if (travel < TAP_MOVE_PX) return;
 
       hitTapRef.current = null;
       setIsSnapping(false);
@@ -885,6 +940,7 @@ export function CircularNavWheel({
         startX: pendingHit.startX,
         startY: pendingHit.startY,
         lastAngle: Math.atan2(p.y - originY, p.x - originX),
+        lastClientY: e.clientY,
         moved: true,
         startItemIndex: null,
       };
@@ -894,38 +950,53 @@ export function CircularNavWheel({
 
     if (dragRef.current.pointerId !== e.pointerId) return;
 
-    const p = pointerLocal(e.clientX, e.clientY);
-    const angle = Math.atan2(p.y - originY, p.x - originX);
-    let delta = angle - dragRef.current.lastAngle;
-    if (delta > Math.PI) delta -= Math.PI * 2;
-    if (delta < -Math.PI) delta += Math.PI * 2;
-    dragRef.current.lastAngle = angle;
-
     if (!dragRef.current.moved) {
       const travel = Math.hypot(
         e.clientX - dragRef.current.startX,
         e.clientY - dragRef.current.startY,
       );
-      if (travel < tapSlop) return;
+      if (travel < TAP_MOVE_PX) {
+        dragRef.current.lastClientY = e.clientY;
+        return;
+      }
       dragRef.current.moved = true;
     }
 
-    let dragGain = 1;
-    if (!isNarrow) {
-      if (spinFeel === "narrow") {
-        const rect = wrapRef.current?.getBoundingClientRect();
-        const layoutW = wRef.current;
-        const radius = rRef.current;
-        const screenR =
-          rect && rect.width > 0 && layoutW > 0
-            ? (radius / layoutW) * rect.width
-            : radius;
-        dragGain = narrowLikeDragGain(screenR);
-      } else if (!coarseRef.current) {
-        dragGain = DESKTOP_DRAG_GAIN;
-      }
+    // Hamburger overlay: glide in DOM only — React setState every frame is what
+    // made the list feel choppy. Landing ring (isNarrow) stays on its path.
+    if (!isNarrow && spinFeel === "narrow") {
+      const rect = wrapRef.current?.getBoundingClientRect();
+      const layoutW = wRef.current;
+      const radius = rRef.current || 1;
+      const screenR =
+        rect && rect.width > 0 && layoutW > 0
+          ? (radius / layoutW) * rect.width
+          : Math.max(window.innerHeight * 0.45, 1);
+      // ~one label per short drag; longer glides pass several.
+      const pxPerItem = Math.max(screenR * ((2 * Math.PI) / NRef.current), 36);
+      const applied =
+        ((e.clientY - dragRef.current.lastClientY) / pxPerItem) *
+        ((2 * Math.PI) / NRef.current);
+      dragRef.current.lastClientY = e.clientY;
+      applyOverlayRotation(rotationRef.current + applied);
+      const { tileIndex } = nearestDesktopLabelSnap(
+        rotationRef.current,
+        snapRotationForIndexRef.current,
+        NRef.current,
+      );
+      paintOverlayHot(tileIndex);
+      return;
     }
-    const applied = delta * dragGain;
+
+    const p = pointerLocal(e.clientX, e.clientY);
+    const angle = Math.atan2(p.y - originY, p.x - originX);
+    let applied = unwrapAngleDelta(angle, dragRef.current.lastAngle);
+    dragRef.current.lastAngle = angle;
+    dragRef.current.lastClientY = e.clientY;
+    if (!isNarrow && !coarseRef.current) {
+      applied *= DESKTOP_DRAG_GAIN;
+    }
+
     setRotation((prev) => {
       const next = prev + applied;
       rotationRef.current = next;
@@ -933,15 +1004,6 @@ export function CircularNavWheel({
     });
     if (isNarrow) {
       syncNarrowTopHover(rotationRef.current);
-    } else if (spinFeel === "narrow") {
-      const { tileIndex } = nearestDesktopLabelSnap(
-        rotationRef.current,
-        snapRotationForIndexRef.current,
-        NRef.current,
-      );
-      if (tileIndex !== focusedRef.current) {
-        setFocusedIndex(tileIndex);
-      }
     }
   };
 
@@ -974,17 +1036,49 @@ export function CircularNavWheel({
     const startX = dragRef.current.startX;
     const startY = dragRef.current.startY;
     const startItemIndex = dragRef.current.startItemIndex;
+    const didMove = dragRef.current.moved;
     clearNarrowDragState();
 
     const φ = rotationRef.current;
 
     const travel = Math.hypot(e.clientX - startX, e.clientY - startY);
-    const tapSlop =
-      spinFeel === "narrow" ? NARROW_SPIN_TAP_MOVE_PX : TAP_MOVE_PX;
-    const isTap = travel < tapSlop;
+    const isTap = travel < TAP_MOVE_PX;
 
     if (isTap) {
       if (isNarrow) {
+        setWheelInteracting(false);
+      } else if (spinFeel === "narrow") {
+        const p = pointerLocal(e.clientX, e.clientY);
+        const i =
+          startItemIndex != null
+            ? startItemIndex
+            : nearestIndexToPointer(p.x, p.y, φ);
+        const nextRot = snapRotationForIndex(i, φ);
+        const centerNow = nearestDesktopLabelSnap(
+          φ,
+          snapRotationForIndex,
+          N,
+        ).tileIndex;
+        // Already the middle (black) row → activate. Else snap it there alone.
+        const alreadyCentered =
+          i === centerNow && Math.abs(nextRot - φ) < 0.04;
+
+        paintOverlayHot(i);
+        setFocusedIndex(i);
+        rotationRef.current = nextRot;
+        setRotation(nextRot);
+        const rotEl = rotatorRef.current;
+        if (rotEl) {
+          rotEl.style.transition = reduceMotion
+            ? "none"
+            : "transform 520ms cubic-bezier(0.22, 1, 0.36, 1)";
+          rotEl.style.transform = `rotate(${nextRot}rad)`;
+        }
+
+        if (alreadyCentered) {
+          const label = items[i]?.label;
+          if (label) onActivateRef.current?.(label);
+        }
         setWheelInteracting(false);
       } else {
         let i: number;
@@ -1000,18 +1094,44 @@ export function CircularNavWheel({
           const label = items[i]?.label;
           if (label) onActivateRef.current?.(label);
         }
+        setWheelInteracting(false);
       }
     } else if (isNarrow && wasDragging) {
       finishNarrowSpin();
+    } else if (spinFeel === "narrow") {
+      if (wasDragging && didMove) {
+        skipNextActivateRef.current = true;
+        window.setTimeout(() => {
+          skipNextActivateRef.current = false;
+        }, 400);
+      }
+      const { tileIndex, rotation: nextRot } = nearestDesktopLabelSnap(
+        φ,
+        snapRotationForIndex,
+        N,
+      );
+      paintOverlayHot(tileIndex);
+      setFocusedIndex(tileIndex);
+      rotationRef.current = nextRot;
+      setRotation(nextRot);
+      const rotEl = rotatorRef.current;
+      if (rotEl) {
+        rotEl.style.transition = reduceMotion
+          ? "none"
+          : "transform 520ms cubic-bezier(0.22, 1, 0.36, 1)";
+        rotEl.style.transform = `rotate(${nextRot}rad)`;
+      }
+      setWheelInteracting(false);
     } else {
       const { tileIndex, rotation: nextRot } = nearestDesktopLabelSnap(
         φ,
         snapRotationForIndex,
         N,
-        spinFeel === "narrow" ? undefined : focusedRef.current,
+        focusedRef.current,
       );
       setFocusedIndex(tileIndex);
       setRotation(nextRot);
+      setWheelInteracting(false);
     }
 
     dragRef.current.moved = false;
@@ -1206,7 +1326,10 @@ export function CircularNavWheel({
         </>
       ) : (
         <div
-          className="absolute inset-0 overflow-visible"
+          ref={rotatorRef}
+          className={`absolute inset-0 overflow-visible${
+            spinFeel === "narrow" ? " overlay-nav-rotator" : ""
+          }`}
           style={{
             transform: `rotate(${layoutRound(rotation)}rad)`,
             transformOrigin: `${ox}px ${oy}px`,
@@ -1214,6 +1337,7 @@ export function CircularNavWheel({
               isDragging || reduceMotion
                 ? "none"
                 : `transform ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+            willChange: spinFeel === "narrow" ? "transform" : undefined,
           }}
           aria-label="Portfolio sections"
         >
@@ -1240,7 +1364,12 @@ export function CircularNavWheel({
                 <button
                   id={`circular-nav-item-${item.index}`}
                   type="button"
-                  className="pointer-events-auto block cursor-pointer whitespace-nowrap border-none bg-transparent p-0 outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-neutral-400"
+                  tabIndex={spinFeel === "narrow" ? -1 : 0}
+                  className={`${
+                    spinFeel === "narrow"
+                      ? "pointer-events-none"
+                      : "pointer-events-auto"
+                  } block cursor-pointer whitespace-nowrap border-none bg-transparent p-0 outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-neutral-400`}
                   style={{
                     transform: `rotate(${itemRotDeg}deg)`,
                     transformOrigin: "left center",
@@ -1251,22 +1380,34 @@ export function CircularNavWheel({
                       : "clamp(1.62rem, 4.32vw, 2.88rem)",
                     letterSpacing: "-0.06em",
                     textTransform: "lowercase",
-                    color: isHot ? "#000000" : "#a3a3a3",
-                    transition: reduceMotion ? "none" : "color 0.18s ease",
+                    // Overlay: color comes only from [data-active] CSS so React
+                    // and the drag path cannot paint two blacks at once.
+                    ...(spinFeel === "narrow"
+                      ? null
+                      : {
+                          color: isHot ? "#000000" : "#a3a3a3",
+                          transition: reduceMotion
+                            ? "none"
+                            : "color 0.18s ease",
+                        }),
                   }}
                   onMouseEnter={() => onItemEnter(item.index)}
                   onMouseLeave={() => onItemLeave(item.index)}
                   onFocus={() => {
-                    setFocusedIndex(item.index);
                     setHoveredIndex(item.index);
-                    if (!isDragging) {
-                      setRotation((prev) =>
-                        snapRotationForIndex(item.index, prev),
-                      );
-                    }
+                    if (!allowDesktopHoverSnap()) return;
+                    setFocusedIndex(item.index);
+                    setRotation((prev) =>
+                      snapRotationForIndex(item.index, prev),
+                    );
                   }}
                   onBlur={() => onItemLeave(item.index)}
                   onClick={() => {
+                    if (spinFeel === "narrow") return;
+                    if (skipNextActivateRef.current) {
+                      skipNextActivateRef.current = false;
+                      return;
+                    }
                     onActivateRef.current?.(item.label);
                   }}
                   onKeyDown={(e) => {
