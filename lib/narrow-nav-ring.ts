@@ -37,6 +37,18 @@ const LABELS = [
   "contact",
 ] as const;
 
+/** Desktop wheel + project hamburger — shorter copy than the landing ring. */
+const DESKTOP_LABELS = [
+  "about",
+  "design",
+  "installation",
+  "photos",
+  "film",
+  "select works",
+  "cv + press",
+  "contact",
+] as const;
+
 /** Label centre angle (rad) on the ring at rotation 0 — from wheel hub. */
 export type NarrowLabelAngles = number[];
 
@@ -474,4 +486,4 @@ export function narrowVisualSnapDelta(
   return -Math.asin(ratio);
 }
 
-export { LABELS as NARROW_NAV_LABELS };
+export { LABELS as NARROW_NAV_LABELS, DESKTOP_LABELS as DESKTOP_NAV_LABELS };

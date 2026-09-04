@@ -265,18 +265,36 @@
   overflow-anchor: none;
 }
 
+/*
+ * EGWÚ Posters → Playlist: same space below each section as DOC NOW Posters.
+ */
 #posters.project-section,
-#merchandise.project-section {
-  margin-bottom: 24px;
+#merchandise.project-section,
+#playlist-cover.project-section {
+  margin-bottom: 53.5px;
 }
 
 #posters.project-section .project-section__title,
-#merchandise.project-section .project-section__title {
+#merchandise.project-section .project-section__title,
+#playlist-cover.project-section .project-section__title {
   margin-bottom: 24px;
 }
 
 /* DOC NOW desktop: every heading uses the Posters title → gallery gap. */
 .project-pane .project-sections--doc-now .project-section__title {
+  margin-bottom: 24px;
+}
+
+/* Logo Refresh ↔ mark: same title → media gap as EGWÚ Logo (53.5). */
+.project-pane
+  .project-sections--doc-now
+  #logo-refresh.project-section
+  .project-section__title {
+  margin-bottom: 53.5px;
+}
+
+/* Colors (EGWÚ + shared): same title → palette gap as DOC NOW 2025. */
+.project-pane #colors.project-section .project-section__title {
   margin-bottom: 24px;
 }
 
@@ -352,8 +370,186 @@
 }
 
 .project-asset-single--colors {
-  width: 561px;
+  /* Match .project-egwu-logos row: 250 + 77.5 gap + 223 */
+  width: calc(250px + 77.5px + 223px);
   max-width: 100%;
+}
+
+/* EGWÚ interactive color card — expanded tab is a square. */
+.project-egwu-colors {
+  --egwu-bar-idle: 1;
+  --egwu-bar-active: 6.5;
+  --egwu-bar-count: 8;
+  /* Active share of the row = active / (idle×(n-1) + active). */
+  --egwu-bar-active-share: calc(
+    var(--egwu-bar-active) /
+      (
+        var(--egwu-bar-idle) * (var(--egwu-bar-count) - 1) +
+          var(--egwu-bar-active)
+      )
+  );
+  /* Same full content width as I–X roman numerals (.project-index-nav). */
+  width: 100%;
+  max-width: 100%;
+  container-type: inline-size;
+  container-name: egwu-colors;
+  margin: 0;
+}
+
+.project-egwu-colors__card {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 0;
+  box-sizing: border-box;
+  width: 100%;
+  height: auto;
+  aspect-ratio: auto;
+  /* No gray plate — content shares the section’s left edge with “Colors”. */
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  overflow: visible;
+}
+
+.project-egwu-colors__bars {
+  display: flex;
+  align-items: stretch;
+  flex: 0 0 auto;
+  gap: 0;
+  width: 100%;
+  margin-top: 0;
+  /* Height = expanded tab width → active bar reads as a square. */
+  height: calc(100cqw * var(--egwu-bar-active-share));
+  min-height: 0;
+}
+
+.project-egwu-colors__bar {
+  position: relative;
+  display: block;
+  flex: var(--egwu-bar-idle) 1 0;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  /* Soft rect corners — same px on all tabs (wide stays rectangular). */
+  border-radius: 10px;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  overflow: hidden;
+  transition: flex-grow 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.project-egwu-colors__bar.is-active {
+  flex-grow: var(--egwu-bar-active);
+}
+
+.project-egwu-colors__meta {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.85fr) minmax(0, 0.7fr);
+  gap: 8px 14px;
+  align-content: start;
+  align-items: start;
+  width: auto;
+  padding: 5.5% 5.5% 4%;
+  color: inherit;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(0.8rem, 2.4cqw, 1.05rem);
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  text-align: left;
+  text-transform: none;
+  user-select: none;
+  pointer-events: none;
+  opacity: 0;
+  /* Fade in after the bar has mostly expanded — no mid-grow reflow twitch. */
+  transition: opacity 180ms ease 320ms;
+}
+
+.project-egwu-colors__bar.is-active .project-egwu-colors__meta {
+  opacity: 1;
+}
+
+.project-egwu-colors__bar:not(.is-active) .project-egwu-colors__meta {
+  transition-delay: 0ms;
+}
+
+.project-egwu-colors__meta-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12em;
+  min-width: 0;
+}
+
+.project-egwu-colors__meta-block--name {
+  gap: 0.3em;
+}
+
+.project-egwu-colors__group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.08em;
+  font-size: 0.9em;
+  opacity: 0.88;
+}
+
+.project-egwu-colors__group-kind,
+.project-egwu-colors__group-label {
+  display: block;
+  white-space: nowrap;
+}
+
+.project-egwu-colors__name {
+  font-size: 1.12em;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.project-egwu-colors__label {
+  font-size: 0.85em;
+  opacity: 0.85;
+}
+
+.project-egwu-colors__value {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+.project-egwu-colors__meta-block--rgb {
+  gap: 0.08em;
+}
+
+.project-egwu-colors__channel {
+  display: flex;
+  gap: 0.45em;
+  font-variant-numeric: tabular-nums;
+}
+
+.project-egwu-colors__channel > span:first-child {
+  width: 0.75em;
+  opacity: 0.8;
+}
+
+.project-egwu-colors__bar:focus-visible {
+  outline: 2px solid #111;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .project-egwu-colors__bar {
+    transition: none;
+  }
+
+  .project-egwu-colors__meta {
+    transition: none;
+  }
 }
 
 .project-asset-single--playlist {
@@ -427,26 +623,33 @@
 .project-cover-flow--poster,
 .project-cover-flow--merchandise,
 .project-cover-flow--website {
-  width: 496px;
+  width: 446px;
   max-width: 100%;
 }
 
+/* Center posters / merch in the content quadrant (I–X column). */
+.project-cover-flow--poster,
+.project-cover-flow--merchandise {
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .project-cover-flow--website {
-  width: 640px;
+  width: 576px;
 }
 
 .project-cover-flow--poster .project-cover-flow__stage {
-  height: 480px;
+  height: 432px;
   overflow: visible;
 }
 
 .project-cover-flow--merchandise .project-cover-flow__stage {
-  height: 480px;
+  height: 432px;
   overflow: visible;
 }
 
 .project-cover-flow--website .project-cover-flow__stage {
-  height: 360px;
+  height: 324px;
   overflow: visible;
 }
 
@@ -472,7 +675,7 @@
   position: absolute;
   top: 0;
   z-index: 120;
-  width: calc(50% - 80px);
+  width: calc(50% - 72px);
   height: 100%;
   padding: 0;
   border: 0;
@@ -532,24 +735,24 @@
 }
 
 .project-cover-flow--poster .project-cover-flow__item {
-  width: 341px;
-  height: 428px;
-  min-width: 341px;
-  min-height: 428px;
+  width: 307px;
+  height: 385px;
+  min-width: 307px;
+  min-height: 385px;
 }
 
 .project-cover-flow--merchandise .project-cover-flow__item {
-  width: 428px;
-  height: 428px;
-  min-width: 428px;
-  min-height: 428px;
+  width: 385px;
+  height: 385px;
+  min-width: 385px;
+  min-height: 385px;
 }
 
 .project-cover-flow--website .project-cover-flow__item {
-  width: 560px;
-  height: 316px;
-  min-width: 560px;
-  min-height: 316px;
+  width: 504px;
+  height: 284px;
+  min-width: 504px;
+  min-height: 284px;
 }
 
 .project-cover-flow__image {
@@ -966,8 +1169,8 @@
 }
 
 .project-narrow #colors.project-section .project-section__title {
-  /* palette @ 1496 − (1397+40) = 59 */
-  margin-bottom: calc(59 * var(--pn-u));
+  /* Match DOC NOW 2025 Colors title → media gap (desktop 24px → narrow scale). */
+  margin-bottom: calc(31 * var(--pn-u));
 }
 
 .project-narrow #posters.project-section .project-section__title,
@@ -976,6 +1179,19 @@
 .project-narrow #podcast-cover.project-section .project-section__title {
   /* Shared title → media gap (playlist-cover reference) */
   margin-bottom: calc(47 * var(--pn-u));
+}
+
+/* EGWÚ narrow: same space below Posters+ as DOC NOW Posters. */
+.project-narrow
+  .project-sections:not(.project-sections--doc-now):not(.project-sections--devault)
+  #posters.project-section,
+.project-narrow
+  .project-sections:not(.project-sections--doc-now):not(.project-sections--devault)
+  #merchandise.project-section,
+.project-narrow
+  .project-sections:not(.project-sections--doc-now):not(.project-sections--devault)
+  #playlist-cover.project-section {
+  margin-bottom: calc(64 * var(--pn-u));
 }
 
 .project-narrow .project-egwu-logos {
@@ -1013,8 +1229,53 @@
 }
 
 .project-narrow .project-asset-single--colors {
-  width: calc(657 * var(--pn-u));
+  /* Match narrow logo row: 300 + 92 gap + 271 */
+  width: calc((300 + 92 + 271) * var(--pn-u));
   max-width: 100%;
+}
+
+.project-narrow .project-egwu-colors {
+  /* Same full content width as I–X roman numerals. */
+  width: 100%;
+  max-width: 100%;
+}
+
+.project-narrow .project-egwu-colors__card {
+  gap: 0;
+  padding: 0;
+  border-radius: 0;
+  aspect-ratio: auto;
+  height: auto;
+  background: transparent;
+}
+
+.project-narrow .project-egwu-colors__bars {
+  gap: 0;
+  margin-top: 0;
+  min-height: 0;
+  flex: 0 0 auto;
+  height: calc(100cqw * var(--egwu-bar-active-share));
+}
+
+.project-narrow .project-egwu-colors__bar {
+  flex: var(--egwu-bar-idle) 1 0;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  border-radius: calc(10 * var(--pn-u));
+}
+
+.project-narrow .project-egwu-colors__bar.is-active {
+  flex-grow: var(--egwu-bar-active);
+  padding: 0;
+}
+
+.project-narrow .project-egwu-colors__meta {
+  gap: calc(6 * var(--pn-u)) calc(10 * var(--pn-u));
+  font-size: calc(18 * var(--pn-u));
+  margin-bottom: 0;
+  max-height: none;
+  padding: 5.5% 5.5% 4%;
 }
 
 .project-narrow .project-asset-single--playlist {
@@ -1270,6 +1531,18 @@
 
 .project-pane .project-hscroll--poster .project-hscroll__image {
   height: 428px !important;
+  width: auto !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: contain;
+}
+
+.project-pane .project-hscroll--merchandise .project-hscroll__item {
+  height: 424px;
+}
+
+.project-pane .project-hscroll--merchandise .project-hscroll__image {
+  height: 424px !important;
   width: auto !important;
   max-width: none !important;
   max-height: none !important;

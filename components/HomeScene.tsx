@@ -70,7 +70,7 @@ export function HomeScene() {
           hoverNavLabel === "cv + press" || activeLabel === "cv + press"
         }
       />
-      <SelectedWorksHoverGif visible={hoverNavLabel === "selected works"} />
+      <SelectedWorksHoverGif visible={hoverNavLabel === "select works"} />
       <ContactTopLinks visible={isContact} top={inset} right={aboutBioRight} />
       <div
         aria-hidden={!showAboutBio}

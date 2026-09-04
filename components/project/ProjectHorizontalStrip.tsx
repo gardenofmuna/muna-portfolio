@@ -117,7 +117,7 @@ export function ProjectHorizontalStrip({ items, ariaLabel, variant }: Props) {
                         ? "(max-width: 900px) 92vw, 560px"
                         : variant === "poster"
                           ? `(max-width: 900px) 72vw, ${posterDesktopWidth(item)}px`
-                          : "(max-width: 900px) 90vw, 428px"
+                          : "(max-width: 900px) 90vw, 424px"
                     }
                     draggable={false}
                     loading="lazy"

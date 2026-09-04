@@ -134,12 +134,14 @@ function subscribe(onStoreChange: () => void) {
   vv?.addEventListener("resize", onChange);
   vv?.addEventListener("scroll", onChange);
   // Safari often reports the real CSS size one frame after first paint.
-  const raf = window.requestAnimationFrame(() => {
+  let raf2 = 0;
+  const raf1 = window.requestAnimationFrame(() => {
     onChange();
-    window.requestAnimationFrame(onChange);
+    raf2 = window.requestAnimationFrame(onChange);
   });
   return () => {
-    window.cancelAnimationFrame(raf);
+    window.cancelAnimationFrame(raf1);
+    window.cancelAnimationFrame(raf2);
     window.removeEventListener("resize", onChange);
     window.removeEventListener("orientationchange", onChange);
     window.removeEventListener("pageshow", onChange);

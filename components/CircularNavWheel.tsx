@@ -22,6 +22,7 @@ import {
   narrowVisualSnapDelta,
   NARROW_BAKED_LABEL_ANGLES,
   NARROW_NAV_LABELS,
+  DESKTOP_NAV_LABELS,
   ringWordText,
   useNarrowRingLayout,
 } from "@/lib/narrow-nav-ring";
@@ -89,6 +90,7 @@ const DESKTOP_STAGE_LABEL_FONT_SIZE = "2.88rem";
  */
 
 const LABELS = NARROW_NAV_LABELS;
+const DESKTOP_LABELS = DESKTOP_NAV_LABELS;
 
 /** Target arc length between consecutive slots on the wheel (px) */
 const TARGET_ARC_SPACING_PX = 45;
@@ -100,11 +102,14 @@ const STAGE_ARC_EXTRA_BACK_LAYOUT_PX = 180;
 
 type Item = { index: number; label: string };
 
-function buildItems(repeats: number): Item[] {
-  const total = LABELS.length * repeats;
+function buildItems(
+  repeats: number,
+  labels: readonly string[] = DESKTOP_LABELS,
+): Item[] {
+  const total = labels.length * repeats;
   return Array.from({ length: total }, (_, i) => ({
     index: i,
-    label: LABELS[i % LABELS.length]!,
+    label: labels[i % labels.length]!,
   }));
 }
 
@@ -163,6 +168,8 @@ function snapRotationForIndexContinuous(
 
 /** Tap if total finger travel from touchstart stays under this (px). */
 const TAP_MOVE_PX = 8;
+/** Overlay taps on iOS often jitter past 8px — still count as a word tap. */
+const OVERLAY_TAP_MOVE_PX = 28;
 
 function unwrapAngleDelta(next: number, prev: number) {
   let delta = next - prev;
@@ -335,7 +342,11 @@ export function CircularNavWheel({
     focusedRef.current = focusedIndex;
   }
   const rotationRef = useRef(0);
-  rotationRef.current = rotation;
+  // Same for rotation: overlay glide writes the live angle on the DOM/ref only.
+  // Syncing from React state every render snaps the wheel back mid-drag.
+  if (!isDragging || spinFeel !== "narrow") {
+    rotationRef.current = rotation;
+  }
   const isDraggingRef = useRef(false);
   isDraggingRef.current = isDragging;
   const isNarrowRef = useRef(isNarrow);
@@ -515,13 +526,17 @@ export function CircularNavWheel({
   wRef.current = w;
 
   /* Narrow: one label per slot on the ring; desktop: tile repeats for arc density. */
+  const wheelLabels = isNarrow ? LABELS : DESKTOP_LABELS;
   const repeats = isNarrow
     ? 1
     : Math.max(
         1,
-        Math.round((2 * Math.PI * r) / (arcSpacing * LABELS.length)),
+        Math.round((2 * Math.PI * r) / (arcSpacing * wheelLabels.length)),
       );
-  const items = useMemo(() => buildItems(repeats), [repeats]);
+  const items = useMemo(
+    () => buildItems(repeats, wheelLabels),
+    [repeats, wheelLabels],
+  );
   const N = items.length;
 
   /** Stable primitive for layout-effect deps — never pass labelArcs array directly. */
@@ -1046,7 +1061,12 @@ export function CircularNavWheel({
     const φ = rotationRef.current;
 
     const travel = Math.hypot(e.clientX - startX, e.clientY - startY);
-    const isTap = travel < TAP_MOVE_PX;
+    // Word-box hit + short travel → tap-to-snap even if iOS jitter passed 8px.
+    const tapSlop =
+      spinFeel === "narrow" && startItemIndex != null
+        ? OVERLAY_TAP_MOVE_PX
+        : TAP_MOVE_PX;
+    const isTap = travel < tapSlop;
 
     if (isTap) {
       if (isNarrow) {
@@ -1336,7 +1356,13 @@ export function CircularNavWheel({
             spinFeel === "narrow" ? " overlay-nav-rotator" : ""
           }`}
           style={{
-            transform: `rotate(${layoutRound(rotation)}rad)`,
+            // During overlay drag the DOM owns the angle (applyOverlayRotation).
+            // Using live rotationRef so a parent re-render cannot jump backward.
+            transform: `rotate(${
+              spinFeel === "narrow" && isDragging
+                ? rotationRef.current
+                : layoutRound(rotation)
+            }rad)`,
             transformOrigin: `${ox}px ${oy}px`,
             transition:
               isDragging || reduceMotion

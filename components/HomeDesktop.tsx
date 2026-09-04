@@ -208,7 +208,7 @@ export function HomeDesktop({ initialProject }: Props) {
                 stageLocked
               />
               <SelectedWorksHoverGif
-                visible={hoverNavLabel === "selected works"}
+                visible={hoverNavLabel === "select works"}
                 layout="desktop"
                 stageLocked
               />

@@ -9,8 +9,8 @@ import { ProjectFooter } from "@/components/project/ProjectFooter";
 import { ProjectHorizontalStrip } from "@/components/project/ProjectHorizontalStrip";
 import { ProjectSection } from "@/components/project/ProjectSection";
 import { FestivalProgramMedia } from "@/components/project/projects/doc-now/FestivalProgramBook";
+import { DocNowColorsSection } from "@/components/project/projects/doc-now/DocNowColorsSection";
 import {
-  DOC_NOW_COLORS,
   DOC_NOW_LOGO,
   DOC_NOW_POSTERS,
   DOC_NOW_PROGRAM,
@@ -59,16 +59,7 @@ export function DocNowProject({ menuState }: Props) {
         </figure>
       </ProjectSection>
       <ProjectSection id="colors" title="Colors">
-        <figure className="project-asset-single project-asset-single--colors">
-          <Image
-            src={DOC_NOW_COLORS.src}
-            alt={DOC_NOW_COLORS.alt}
-            width={DOC_NOW_COLORS.width}
-            height={DOC_NOW_COLORS.height}
-            className="project-asset-single__image"
-            sizes="(max-width: 900px) 90vw, 561px"
-          />
-        </figure>
+        <DocNowColorsSection />
       </ProjectSection>
       <ProjectSection id="posters" title="Posters">
         <LazyMount afterScroll minHeight={280}>

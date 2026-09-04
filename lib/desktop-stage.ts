@@ -36,18 +36,32 @@ const NZERIBE_IMG_H = 117;
 const ABOUT_GAP_FROM_WEBP_PX = 20;
 
 /**
- * Content column from Artboard 9 guides (user-measured, artboard-relative).
- * V: 760.8 (visual) | 836.6 (content left) | 2154 (content right) | 2229.7 (signature left)
+ * Content column from equal-gutter centering between:
+ *   - right edge of the longest open-menu label (“select works”)
+ *   - left edge of nzeribe1.webp (signature mark)
  *
- * Nav clips at content left (836.6) so wheel ink can run through the ~76px
- * air before the title — not a hard white bar cutting mid-glyph at 760.8.
- * Signature side keeps the measured gutter (2154 → 2229.7).
+ * Measured in layout coords (DESKTOP_LAYOUT_W = 1440), then ×2 → master:
+ *   selectWorksRight ≈ 333.17 | nzeribeLeft ≈ 1117.20 | contentW ≈ 661.20
+ *   gutter = (nzeribeLeft − selectWorksRight − contentW) / 2 ≈ 61.42
+ *   contentLeft = selectWorksRight + gutter ≈ 394.59
+ *   contentRight = contentLeft + contentW ≈ 1055.78
+ *
+ * Nav clips at content left. Right white air is projectGutterRight
+ * (signature column still starts at nzeribe / MASTER_SIGNATURE_LEFT).
  */
-const MASTER_CONTENT_LEFT = 836.6;
-const MASTER_CONTENT_RIGHT = 2154;
+const MASTER_CONTENT_LEFT = 789.17; // 394.585 layout × 2
+const MASTER_CONTENT_RIGHT = 2106.87; // 1055.435 layout × 2 (equal right gutter)
 const MASTER_SIGNATURE_LEFT = 2229.7;
 /** Menu-hidden hamburger column — title/body start at x=301 on the 8514 scroll. */
 const MASTER_NAV_HIDDEN = 301;
+
+/**
+ * Hamburger toggle in layout coords (see .desktop-site-shell__menu-toggle).
+ * Hidden-state left gutter = navZoneClosed − hamburgerRight; the right
+ * project gutter is compensated so that same air survives smart-object scale.
+ */
+const HAMBURGER_LEFT_LAYOUT = 42;
+const HAMBURGER_WIDTH_LAYOUT = 53.5;
 
 const FRAME_SCALE_LAYOUT = DESKTOP_LAYOUT_H / REF_PAGE_HEIGHT;
 
@@ -291,8 +305,9 @@ export function getDesktopStageMetrics(): DesktopStageMetrics {
     navZoneOpen: MASTER_CONTENT_LEFT / DESKTOP_LAYOUT_SCALE,
     navZoneClosed: MASTER_NAV_HIDDEN / DESKTOP_LAYOUT_SCALE,
     signatureZone: (DESKTOP_STAGE_W - MASTER_SIGNATURE_LEFT) / DESKTOP_LAYOUT_SCALE,
-    /** No left white bar — nav paints up to content left. */
+    /** No left white bar — equal air lives between select-works ink and content. */
     projectGutter: 0,
+    /** Matches left air: content → nzeribe1.webp. */
     projectGutterRight: gutterRight,
     shellInsetBottom: inset + nzeribeH + gapScaled,
   };
@@ -302,6 +317,21 @@ export function getDesktopStageShellStyle(
   menuState: "open" | "hidden" = "open",
 ): CSSProperties {
   const m = getDesktopStageMetrics();
+  const baseW = Math.max(1, DESKTOP_LAYOUT_W - m.navZoneOpen - m.signatureZone);
+  const hiddenW = Math.max(1, DESKTOP_LAYOUT_W - m.navZoneClosed - m.signatureZone);
+  const smartScale = hiddenW / baseW;
+  /**
+   * Open: equal select-works ↔ content ↔ nzeribe air (projectGutterRight).
+   * Hidden: smart scale would inflate that right pad; shrink the unscaled pad
+   * so post-scale right air matches hamburger → “I” on the left.
+   */
+  const hamburgerRight = HAMBURGER_LEFT_LAYOUT + HAMBURGER_WIDTH_LAYOUT;
+  const leftGutterHidden = Math.max(0, m.navZoneClosed - hamburgerRight);
+  const gutterRight =
+    menuState === "hidden"
+      ? leftGutterHidden / smartScale
+      : m.projectGutterRight;
+
   return {
     width: "100%",
     height: "100%",
@@ -311,8 +341,7 @@ export function getDesktopStageShellStyle(
     ["--signature-zone-width" as string]: `${m.signatureZone}px`,
     ["--shell-inset-top" as string]: `${m.inset}px`,
     ["--shell-inset-bottom" as string]: `${m.shellInsetBottom}px`,
-    /* Gutters stay on the open composition; hidden state scales the object. */
     ["--project-gutter-left" as string]: `${m.projectGutter}px`,
-    ["--project-gutter-right" as string]: `${m.projectGutterRight}px`,
+    ["--project-gutter-right" as string]: `${gutterRight}px`,
   };
 }

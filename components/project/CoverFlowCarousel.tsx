@@ -58,16 +58,16 @@ type CoverFlowCarouselProps = {
   maxRotation?: number;
 };
 
-const POSTER_SLOT_OFFSETS = [-1, 0, 1] as const;
+const POSTER_SLOT_OFFSETS = [-2, -1, 0, 1, 2] as const;
 
 const FAN_BEHAVIOR = {
-  /** 2D fan — prev / current / next only, even ±4° steps. */
-  sideOffset: 90,
+  /** Flat stack — upright cards; depth from offset + scale, not tilt. */
+  sideOffset: 81,
   neighbor1Scale: 0.84,
   neighbor2Scale: 0.8,
-  maxRotation: 8,
-  maxVisibleOffset: 1,
-  tilt: "fan" as const,
+  maxRotation: 0,
+  maxVisibleOffset: 2,
+  tilt: "stack" as const,
   centerScale: 1.05,
   outerOpacity: 0.85,
 } as const;
@@ -75,15 +75,15 @@ const FAN_BEHAVIOR = {
 const DEFAULT_VARIANT_BEHAVIOR = {
   poster: {
     ...FAN_BEHAVIOR,
-    sideOffset: 104,
+    sideOffset: 94,
   },
   merchandise: {
     ...FAN_BEHAVIOR,
-    sideOffset: 104,
+    sideOffset: 94,
   },
   website: {
     ...FAN_BEHAVIOR,
-    sideOffset: 120,
+    sideOffset: 108,
     neighbor1Scale: 0.78,
     centerScale: 1,
   },
@@ -482,7 +482,7 @@ export function CoverFlowCarousel({
                         fill
                         className="project-cover-flow__image"
                         draggable={false}
-                        sizes="560px"
+                        sizes="504px"
                         quality={70}
                       />
                     ) : null
@@ -495,10 +495,10 @@ export function CoverFlowCarousel({
                       draggable={false}
                       sizes={
                         variant === "website"
-                          ? "560px"
+                          ? "504px"
                           : variant === "poster"
-                            ? "341px"
-                            : "428px"
+                            ? "307px"
+                            : "385px"
                       }
                       quality={70}
                       unoptimized={needsUnoptimized(item.src)}

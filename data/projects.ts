@@ -121,7 +121,7 @@ export const PROJECT_NAV_LABELS = [
   "installation",
   "photos",
   "film",
-  "selected works",
+  "select works",
   "cv + press",
   "contact",
   "about",
@@ -269,7 +269,7 @@ export const EGWU_MERCHANDISE: CoverFlowItem[] = [
 ];
 
 export const EGWU_COLORS = {
-  src: "/projects/egwu/colors.webp",
+  src: "/projects/egwu/colors-palette.webp",
   alt: "EGWÚ Records primary and secondary color palettes with labeled swatches",
   width: 1575,
   height: 800,

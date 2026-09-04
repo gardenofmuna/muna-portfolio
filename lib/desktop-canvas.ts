@@ -58,7 +58,7 @@ export function getDesktopCanvasMetrics(): DesktopCanvasMetrics {
   const bioRightClearOfNzeribe = `calc(${REF_INSET} * ${u1624} + ${NZERIBE_IMG_W} * ${u1624} + ${gapScaled})`;
   /**
    * Equal white gutters on the project page (menu↔page and page↔signature).
-   * Nav clip is wider than 392 so long labels like "selected works" can finish
+   * Nav clip is wider than 392 so long labels like "select works" can finish
    * before the gutter — kept separate from the gutter size so we can widen the
    * clip without growing the white gaps.
    */
