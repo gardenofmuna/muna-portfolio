@@ -893,12 +893,6 @@ export function CircularNavWheel({
         ? e.target.closest("button[id^='circular-nav-item-']")
         : null;
     const startMatch = /^circular-nav-item-(\d+)$/.exec(startBtn?.id ?? "");
-    // Overlay labels are pointer-events-none — resolve the tapped row by
-    // geometry so a finger-up can snap that exact label to center.
-    const overlayTapIndex =
-      spinFeel === "narrow"
-        ? nearestIndexToPointer(p.x, p.y, rotationRef.current)
-        : null;
     if (spinFeel === "narrow") {
       paintOverlayHot(focusedRef.current);
       if (rotatorRef.current) rotatorRef.current.style.transition = "none";
@@ -910,12 +904,11 @@ export function CircularNavWheel({
       lastAngle: Math.atan2(p.y - originY, p.x - originX),
       lastClientY: e.clientY,
       moved: false,
+      // Overlay: only the word box under the finger counts as a tap target.
       startItemIndex:
-        overlayTapIndex != null
-          ? overlayTapIndex
-          : startMatch != null
-            ? Number.parseInt(startMatch[1] ?? "", 10)
-            : null,
+        startMatch != null
+          ? Number.parseInt(startMatch[1] ?? "", 10)
+          : null,
     };
     isDraggingRef.current = true;
     setIsDragging(true);
@@ -1048,39 +1041,38 @@ export function CircularNavWheel({
       if (isNarrow) {
         setWheelInteracting(false);
       } else if (spinFeel === "narrow") {
-        const p = pointerLocal(e.clientX, e.clientY);
-        const i =
-          startItemIndex != null
-            ? startItemIndex
-            : nearestIndexToPointer(p.x, p.y, φ);
-        const nextRot = snapRotationForIndex(i, φ);
-        const centerNow = nearestDesktopLabelSnap(
-          φ,
-          snapRotationForIndex,
-          N,
-        ).tileIndex;
-        // Already the middle (black) row → activate. Else snap it there alone.
-        const alreadyCentered =
-          i === centerNow && Math.abs(nextRot - φ) < 0.04;
+        // Only a real word-box hit snaps; empty space does not nearest-guess.
+        if (startItemIndex == null) {
+          setWheelInteracting(false);
+        } else {
+          const i = startItemIndex;
+          const nextRot = snapRotationForIndex(i, φ);
+          const centerNow = nearestDesktopLabelSnap(
+            φ,
+            snapRotationForIndex,
+            N,
+          ).tileIndex;
+          const alreadyCentered =
+            i === centerNow && Math.abs(nextRot - φ) < 0.04;
 
-        paintOverlayHot(i);
-        setFocusedIndex(i);
-        rotationRef.current = nextRot;
-        setRotation(nextRot);
-        const rotEl = rotatorRef.current;
-        if (rotEl) {
-          rotEl.style.transition = reduceMotion
-            ? "none"
-            : "transform 520ms cubic-bezier(0.22, 1, 0.36, 1)";
-          rotEl.style.transform = `rotate(${nextRot}rad)`;
-        }
+          paintOverlayHot(i);
+          setFocusedIndex(i);
+          rotationRef.current = nextRot;
+          setRotation(nextRot);
+          const rotEl = rotatorRef.current;
+          if (rotEl) {
+            rotEl.style.transition = reduceMotion
+              ? "none"
+              : "transform 520ms cubic-bezier(0.22, 1, 0.36, 1)";
+            rotEl.style.transform = `rotate(${nextRot}rad)`;
+          }
 
-        if (alreadyCentered) {
-          const label = items[i]?.label;
-          if (label) onActivateRef.current?.(label);
+          if (alreadyCentered) {
+            const label = items[i]?.label;
+            if (label) onActivateRef.current?.(label);
+          }
+          setWheelInteracting(false);
         }
-        setWheelInteracting(false);
-      } else {
         let i: number;
         if (startItemIndex != null) {
           i = startItemIndex;
@@ -1354,7 +1346,11 @@ export function CircularNavWheel({
             return (
               <span
                 key={`${repeats}-${item.index}`}
-                className="pointer-events-none absolute"
+                className={`${
+                  spinFeel === "narrow"
+                    ? "pointer-events-auto"
+                    : "pointer-events-none"
+                } absolute`}
                 style={{
                   left: x,
                   top: y,
@@ -1365,11 +1361,7 @@ export function CircularNavWheel({
                   id={`circular-nav-item-${item.index}`}
                   type="button"
                   tabIndex={spinFeel === "narrow" ? -1 : 0}
-                  className={`${
-                    spinFeel === "narrow"
-                      ? "pointer-events-none"
-                      : "pointer-events-auto"
-                  } block cursor-pointer whitespace-nowrap border-none bg-transparent p-0 outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-neutral-400`}
+                  className="pointer-events-auto block cursor-pointer whitespace-nowrap border-none bg-transparent p-0 outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-neutral-400"
                   style={{
                     transform: `rotate(${itemRotDeg}deg)`,
                     transformOrigin: "left center",
@@ -1380,10 +1372,14 @@ export function CircularNavWheel({
                       : "clamp(1.62rem, 4.32vw, 2.88rem)",
                     letterSpacing: "-0.06em",
                     textTransform: "lowercase",
-                    // Overlay: color comes only from [data-active] CSS so React
-                    // and the drag path cannot paint two blacks at once.
+                    // Overlay: color from [data-active] CSS; hit box hugs the word.
                     ...(spinFeel === "narrow"
-                      ? null
+                      ? {
+                          display: "inline-block",
+                          width: "max-content",
+                          lineHeight: 1,
+                          height: "1em",
+                        }
                       : {
                           color: isHot ? "#000000" : "#a3a3a3",
                           transition: reduceMotion

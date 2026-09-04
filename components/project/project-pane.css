@@ -841,9 +841,18 @@
   touch-action: none;
 }
 
-/* One active label only — never React color + DOM color at once. */
+/* One active label only — never React color + DOM color at once.
+   Hit target = the word box itself (tight width/height). */
 .project-narrow__nav-overlay .overlay-nav-rotator [id^="circular-nav-item-"] {
   color: #a3a3a3;
+  display: inline-block;
+  width: max-content;
+  max-width: none;
+  line-height: 1;
+  height: 1em;
+  padding: 0;
+  margin: 0;
+  pointer-events: auto;
 }
 
 .project-narrow__nav-overlay
