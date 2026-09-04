@@ -370,6 +370,13 @@
   margin-bottom: 24px;
 }
 
+/* Same desktop rhythm as DOC NOW gallery sections (title 24 / below 53.5).
+   #posters must be named — the EGWÚ id rule otherwise wins. */
+.project-pane .project-sections--devault .project-section,
+.project-pane .project-sections--devault #posters.project-section {
+  margin-bottom: 53.5px;
+}
+
 .project-logo-stack {
   display: flex;
   flex-direction: column;

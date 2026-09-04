@@ -19,7 +19,8 @@ export function EgwuPlaylistSection({ menuState }: Props) {
         width={EGWU_PLAYLIST_COVER.width}
         height={EGWU_PLAYLIST_COVER.height}
         className="project-asset-single__image"
-        sizes="100vw"
+        sizes="449px"
+        quality={85}
       />
     </figure>
   );

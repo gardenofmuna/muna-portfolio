@@ -14,6 +14,9 @@ type Props = {
   variant: HorizontalStripVariant;
 };
 
+/** Desktop poster-strip height in project-pane.css */
+const POSTER_STRIP_H = 428;
+
 function displaySize(item: CoverFlowItem) {
   const maxEdge = 1080;
   const edge = Math.max(item.width, item.height);
@@ -25,6 +28,12 @@ function displaySize(item: CoverFlowItem) {
     width: Math.round(item.width * scale),
     height: Math.round(item.height * scale),
   };
+}
+
+function posterDesktopWidth(item: CoverFlowItem) {
+  const { width, height } = displaySize(item);
+  if (height <= 0) return POSTER_STRIP_H;
+  return Math.round((width / height) * POSTER_STRIP_H);
 }
 
 function needsUnoptimized(src: string) {
@@ -107,13 +116,13 @@ export function ProjectHorizontalStrip({ items, ariaLabel, variant }: Props) {
                       variant === "website"
                         ? "(max-width: 900px) 92vw, 560px"
                         : variant === "poster"
-                          ? "(max-width: 900px) 72vw, 342px"
+                          ? `(max-width: 900px) 72vw, ${posterDesktopWidth(item)}px`
                           : "(max-width: 900px) 90vw, 428px"
                     }
                     draggable={false}
                     loading="lazy"
                     decoding="async"
-                    quality={70}
+                    quality={variant === "poster" ? 85 : 70}
                     unoptimized={needsUnoptimized(item.src)}
                   />
                 )}
