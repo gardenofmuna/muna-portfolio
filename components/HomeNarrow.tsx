@@ -7,7 +7,7 @@ import { CircularNavWheel } from "@/components/CircularNavWheel";
 import { DesignCluster } from "@/components/DesignCluster";
 import { InstallationLottie } from "@/components/InstallationLottie";
 import { MobileFooterLinks } from "@/components/MobileFooterLinks";
-import { NarrowWheelFit } from "@/components/NarrowArtboard";
+import { NarrowWheelFit, useNarrowArtboardMetrics } from "@/components/NarrowArtboard";
 import { PhotosHoverCluster } from "@/components/PhotosHoverCluster";
 import { CvPressHoverAccordion } from "@/components/CvPressHoverAccordion";
 import { FilmHoverGif } from "@/components/FilmHoverGif";
@@ -37,6 +37,7 @@ type Props = {
  * Project pages own the wordmark in the header so it can hide with the menu.
  */
 export function HomeNarrow({ initialProject }: Props) {
+  const { vx } = useNarrowArtboardMetrics();
   const [activeLabel, setActiveLabel] = useState(
     initialProject ? "design" : "contact",
   );
@@ -132,7 +133,10 @@ export function HomeNarrow({ initialProject }: Props) {
   return (
     <div className="narrow-app fixed inset-0 overflow-hidden bg-white">
       {projectOpen ? null : (
-      <div className="narrow-persist-wordmark">
+      <div
+        className="narrow-persist-wordmark"
+        style={vx ? { left: `calc(${vx}px + var(--narrow-gutter))` } : undefined}
+      >
         <SiteWordmark placement="flow" />
       </div>
       )}

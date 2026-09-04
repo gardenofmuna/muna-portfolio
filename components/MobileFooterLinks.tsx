@@ -20,7 +20,7 @@ type Props = {
  * Quadrant 3 — linkedin / insta / email, a fixed 24px from the viewport bottom.
  */
 export function MobileFooterLinks({ inverted = false }: Props) {
-  const { u, vw } = useNarrowArtboardMetrics();
+  const { u, vw, vx } = useNarrowArtboardMetrics();
   const scale = vw > 0 && u > 0 ? u : 1;
   const ink = inverted ? "#fff" : "#000";
   const stroke = inverted ? "#fff" : "#000";
@@ -41,8 +41,10 @@ export function MobileFooterLinks({ inverted = false }: Props) {
   return (
     <nav
       aria-label="Contact links"
-      className="pointer-events-auto absolute left-0 right-0 z-[46] flex flex-row items-center justify-center"
+      className="pointer-events-auto absolute z-[46] flex flex-row items-center justify-center"
       style={{
+        left: vx,
+        width: vw > 0 ? vw : "100%",
         bottom: NARROW_CHROME_SCREEN_PAD,
         gap: NARROW_FOOTER_LINK_GAP_PX * scale,
       }}
