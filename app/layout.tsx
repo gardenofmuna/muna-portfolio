@@ -23,17 +23,9 @@ export const metadata: Metadata = {
   title: "Muna | Portfolio",
   description: "Hi! Welcome to my Portfolio!",
   icons: {
-    icon: [
-      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
-      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/favicon.ico" },
-    ],
-    apple: [
-      { url: "/muna-touch-icon.png", sizes: "180x180", type: "image/png" },
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
-    ],
-    shortcut: "/favicon-32x32.png",
+    icon: [{ url: "/site-icon-2026.png", type: "image/png" }],
+    apple: [{ url: "/site-icon-2026.png", sizes: "180x180" }],
+    shortcut: "/site-icon-2026.png",
   },
   openGraph: {
     title: "Muna | Portfolio",
@@ -67,16 +59,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="apple-touch-icon" href="/muna-touch-icon.png" />
-        <link
-          rel="apple-touch-icon"
-          sizes="180x180"
-          href="/apple-touch-icon.png"
-        />
-        <link
-          rel="apple-touch-icon-precomposed"
-          href="/apple-touch-icon-precomposed.png"
-        />
+        <link rel="apple-touch-icon" href="/site-icon-2026.png" />
+        <link rel="icon" href="/site-icon-2026.png" type="image/png" />
         <link
           rel="preload"
           href="/fonts/ltc-garamont-display-ot.otf"
