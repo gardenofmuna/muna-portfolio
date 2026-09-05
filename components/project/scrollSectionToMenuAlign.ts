@@ -6,30 +6,28 @@ const FALLBACK_MENU_TOP_PAD = 36;
 /** Bumps so a newer section click cancels an in-flight delayed align. */
 let alignToken = 0;
 
-/** Extra air between fixed chrome and the section heading after a jump. */
-const SECTION_ALIGN_GAP = 24;
+/** Extra air under the fixed narrow header after a jump (mobile only). */
+const NARROW_SECTION_ALIGN_GAP = 24;
 
 /**
  * Where the section heading’s top should land:
  * - Narrow: under the fixed wordmark/hamburger header, with a little air above
- * - Desktop: below the left hamburger (cover-flow pin target), same air
+ * - Desktop: level with the left hamburger (cover-flow pin target)
  */
 function sectionAlignTop(scroller: HTMLElement): number {
   const narrowHeader = document.querySelector(".project-narrow__header");
   if (narrowHeader instanceof HTMLElement) {
-    return narrowHeader.getBoundingClientRect().bottom + SECTION_ALIGN_GAP;
+    return (
+      narrowHeader.getBoundingClientRect().bottom + NARROW_SECTION_ALIGN_GAP
+    );
   }
   const desktop = document.querySelector(
     ".desktop-site-shell__menu-toggle:not(.desktop-site-shell__menu-toggle--end)",
   );
   if (desktop instanceof HTMLElement) {
-    return desktop.getBoundingClientRect().top + SECTION_ALIGN_GAP;
+    return desktop.getBoundingClientRect().top;
   }
-  return (
-    scroller.getBoundingClientRect().top +
-    FALLBACK_MENU_TOP_PAD +
-    SECTION_ALIGN_GAP
-  );
+  return scroller.getBoundingClientRect().top + FALLBACK_MENU_TOP_PAD;
 }
 
 function prefersReducedMotion(): boolean {
