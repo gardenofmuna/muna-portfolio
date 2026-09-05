@@ -423,6 +423,8 @@ export function CircularNavWheel({
       ?.setAttribute("data-active", "");
     overlayHotRef.current = tileIndex;
     focusedRef.current = tileIndex;
+    // Drive landing hover previews while gliding (iPad / mobile-menu feel).
+    setHoveredIndex((prev) => (prev === tileIndex ? prev : tileIndex));
   }, []);
 
   const applyOverlayRotation = useCallback((φ: number) => {
@@ -1193,6 +1195,10 @@ export function CircularNavWheel({
       style={{
         zIndex: isNarrow ? 10 : 1,
         touchAction: "none",
+        /* Stage wheel paints full layout width but must not steal middle-pane
+           touches (esp. fit-mode overflow:visible). Hits go to the nav strip
+           + labels only; events still bubble to these handlers. */
+        ...(useStageContainment ? { pointerEvents: "none" as const } : null),
         ...(isNarrow
           ? {
               width: NARROW_W,
@@ -1217,6 +1223,16 @@ export function CircularNavWheel({
       onPointerUp={endPointer}
       onPointerCancel={endPointer}
     >
+      {useStageContainment ? (
+        <div
+          aria-hidden
+          className="absolute left-0 top-0 h-full"
+          style={{
+            width: "var(--nav-zone-width, 30%)",
+            pointerEvents: "auto",
+          }}
+        />
+      ) : null}
       {isNarrow ? (
         <>
         <div

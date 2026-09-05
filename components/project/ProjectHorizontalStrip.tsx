@@ -5,6 +5,7 @@ import { useLayoutEffect, useRef } from "react";
 
 import type { CoverFlowItem, CoverFlowVariant } from "@/components/project/CoverFlowCarousel";
 import { ProjectLoopVideo } from "@/components/project/ProjectLoopVideo";
+import { readSafari } from "@/lib/safari";
 
 export type HorizontalStripVariant = CoverFlowVariant | "website";
 
@@ -58,6 +59,9 @@ export function ProjectHorizontalStrip({ items, ariaLabel, variant }: Props) {
     const scroller = scrollerRef.current;
     const wrap = wrapRef.current;
     if (!scroller || !wrap) return;
+
+    /* Safari’s CSS mask-image leaves spurious top/bottom white bands. */
+    if (readSafari()) wrap.setAttribute("data-safari", "true");
 
     const sync = () => syncEdgeFades(scroller, wrap);
     sync();

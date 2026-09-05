@@ -134,12 +134,14 @@ export function desktopStageLayoutSize(
 ): StageLayoutSize {
   if (mode === "fit") {
     const scale = viewportW / DESKTOP_STAGE_W;
+    /* Width-fit, but stretch layout height so we don’t letterbox top/bottom. */
+    const layoutH = desktopWheelLayoutHeight(viewportH, scale);
     return {
       scale,
       stageW: DESKTOP_STAGE_W,
-      stageH: DESKTOP_STAGE_H,
+      stageH: layoutH * DESKTOP_LAYOUT_SCALE,
       layoutW: DESKTOP_LAYOUT_W,
-      layoutH: DESKTOP_LAYOUT_H,
+      layoutH,
     };
   }
   const scale = desktopStageHeightScale(viewportH);

@@ -49,7 +49,8 @@ function getState(scroller: HTMLElement): ScrollerPinState {
 }
 
 function menuIsOpen() {
-  return !document.querySelector(".desktop-site-shell__menu-toggle");
+  const shell = document.querySelector(".desktop-site-shell");
+  return shell?.getAttribute("data-menu-state") === "open";
 }
 
 function metrics(
@@ -60,7 +61,9 @@ function metrics(
   const scrollerRect = scroller.getBoundingClientRect();
   const headingRect = heading.getBoundingClientRect();
   const sectionRect = lockEl.getBoundingClientRect();
-  const toggle = document.querySelector(".desktop-site-shell__menu-toggle");
+  const toggle = document.querySelector(
+    ".desktop-site-shell__menu-toggle:not(.desktop-site-shell__menu-toggle--end)",
+  );
   const hamburgerTop =
     toggle instanceof HTMLElement
       ? toggle.getBoundingClientRect().top

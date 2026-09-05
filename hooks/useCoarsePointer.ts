@@ -6,7 +6,7 @@ const COARSE_MQ = "(pointer: coarse)";
 
 /** True on touch-primary devices (iPad, phones) even in landscape desktop layout. */
 export function useCoarsePointer(): boolean {
-  const [coarse, setCoarse] = useState(false);
+  const [coarse, setCoarse] = useState(readCoarsePointer);
 
   useEffect(() => {
     const mq = window.matchMedia(COARSE_MQ);

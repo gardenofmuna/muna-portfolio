@@ -14,7 +14,6 @@ import {
   getDesktopStageMetrics,
   getDesktopStageShellStyle,
 } from "@/lib/desktop-stage";
-
 import "./desktop-site-shell.css";
 
 export type DesktopMenuState = "open" | "hidden";
@@ -39,8 +38,15 @@ type Props = {
    * Project toggles to `"hidden"` when the middle pane scrolls.
    */
   menuState?: DesktopMenuState;
-  /** Shown in the nav zone when menuState is hidden. */
+  /** Opens nav when menuState is hidden (left hamburger). */
   onOpenMenu?: () => void;
+  /** Closes nav when menuState is open (right hamburger). */
+  onCloseMenu?: () => void;
+  /**
+   * White focus veil over center + signature. Only true after the hamburger
+   * reopens the menu — not when the menu is naturally open at scroll top.
+   */
+  menuVeil?: boolean;
   /** When set, bottom-right nzeribe signature navigates home (e.g. exit project). */
   onSignatureClick?: () => void;
   /**
@@ -62,6 +68,8 @@ export function DesktopSiteShell({
   darkBackground = false,
   menuState = "open",
   onOpenMenu,
+  onCloseMenu,
+  menuVeil = false,
   onSignatureClick,
   layout = "fluid",
 }: Props) {
@@ -72,7 +80,10 @@ export function DesktopSiteShell({
     ? getDesktopStageShellStyle(menuState)
     : getDesktopShellGridStyle(menuState);
   const reduceMotion = useReducedMotionPref();
-  const showHamburger = menuState === "hidden" && Boolean(onOpenMenu);
+  const showOpenHamburger = menuState === "hidden" && Boolean(onOpenMenu);
+  /* Close control only after hamburger reopen (menuVeil), not at natural scroll-top open. */
+  const showCloseHamburger =
+    menuState === "open" && menuVeil && Boolean(onCloseMenu);
 
   const polaroidStyle = isStage
     ? {
@@ -112,10 +123,11 @@ export function DesktopSiteShell({
         .filter(Boolean)
         .join(" ")}
       data-menu-state={menuState}
+      data-menu-veil={menuVeil ? "true" : undefined}
       style={gridStyle}
     >
       <div className="desktop-site-shell__nav">
-        {showHamburger && (
+        {showOpenHamburger && (
           <button
             type="button"
             className="desktop-site-shell__menu-toggle"
@@ -123,19 +135,7 @@ export function DesktopSiteShell({
             aria-expanded={false}
             onClick={onOpenMenu}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="107"
-              height="74"
-              viewBox="0 0 107 74"
-              aria-hidden
-            >
-              <path
-                fillRule="evenodd"
-                fill="#000"
-                d="M0.801,73.857 L0.801,62.195 L106.310,62.195 L106.310,73.857 L0.801,73.857 ZM0.801,31.098 L106.310,31.098 L106.310,42.759 L0.801,42.759 L0.801,31.098 ZM0.801,-0.000 L106.310,-0.000 L106.310,11.661 L0.801,11.661 L0.801,-0.000 Z"
-              />
-            </svg>
+            <MenuToggleIcon />
           </button>
         )}
         <div
@@ -150,6 +150,18 @@ export function DesktopSiteShell({
           {nav}
         </div>
       </div>
+
+      {showCloseHamburger && (
+        <button
+          type="button"
+          className="desktop-site-shell__menu-toggle desktop-site-shell__menu-toggle--end"
+          aria-label="Close navigation menu"
+          aria-expanded={true}
+          onClick={onCloseMenu}
+        >
+          <MenuToggleIcon />
+        </button>
+      )}
 
       <div className="desktop-site-shell__center">{center}</div>
 
@@ -211,6 +223,24 @@ export function DesktopSiteShell({
         )}
       </div>
     </div>
+  );
+}
+
+function MenuToggleIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="107"
+      height="74"
+      viewBox="0 0 107 74"
+      aria-hidden
+    >
+      <path
+        fillRule="evenodd"
+        fill="#000"
+        d="M0.801,73.857 L0.801,62.195 L106.310,62.195 L106.310,73.857 L0.801,73.857 ZM0.801,31.098 L106.310,31.098 L106.310,42.759 L0.801,42.759 L0.801,31.098 ZM0.801,-0.000 L106.310,-0.000 L106.310,11.661 L0.801,11.661 L0.801,-0.000 Z"
+      />
+    </svg>
   );
 }
 

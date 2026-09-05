@@ -56,10 +56,41 @@
 }
 
 .desktop-site-shell:has(.project-pane)[data-menu-state="open"] .desktop-site-shell__center {
-  /* Above nav (z-index 10) so fanned posters/merch paint over the wheel.
-     Hidden state keeps center at z-index 1 so the hamburger stays on top. */
+  /* Content stays above the page; veil dims it. Nav rises above for focus. */
   z-index: 20;
   overflow: visible;
+}
+
+.desktop-site-shell:has(.project-pane)[data-menu-state="open"] .desktop-site-shell__nav {
+  z-index: 90;
+}
+
+/* White veil over center + signature — only after hamburger reopen (data-menu-veil).
+   Left edge fades under the circular nav so content exiting the wheel has no hard cut. */
+.desktop-site-shell:has(.project-pane)::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 80;
+  --menu-veil: rgba(255, 255, 255, 0.55);
+  --menu-veil-fade: 110px;
+  background: linear-gradient(
+    to right,
+    transparent 0,
+    transparent max(0px, calc(var(--nav-zone-width) - var(--menu-veil-fade))),
+    rgb(255 255 255 / 0.12) calc(var(--nav-zone-width) - var(--menu-veil-fade) * 0.72),
+    rgb(255 255 255 / 0.32) calc(var(--nav-zone-width) - var(--menu-veil-fade) * 0.48),
+    rgb(255 255 255 / 0.55) calc(var(--nav-zone-width) - var(--menu-veil-fade) * 0.24),
+    var(--menu-veil) var(--nav-zone-width),
+    var(--menu-veil) 100%
+  );
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.desktop-site-shell:has(.project-pane)[data-menu-veil="true"]::before {
+  opacity: 1;
 }
 
 /* Expand the open-state scrollport into the nav column so overflow-x:hidden
@@ -202,6 +233,13 @@
   pointer-events: auto;
 }
 
+/* Same icon mirrored to the signature edge — closes the open menu. */
+.desktop-site-shell__menu-toggle--end {
+  left: auto;
+  right: 42px;
+  z-index: 100;
+}
+
 .desktop-site-shell__menu-toggle svg {
   display: block;
   width: 100%;
@@ -231,7 +269,8 @@
 @media (prefers-reduced-motion: reduce) {
   .desktop-site-shell,
   .desktop-site-shell__nav-layer,
-  .desktop-site-shell__polaroid {
+  .desktop-site-shell__polaroid,
+  .desktop-site-shell:has(.project-pane)::before {
     transition: none !important;
   }
 

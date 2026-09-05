@@ -4,7 +4,7 @@ import { EGWU_POSTERS } from "@/data/projects";
 
 type Props = {
   menuState: ProjectMenuState;
-  /** Kept for call-site parity; posters always use a horizontal strip. */
+  /** Kept for call-site parity; posters use a horizontal strip. */
   gallery?: "coverflow" | "strip";
 };
 

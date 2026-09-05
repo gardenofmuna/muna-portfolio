@@ -25,6 +25,7 @@ import {
   DESKTOP_LAYOUT_BIO_LEFT,
   getDesktopStageMetrics,
 } from "@/lib/desktop-stage";
+import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import {
   EGWU_RECORDS_SLUG,
   getProjectBySlug,
@@ -58,7 +59,10 @@ export function HomeDesktop({ initialProject }: Props) {
   );
   const [enteredFromLanding, setEnteredFromLanding] = useState(false);
   const [menuState, setMenuState] = useState<ProjectMenuState>("open");
+  const [menuVeil, setMenuVeil] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
+  const [wheelInteracting, setWheelInteracting] = useState(false);
+  const coarsePointer = useCoarsePointer();
   const m = getDesktopStageMetrics();
   const projectOpen = project != null;
   const projectRef = useRef(project);
@@ -78,6 +82,7 @@ export function HomeDesktop({ initialProject }: Props) {
     if (!next) return;
     setEnteredFromLanding(true);
     setMenuState("open");
+    setMenuVeil(false);
     setProject(next);
     if (window.location.pathname !== DESIGN_PROJECT_PATH) {
       window.history.pushState(
@@ -92,6 +97,7 @@ export function HomeDesktop({ initialProject }: Props) {
     setProject(null);
     setEnteredFromLanding(false);
     setMenuState("open");
+    setMenuVeil(false);
     if (window.location.pathname !== "/") {
       window.history.pushState(null, "", "/");
     }
@@ -108,6 +114,7 @@ export function HomeDesktop({ initialProject }: Props) {
         setProject(null);
         setEnteredFromLanding(false);
         setMenuState("open");
+        setMenuVeil(false);
         return;
       }
       const match = /^\/design\/([^/]+)/.exec(window.location.pathname);
@@ -115,6 +122,7 @@ export function HomeDesktop({ initialProject }: Props) {
       setProject(next ?? null);
       setEnteredFromLanding(false);
       setMenuState("open");
+      setMenuVeil(false);
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
@@ -123,7 +131,11 @@ export function HomeDesktop({ initialProject }: Props) {
   const previewLabel = hoverNavLabel ?? activeLabel;
   const isContact = !projectOpen && previewLabel === "contact";
   const showAboutBio = !projectOpen && (previewLabel === "about" || isContact);
-  const fadeMs = reduceMotion ? 80 : 520;
+  const fadeMs = wheelInteracting
+    ? 120
+    : reduceMotion
+      ? 80
+      : 520;
 
   /** Clear signature column for bio; contact bar meets polaroid flush (no black gap). */
   const bioRightClearOfNzeribe = m.inset + m.nzeribeW + m.gapScaled;
@@ -136,15 +148,33 @@ export function HomeDesktop({ initialProject }: Props) {
         layout="stage"
         showPolaroid={!projectOpen}
         menuState={projectOpen ? menuState : "open"}
-        onOpenMenu={projectOpen ? () => setMenuState("open") : undefined}
+        menuVeil={projectOpen && menuVeil}
+        onOpenMenu={
+          projectOpen
+            ? () => {
+                setMenuVeil(true);
+                setMenuState("open");
+              }
+            : undefined
+        }
+        onCloseMenu={
+          projectOpen
+            ? () => {
+                setMenuVeil(false);
+                setMenuState("hidden");
+              }
+            : undefined
+        }
         onSignatureClick={projectOpen ? goToLanding : undefined}
         nav={
           <CircularNavWheel
             layout="desktop"
             containment="stage"
+            spinFeel={coarsePointer ? "narrow" : "desktop"}
             initialActiveLabel={initialProject ? "design" : "contact"}
             onActiveLabelChange={setActiveLabel}
             onHoverLabelChange={setHoverNavLabel}
+            onWheelInteractingChange={setWheelInteracting}
             onLabelActivate={(label) => {
               if (label === "design") openDesignProject();
             }}
@@ -161,7 +191,10 @@ export function HomeDesktop({ initialProject }: Props) {
             >
               <ProjectContentPane
                 menuState={menuState}
-                onMenuStateChange={setMenuState}
+                onMenuStateChange={(next) => {
+                  setMenuState(next);
+                  if (next === "hidden") setMenuVeil(false);
+                }}
               >
                 <div className="project-pane__chrome">
                   <ProjectIndexNav
@@ -181,34 +214,32 @@ export function HomeDesktop({ initialProject }: Props) {
           projectOpen ? null : (
             <>
               <DesignCluster
-                visible={activeLabel === "design"}
+                visible={previewLabel === "design"}
                 variant="desktop"
                 stageLocked
               />
               <InstallationLottie
-                visible={activeLabel === "installation"}
+                visible={previewLabel === "installation"}
                 layout="desktop"
                 stageLocked
               />
               <PhotosHoverCluster
-                visible={hoverNavLabel === "photos"}
+                visible={previewLabel === "photos"}
                 variant="desktop"
                 stageLocked
               />
               <FilmHoverGif
-                visible={hoverNavLabel === "film"}
+                visible={previewLabel === "film"}
                 layout="desktop"
                 stageLocked
               />
               <CvPressHoverAccordion
-                visible={
-                  hoverNavLabel === "cv + press" || activeLabel === "cv + press"
-                }
+                visible={previewLabel === "cv + press"}
                 layout="desktop"
                 stageLocked
               />
               <SelectedWorksHoverGif
-                visible={hoverNavLabel === "select works"}
+                visible={previewLabel === "select works"}
                 layout="desktop"
                 stageLocked
               />

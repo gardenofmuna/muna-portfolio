@@ -4,7 +4,7 @@ import { EGWU_MERCHANDISE } from "@/data/projects";
 
 type Props = {
   menuState: ProjectMenuState;
-  /** Kept for call-site parity; merchandise always uses a horizontal strip. */
+  /** Kept for call-site parity; merchandise uses a horizontal strip. */
   gallery?: "coverflow" | "strip";
 };
 

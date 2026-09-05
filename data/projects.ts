@@ -164,43 +164,36 @@ import type { CoverFlowItem } from "@/components/project/CoverFlowCarousel";
 export type EgwuImageAsset = CoverFlowItem;
 
 /** Default resting poster in reference: green postage-stamp (poster-06). */
-export const EGWU_POSTERS_INITIAL_INDEX = 5;
+export const EGWU_POSTERS_INITIAL_INDEX = 4;
 
 export const EGWU_POSTERS: CoverFlowItem[] = [
   {
     src: "/projects/egwu/posters/poster-01.webp",
-    alt: "EGWÚ Records event poster with green postage-stamp frame and EGWÚ and Friends lineup",
+    alt: "EGWÚ and Friends London lineup poster with DJ illustration",
     width: 1080,
     height: 1350,
-    label: "EGWÚ and Friends lineup",
+    label: "EGWÚ and Friends London",
   },
   {
     src: "/projects/egwu/posters/poster-02.webp",
-    alt: "EGWÚ Records event poster with yellow and black graphic layout",
+    alt: "EGWÚ Community Event poster with modular red and magenta grid layout",
     width: 1080,
     height: 1350,
-    label: "Yellow and black layout",
-  },
-  {
-    src: "/projects/egwu/posters/poster-03.webp",
-    alt: "EGWÚ Records event poster with pink and black typographic composition",
-    width: 1080,
-    height: 1080,
-    label: "Pink typographic composition",
-  },
-  {
-    src: "/projects/egwu/posters/poster-04.webp",
-    alt: "EGWÚ Records event poster with red geometric poster design",
-    width: 1080,
-    height: 1350,
-    label: "Red geometric design",
+    label: "EGWÚ Community Event",
   },
   {
     src: "/projects/egwu/posters/poster-05.webp",
-    alt: "EGWÚ Records event poster with warm-toned collage layout",
+    alt: "EGWÚ Vinyl Festival poster with Sir Shina Peters and sunburst typography",
     width: 1080,
     height: 1351,
-    label: "Warm-toned collage",
+    label: "EGWÚ Vinyl Festival",
+  },
+  {
+    src: "/projects/egwu/posters/poster-04.webp",
+    alt: "EGWÚ Records Focus on the Physical poster with pink grain on black",
+    width: 1080,
+    height: 1350,
+    label: "Focus on the Physical",
   },
   {
     src: "/projects/egwu/posters/poster-06.webp",
@@ -209,25 +202,39 @@ export const EGWU_POSTERS: CoverFlowItem[] = [
     height: 1350,
     label: "Green postage-stamp poster",
   },
+  {
+    src: "/projects/egwu/posters/poster-03.webp",
+    alt: "EGWÚ Groove Sessions poster with vinyl-record head illustration",
+    width: 1080,
+    height: 1080,
+    label: "EGWÚ Groove Sessions",
+  },
 ];
 
 /** Default resting item in reference: black tee with green stamp graphic. */
-export const EGWU_MERCHANDISE_INITIAL_INDEX = 1;
+export const EGWU_MERCHANDISE_INITIAL_INDEX = 0;
 
 export const EGWU_MERCHANDISE: CoverFlowItem[] = [
-  {
-    src: "/projects/egwu/merchandise/tshirt-white.webp",
-    alt: "White EGWÚ Records t-shirt with blue chest graphic",
-    width: 2000,
-    height: 2000,
-    label: "White t-shirt",
-  },
   {
     src: "/projects/egwu/merchandise/tshirt-black-front.webp",
     alt: "Black EGWÚ Records t-shirt with postage-stamp graphic on the front",
     width: 2000,
     height: 2000,
     label: "Black t-shirt with green stamp",
+  },
+  {
+    src: "/projects/egwu/merchandise/tshirt-black-back.webp",
+    alt: "Black EGWÚ Records t-shirt back view",
+    width: 2000,
+    height: 2000,
+    label: "Black t-shirt back",
+  },
+  {
+    src: "/projects/egwu/merchandise/tshirt-white.webp",
+    alt: "White EGWÚ Records t-shirt with blue chest graphic",
+    width: 2000,
+    height: 2000,
+    label: "White t-shirt",
   },
   {
     src: "/projects/egwu/merchandise/tshirt-black-front-1.webp",
@@ -242,13 +249,6 @@ export const EGWU_MERCHANDISE: CoverFlowItem[] = [
     width: 2000,
     height: 2000,
     label: "Black t-shirt alternate front",
-  },
-  {
-    src: "/projects/egwu/merchandise/tshirt-black-back.webp",
-    alt: "Black EGWÚ Records t-shirt back view",
-    width: 2000,
-    height: 2000,
-    label: "Black t-shirt back",
   },
   {
     src: "/projects/egwu/merchandise/bandana-red.webp",

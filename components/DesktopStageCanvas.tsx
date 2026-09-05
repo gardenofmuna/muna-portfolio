@@ -33,7 +33,9 @@ type StageView = {
   mode: StageFitMode;
   scale: number;
   stageW: number;
+  stageH: number;
   layoutW: number;
+  layoutH: number;
   viewportW: number;
   viewportH: number;
   alignX: StageCropAlignX;
@@ -57,7 +59,9 @@ export function DesktopStageCanvas({ children, className }: Props) {
     mode: "expand",
     scale: 1,
     stageW: DESKTOP_STAGE_W,
+    stageH: DESKTOP_STAGE_H,
     layoutW: DESKTOP_LAYOUT_W,
+    layoutH: DESKTOP_LAYOUT_H,
     viewportW: DESKTOP_STAGE_W,
     viewportH: DESKTOP_STAGE_H,
     alignX: "left",
@@ -89,7 +93,9 @@ export function DesktopStageCanvas({ children, className }: Props) {
         mode,
         scale: size.scale,
         stageW: size.stageW,
+        stageH: size.stageH,
         layoutW: size.layoutW,
+        layoutH: size.layoutH,
         viewportW: next.width,
         viewportH: next.height,
         alignX,
@@ -110,22 +116,17 @@ export function DesktopStageCanvas({ children, className }: Props) {
           view.alignX,
           "top",
         )
-      : view.mode === "fit"
-        ? {
-            left: 0,
-            top: (view.viewportH - DESKTOP_STAGE_H * view.scale) / 2,
-          }
-        : { left: 0, top: 0 };
+      : { left: 0, top: 0 };
 
   return (
-      <DesktopStageViewContext.Provider
-        value={{
-          mode: view.mode,
-          scale: view.scale,
-          layoutW: view.layoutW,
-          wheelLayoutH: view.wheelLayoutH,
-        }}
-      >
+    <DesktopStageViewContext.Provider
+      value={{
+        mode: view.mode,
+        scale: view.scale,
+        layoutW: view.layoutW,
+        wheelLayoutH: view.wheelLayoutH,
+      }}
+    >
       <div
         className={`fixed inset-0 z-0 overflow-hidden bg-white ${className ?? ""}`}
         data-stage-mode={view.mode}
@@ -134,7 +135,7 @@ export function DesktopStageCanvas({ children, className }: Props) {
           className="absolute"
           style={{
             width: view.stageW,
-            height: DESKTOP_STAGE_H,
+            height: view.stageH,
             left: offset.left,
             top: offset.top,
             transform: `scale(${view.scale})`,
@@ -147,7 +148,7 @@ export function DesktopStageCanvas({ children, className }: Props) {
             className="absolute left-0 top-0"
             style={{
               width: view.layoutW,
-              height: DESKTOP_LAYOUT_H,
+              height: view.layoutH,
               transform: `scale(${DESKTOP_LAYOUT_SCALE})`,
               transformOrigin: "top left",
             }}

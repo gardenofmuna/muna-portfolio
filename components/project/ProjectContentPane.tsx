@@ -166,6 +166,7 @@ export function ProjectContentPane({
 
   const scaleRef = useRef(1);
   const userOpenedMenuRef = useRef(false);
+  const userClosedMenuRef = useRef(false);
 
   useLayoutEffect(() => {
     const el = scrollRef.current;
@@ -173,9 +174,13 @@ export function ProjectContentPane({
     const nextScale = smart.scale || 1;
     if (menuState === "open" && el && el.scrollTop > SCROLL_HIDE_THRESHOLD) {
       userOpenedMenuRef.current = true;
+      userClosedMenuRef.current = false;
     }
     if (menuState === "hidden") {
       userOpenedMenuRef.current = false;
+      if (el && el.scrollTop <= 8) {
+        userClosedMenuRef.current = true;
+      }
     }
     if (el && prevScale > 0 && nextScale > 0 && prevScale !== nextScale) {
       el.scrollTop = el.scrollTop * (nextScale / prevScale);
@@ -202,6 +207,10 @@ export function ProjectContentPane({
     const scroll = scrollRef.current;
     const inner = innerRef.current;
     if (!scroll || !inner) return;
+
+    /* Coarse (iPad): native pan-y on the scrollport — synthesizing touch
+       scroll + preventDefault kills inertia and feels dead. */
+    if (coarsePointer) return;
 
     let lastTouchY = 0;
 
@@ -245,8 +254,10 @@ export function ProjectContentPane({
     if (!el) return;
     if (userOpenedMenuRef.current) return;
     if (el.scrollTop > SCROLL_HIDE_THRESHOLD) {
+      userClosedMenuRef.current = false;
       if (menuState !== "hidden") onMenuStateChange("hidden");
     } else if (el.scrollTop <= 8) {
+      if (userClosedMenuRef.current) return;
       if (menuState !== "open") onMenuStateChange("open");
     }
   }, [menuState, onMenuStateChange]);
