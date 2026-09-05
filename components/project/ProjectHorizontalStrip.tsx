@@ -60,7 +60,7 @@ export function ProjectHorizontalStrip({ items, ariaLabel, variant }: Props) {
     const wrap = wrapRef.current;
     if (!scroller || !wrap) return;
 
-    /* Safari’s CSS mask-image leaves spurious top/bottom white bands. */
+    /* Safari’s wrap-level mask left top/bottom bands; scroller mask is used instead. */
     if (readSafari()) wrap.setAttribute("data-safari", "true");
 
     const sync = () => syncEdgeFades(scroller, wrap);
@@ -97,6 +97,9 @@ export function ProjectHorizontalStrip({ items, ariaLabel, variant }: Props) {
         <ul className="project-hscroll__track">
           {items.map((item) => {
             const size = displaySize(item);
+            const posterW =
+              variant === "poster" ? posterDesktopWidth(item) : size.width;
+            const posterH = variant === "poster" ? POSTER_STRIP_H : size.height;
             return (
               <li key={item.src} className="project-hscroll__item">
                 {item.kind === "video" ? (
@@ -113,14 +116,14 @@ export function ProjectHorizontalStrip({ items, ariaLabel, variant }: Props) {
                   <Image
                     src={item.src}
                     alt={item.alt}
-                    width={size.width}
-                    height={size.height}
+                    width={posterW}
+                    height={posterH}
                     className="project-hscroll__image"
                     sizes={
                       variant === "website"
                         ? "(max-width: 900px) 92vw, 560px"
                         : variant === "poster"
-                          ? `(max-width: 900px) 72vw, ${posterDesktopWidth(item)}px`
+                          ? `(max-width: 900px) 72vw, ${posterW}px`
                           : "(max-width: 900px) 90vw, 424px"
                     }
                     draggable={false}

@@ -1,6 +1,12 @@
+"use client";
+
 import type { ProjectDefinition } from "@/data/projects";
 
-import type { ProjectMenuState } from "@/components/project/ProjectContentPane";
+import {
+  useProjectScroll,
+  type ProjectMenuState,
+} from "@/components/project/ProjectContentPane";
+import { scrollSectionToMenuAlign } from "@/components/project/scrollSectionToMenuAlign";
 
 type Props = {
   project: ProjectDefinition;
@@ -8,6 +14,8 @@ type Props = {
 };
 
 export function ProjectHeader({ project, menuState }: Props) {
+  const scrollApi = useProjectScroll();
+
   return (
     <header className="project-header" data-menu-state={menuState}>
       <h1
@@ -29,6 +37,17 @@ export function ProjectHeader({ project, menuState }: Props) {
               className="project-header__section-link"
               href={`#${link.id}`}
               style={{ color: link.color }}
+              onClick={(event) => {
+                event.preventDefault();
+                if (scrollApi?.scrollToSection) {
+                  scrollApi.scrollToSection(link.id);
+                } else {
+                  scrollSectionToMenuAlign(link.id);
+                }
+                if (typeof window !== "undefined") {
+                  window.history.replaceState(null, "", `#${link.id}`);
+                }
+              }}
             >
               {link.label}
             </a>

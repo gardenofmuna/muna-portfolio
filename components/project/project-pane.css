@@ -254,7 +254,12 @@
 
 .project-section {
   margin-bottom: 53.5px;
-  scroll-margin-top: 0.5rem;
+  /* Fallback for hash nav; JS snaps heading to the hamburger top. */
+  scroll-margin-top: 36px;
+}
+
+.project-pane .project-section__title {
+  scroll-margin-top: 36px;
 }
 
 .project-section__title {
@@ -1174,12 +1179,19 @@
 .project-narrow .project-section {
   /* ~64 artboard between section blocks in the tall Figma comp */
   margin-bottom: calc(64 * var(--pn-u));
+  /* Fallback for hash nav — JS snaps heading under the fixed header with air. */
+  scroll-margin-top: calc(
+    var(--narrow-chrome-pad, 24px) * 2 + var(--pn-nzeribe-h, 40px) + 24px
+  );
 }
 
 .project-narrow .project-section__title {
   font-size: calc(48 * var(--pn-u));
   /* primary square @ y=1032 → 1032 − (951+50) = 31 */
   margin-bottom: calc(31 * var(--pn-u));
+  scroll-margin-top: calc(
+    var(--narrow-chrome-pad, 24px) * 2 + var(--pn-nzeribe-h, 40px) + 24px
+  );
 }
 
 .project-narrow #colors.project-section .project-section__title {
@@ -1388,6 +1400,14 @@
   height: calc(757.8 * var(--pn-u));
   width: auto;
   max-width: none;
+}
+
+.project-narrow .project-hscroll--poster .project-hscroll__item > span {
+  display: block !important;
+  height: calc(757.8 * var(--pn-u)) !important;
+  width: auto !important;
+  max-width: none !important;
+  aspect-ratio: auto !important;
 }
 
 .project-narrow .project-hscroll--merchandise .project-hscroll__track {
@@ -1640,8 +1660,8 @@
 }
 
 /*
- * Safari: mask-image paints false top/bottom white bands on the strip.
- * Same fade envelope via overlays + dense stops (no banding slabs).
+ * Safari: white overlays leave a hard hairline at the fade front; wrap-level
+ * mask-image left false top/bottom bands. Mask the scroller only.
  */
 .project-pane .project-hscroll-wrap[data-safari] {
   -webkit-mask-image: none !important;
@@ -1650,61 +1670,102 @@
 
 .project-pane .project-hscroll-wrap[data-safari]::before,
 .project-pane .project-hscroll-wrap[data-safari]::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: var(--hscroll-fade, 48px);
-  z-index: 2;
-  pointer-events: none;
-  opacity: 0;
+  content: none !important;
 }
 
-.project-pane .project-hscroll-wrap[data-safari]::before {
-  left: 0;
-  background: linear-gradient(
+.project-pane .project-hscroll-wrap[data-safari] .project-hscroll {
+  overflow-y: hidden;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-image: linear-gradient(#000, #000);
+  mask-image: linear-gradient(#000, #000);
+}
+
+.project-pane
+  .project-hscroll-wrap[data-safari][data-fade-left]
+  .project-hscroll {
+  -webkit-mask-image: linear-gradient(
     to right,
-    #fff 0%,
-    #fff 10%,
-    rgba(255, 255, 255, 0.96) 16%,
-    rgba(255, 255, 255, 0.9) 22%,
-    rgba(255, 255, 255, 0.82) 30%,
-    rgba(255, 255, 255, 0.72) 38%,
-    rgba(255, 255, 255, 0.6) 46%,
-    rgba(255, 255, 255, 0.48) 54%,
-    rgba(255, 255, 255, 0.36) 62%,
-    rgba(255, 255, 255, 0.24) 70%,
-    rgba(255, 255, 255, 0.14) 78%,
-    rgba(255, 255, 255, 0.07) 86%,
-    rgba(255, 255, 255, 0.02) 93%,
-    rgba(255, 255, 255, 0) 100%
+    transparent 0,
+    rgb(0 0 0 / 0.06) calc(var(--hscroll-fade) * 0.2),
+    rgb(0 0 0 / 0.2) calc(var(--hscroll-fade) * 0.4),
+    rgb(0 0 0 / 0.45) calc(var(--hscroll-fade) * 0.6),
+    rgb(0 0 0 / 0.75) calc(var(--hscroll-fade) * 0.8),
+    #000 var(--hscroll-fade),
+    #000 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    rgb(0 0 0 / 0.06) calc(var(--hscroll-fade) * 0.2),
+    rgb(0 0 0 / 0.2) calc(var(--hscroll-fade) * 0.4),
+    rgb(0 0 0 / 0.45) calc(var(--hscroll-fade) * 0.6),
+    rgb(0 0 0 / 0.75) calc(var(--hscroll-fade) * 0.8),
+    #000 var(--hscroll-fade),
+    #000 100%
   );
 }
 
-.project-pane .project-hscroll-wrap[data-safari]::after {
-  right: 0;
-  background: linear-gradient(
-    to left,
-    #fff 0%,
-    #fff 10%,
-    rgba(255, 255, 255, 0.96) 16%,
-    rgba(255, 255, 255, 0.9) 22%,
-    rgba(255, 255, 255, 0.82) 30%,
-    rgba(255, 255, 255, 0.72) 38%,
-    rgba(255, 255, 255, 0.6) 46%,
-    rgba(255, 255, 255, 0.48) 54%,
-    rgba(255, 255, 255, 0.36) 62%,
-    rgba(255, 255, 255, 0.24) 70%,
-    rgba(255, 255, 255, 0.14) 78%,
-    rgba(255, 255, 255, 0.07) 86%,
-    rgba(255, 255, 255, 0.02) 93%,
-    rgba(255, 255, 255, 0) 100%
+.project-pane
+  .project-hscroll-wrap[data-safari][data-fade-right]
+  .project-hscroll {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    #000 0,
+    #000 calc(100% - var(--hscroll-fade)),
+    rgb(0 0 0 / 0.75) calc(100% - var(--hscroll-fade) * 0.8),
+    rgb(0 0 0 / 0.45) calc(100% - var(--hscroll-fade) * 0.6),
+    rgb(0 0 0 / 0.2) calc(100% - var(--hscroll-fade) * 0.4),
+    rgb(0 0 0 / 0.06) calc(100% - var(--hscroll-fade) * 0.2),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    #000 0,
+    #000 calc(100% - var(--hscroll-fade)),
+    rgb(0 0 0 / 0.75) calc(100% - var(--hscroll-fade) * 0.8),
+    rgb(0 0 0 / 0.45) calc(100% - var(--hscroll-fade) * 0.6),
+    rgb(0 0 0 / 0.2) calc(100% - var(--hscroll-fade) * 0.4),
+    rgb(0 0 0 / 0.06) calc(100% - var(--hscroll-fade) * 0.2),
+    transparent 100%
   );
 }
 
-.project-pane .project-hscroll-wrap[data-safari][data-fade-left]::before,
-.project-pane .project-hscroll-wrap[data-safari][data-fade-right]::after {
-  opacity: 1;
+.project-pane
+  .project-hscroll-wrap[data-safari][data-fade-left][data-fade-right]
+  .project-hscroll {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    rgb(0 0 0 / 0.06) calc(var(--hscroll-fade) * 0.2),
+    rgb(0 0 0 / 0.2) calc(var(--hscroll-fade) * 0.4),
+    rgb(0 0 0 / 0.45) calc(var(--hscroll-fade) * 0.6),
+    rgb(0 0 0 / 0.75) calc(var(--hscroll-fade) * 0.8),
+    #000 var(--hscroll-fade),
+    #000 calc(100% - var(--hscroll-fade)),
+    rgb(0 0 0 / 0.75) calc(100% - var(--hscroll-fade) * 0.8),
+    rgb(0 0 0 / 0.45) calc(100% - var(--hscroll-fade) * 0.6),
+    rgb(0 0 0 / 0.2) calc(100% - var(--hscroll-fade) * 0.4),
+    rgb(0 0 0 / 0.06) calc(100% - var(--hscroll-fade) * 0.2),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    rgb(0 0 0 / 0.06) calc(var(--hscroll-fade) * 0.2),
+    rgb(0 0 0 / 0.2) calc(var(--hscroll-fade) * 0.4),
+    rgb(0 0 0 / 0.45) calc(var(--hscroll-fade) * 0.6),
+    rgb(0 0 0 / 0.75) calc(var(--hscroll-fade) * 0.8),
+    #000 var(--hscroll-fade),
+    #000 calc(100% - var(--hscroll-fade)),
+    rgb(0 0 0 / 0.75) calc(100% - var(--hscroll-fade) * 0.8),
+    rgb(0 0 0 / 0.45) calc(100% - var(--hscroll-fade) * 0.6),
+    rgb(0 0 0 / 0.2) calc(100% - var(--hscroll-fade) * 0.4),
+    rgb(0 0 0 / 0.06) calc(100% - var(--hscroll-fade) * 0.2),
+    transparent 100%
+  );
 }
 
 .project-pane .project-hscroll {
@@ -1731,6 +1792,16 @@
 
 .project-pane .project-hscroll--poster .project-hscroll__item {
   height: 428px;
+}
+
+/* Next/Image wraps in a span with aspect-ratio from width/height props —
+   unlock that so every poster shares the strip height (cropped stamp included). */
+.project-pane .project-hscroll--poster .project-hscroll__item > span {
+  display: block !important;
+  height: 428px !important;
+  width: auto !important;
+  max-width: none !important;
+  aspect-ratio: auto !important;
 }
 
 .project-pane .project-hscroll--poster .project-hscroll__image {

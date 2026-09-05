@@ -12,6 +12,7 @@ import {
 } from "react";
 
 import { DesktopStageViewContext } from "@/components/DesktopStageCanvas";
+import { scrollSectionToMenuAlign } from "@/components/project/scrollSectionToMenuAlign";
 import { DESKTOP_LAYOUT_W, getDesktopStageMetrics } from "@/lib/desktop-stage";
 import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 
@@ -19,6 +20,8 @@ export type ProjectMenuState = "open" | "hidden";
 
 type ProjectScrollApi = {
   scrollToTop: () => void;
+  /** Jump so the section heading lines up with the hamburger. */
+  scrollToSection: (sectionId: string) => void;
 };
 
 const ProjectScrollContext = createContext<ProjectScrollApi | null>(null);
@@ -266,6 +269,22 @@ export function ProjectContentPane({
     scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
+  const scrollToSection = useCallback(
+    (sectionId: string) => {
+      /* Section jumps always dismiss the nav so the left hamburger exists
+         as the align target (and hamburger-open lock cannot block hide). */
+      userOpenedMenuRef.current = false;
+      userClosedMenuRef.current = false;
+      const wasOpen = menuState === "open";
+      if (wasOpen) onMenuStateChange("hidden");
+      /* Wait for menu-hide + smart-object ease (420ms), then one smooth scroll. */
+      scrollSectionToMenuAlign(sectionId, {
+        delayMs: wasOpen ? 440 : 0,
+      });
+    },
+    [menuState, onMenuStateChange],
+  );
+
   const transition =
     reduceMotion || !easeScale
       ? "none"
@@ -281,7 +300,7 @@ export function ProjectContentPane({
       : undefined;
 
   return (
-    <ProjectScrollContext.Provider value={{ scrollToTop }}>
+    <ProjectScrollContext.Provider value={{ scrollToTop, scrollToSection }}>
       <div
         ref={paneRef}
         className="project-pane"

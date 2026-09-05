@@ -163,8 +163,8 @@ import type { CoverFlowItem } from "@/components/project/CoverFlowCarousel";
 
 export type EgwuImageAsset = CoverFlowItem;
 
-/** Default resting poster in reference: green postage-stamp (poster-06). */
-export const EGWU_POSTERS_INITIAL_INDEX = 4;
+/** Default resting poster in reference: green postage-stamp (poster-06) — last in strip. */
+export const EGWU_POSTERS_INITIAL_INDEX = 5;
 
 export const EGWU_POSTERS: CoverFlowItem[] = [
   {
@@ -196,18 +196,18 @@ export const EGWU_POSTERS: CoverFlowItem[] = [
     label: "Focus on the Physical",
   },
   {
-    src: "/projects/egwu/posters/poster-06.webp",
-    alt: "EGWÚ Records event poster with green postage-stamp frame and EGWÚ and Friends February event",
-    width: 1080,
-    height: 1350,
-    label: "Green postage-stamp poster",
-  },
-  {
     src: "/projects/egwu/posters/poster-03.webp",
     alt: "EGWÚ Groove Sessions poster with vinyl-record head illustration",
     width: 1080,
     height: 1080,
     label: "EGWÚ Groove Sessions",
+  },
+  {
+    src: "/projects/egwu/posters/poster-06.webp",
+    alt: "EGWÚ Records event poster with green postage-stamp frame and EGWÚ and Friends February event",
+    width: 1080,
+    height: 1283,
+    label: "Green postage-stamp poster",
   },
 ];
 
