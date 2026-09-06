@@ -25,7 +25,6 @@ import {
   DESKTOP_LAYOUT_BIO_LEFT,
   getDesktopStageMetrics,
 } from "@/lib/desktop-stage";
-import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import {
   EGWU_RECORDS_SLUG,
   getProjectBySlug,
@@ -62,7 +61,6 @@ export function HomeDesktop({ initialProject }: Props) {
   const [menuVeil, setMenuVeil] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
   const [wheelInteracting, setWheelInteracting] = useState(false);
-  const coarsePointer = useCoarsePointer();
   const m = getDesktopStageMetrics();
   const projectOpen = project != null;
   const projectRef = useRef(project);
@@ -128,7 +126,9 @@ export function HomeDesktop({ initialProject }: Props) {
     return () => window.removeEventListener("popstate", onPop);
   }, []);
 
-  const previewLabel = hoverNavLabel ?? activeLabel;
+  /* Previews follow the dial only while clicking/dragging — not mouse hover. */
+  const previewLabel =
+    wheelInteracting && hoverNavLabel ? hoverNavLabel : activeLabel;
   const isContact = !projectOpen && previewLabel === "contact";
   const showAboutBio = !projectOpen && (previewLabel === "about" || isContact);
   const fadeMs = wheelInteracting
@@ -170,7 +170,7 @@ export function HomeDesktop({ initialProject }: Props) {
           <CircularNavWheel
             layout="desktop"
             containment="stage"
-            spinFeel={coarsePointer ? "narrow" : "desktop"}
+            spinFeel="narrow"
             initialActiveLabel={initialProject ? "design" : "contact"}
             onActiveLabelChange={setActiveLabel}
             onHoverLabelChange={setHoverNavLabel}

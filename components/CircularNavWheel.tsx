@@ -824,31 +824,18 @@ export function CircularNavWheel({
     return () => window.removeEventListener("keydown", onKey);
   }, [N, isNarrow, selectNarrowIndex, snapRotationForIndex]);
 
-  /** Desktop mouse only — iOS fake hover must not snap the overlay mid-drag. */
-  const allowDesktopHoverSnap = () =>
-    !isDraggingRef.current &&
-    !isNarrowRef.current &&
-    spinFeelRef.current !== "narrow" &&
-    !coarseRef.current;
+  /** Hover must not spin or drive landing previews — click / drag only. */
+  const allowDesktopHoverSnap = () => false;
 
   const onItemEnter = (i: number) => {
+    /* Phone landing ring only — desktop/iPad stage is click + drag. */
+    if (!isNarrow) return;
     setHoveredIndex(i);
-    if (!allowDesktopHoverSnap()) return;
-    const nextLabel = i % LABELS.length;
-    const curLabel = focusedRef.current % LABELS.length;
-    if (nextLabel !== curLabel) {
-      setFocusedIndex(i);
-      setRotation((prev) => snapRotationForIndex(i, prev));
-    }
   };
 
-  /** Desktop: keep hover while the snapped item stays focused (label moves under cursor on rotate). */
   const onItemLeave = (i: number) => {
-    if (isNarrow) {
-      setHoveredIndex(null);
-      return;
-    }
-    setHoveredIndex((prev) => (focusedRef.current === i ? i : null));
+    if (!isNarrow) return;
+    setHoveredIndex(null);
   };
 
   const pointerLocal = (clientX: number, clientY: number) => {
@@ -1108,6 +1095,8 @@ export function CircularNavWheel({
           setWheelInteracting(false);
         }
       } else {
+        /* Desktop: click a label (or the dial) to snap/move there; drag to spin.
+           Activate only when the tapped label is already centered. */
         let i: number;
         if (startItemIndex != null) {
           i = startItemIndex;
@@ -1115,9 +1104,21 @@ export function CircularNavWheel({
           const p = pointerLocal(e.clientX, e.clientY);
           i = nearestIndexToPointer(p.x, p.y, φ);
         }
+        const nextRot = snapRotationForIndex(i, φ);
+        const centerNow = nearestDesktopLabelSnap(
+          φ,
+          snapRotationForIndex,
+          N,
+        ).tileIndex;
+        const alreadyCentered =
+          i === centerNow && Math.abs(nextRot - φ) < 0.04;
+
+        setHoveredIndex(null);
         setFocusedIndex(i);
-        setRotation((prev) => snapRotationForIndex(i, prev));
-        if (startItemIndex != null) {
+        rotationRef.current = nextRot;
+        setRotation(nextRot);
+
+        if (startItemIndex != null && alreadyCentered) {
           const label = items[i]?.label;
           if (label) onActivateRef.current?.(label);
         }
@@ -1445,6 +1446,8 @@ export function CircularNavWheel({
                   onMouseEnter={() => onItemEnter(item.index)}
                   onMouseLeave={() => onItemLeave(item.index)}
                   onFocus={() => {
+                    /* Desktop stage: focus must not flash hover previews. */
+                    if (!isNarrow) return;
                     setHoveredIndex(item.index);
                     if (!allowDesktopHoverSnap()) return;
                     setFocusedIndex(item.index);
@@ -1454,17 +1457,16 @@ export function CircularNavWheel({
                   }}
                   onBlur={() => onItemLeave(item.index)}
                   onClick={() => {
+                    /* Pointer-up owns snap / activate for desktop + overlay. */
                     if (spinFeel === "narrow") return;
                     if (skipNextActivateRef.current) {
                       skipNextActivateRef.current = false;
                       return;
                     }
-                    onActivateRef.current?.(item.label);
                   }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
-                      onItemEnter(item.index);
                       onActivateRef.current?.(item.label);
                     }
                     if (e.key === "ArrowUp" || e.key === "ArrowDown") {
