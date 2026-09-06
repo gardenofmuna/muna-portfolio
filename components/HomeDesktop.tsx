@@ -146,7 +146,10 @@ export function HomeDesktop({ initialProject }: Props) {
     <DesktopStageCanvas>
       <DesktopSiteShell
         layout="stage"
-        showPolaroid={!projectOpen}
+        showPolaroid={
+          !projectOpen &&
+          (previewLabel === "about" || previewLabel === "contact")
+        }
         menuState={projectOpen ? menuState : "open"}
         menuVeil={projectOpen && menuVeil}
         onOpenMenu={
