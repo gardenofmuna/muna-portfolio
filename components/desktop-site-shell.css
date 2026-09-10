@@ -201,8 +201,26 @@
 .desktop-site-shell__signature-mark {
   position: fixed;
   z-index: 30;
+  overflow: hidden;
   user-select: none;
   pointer-events: none;
+  /* Width animates full wordmark → leading “m” (see DesktopSiteShell). */
+  will-change: width;
+}
+
+.desktop-site-shell__signature-mark__inner {
+  display: block;
+  height: 100%;
+  /* Full asset width — parent clips to the “m” when compact. */
+  max-width: none;
+}
+
+.desktop-site-shell__signature-mark__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: left bottom;
 }
 
 .desktop-site-shell__signature-button {

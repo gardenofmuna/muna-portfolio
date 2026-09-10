@@ -6,7 +6,7 @@ import { AboutBio } from "@/components/AboutBio";
 import { CircularNavWheel } from "@/components/CircularNavWheel";
 import { ContactTopLinks } from "@/components/ContactTopLinks";
 import { CvPressHoverAccordion } from "@/components/CvPressHoverAccordion";
-import { DesignCluster } from "@/components/DesignCluster";
+import { DesignLandingIndex } from "@/components/DesignLandingIndex";
 import { DesktopSiteShell } from "@/components/DesktopSiteShell";
 import { DesktopStageCanvas } from "@/components/DesktopStageCanvas";
 import { FilmHoverGif } from "@/components/FilmHoverGif";
@@ -26,14 +26,11 @@ import {
   getDesktopStageMetrics,
 } from "@/lib/desktop-stage";
 import {
-  EGWU_RECORDS_SLUG,
   getProjectBySlug,
   type ProjectDefinition,
 } from "@/data/projects";
 
 import "@/components/project/project-pane.css";
-
-const DESIGN_PROJECT_PATH = `/design/${EGWU_RECORDS_SLUG}`;
 
 type Props = {
   /** Direct visit to a project URL — same shell, already in project view. */
@@ -45,8 +42,8 @@ type Props = {
  * Menu uses stage containment (shared off-axis position). Hover/bio/contact
  * overlays are authored in layout coordinates and scale with the stage.
  *
- * Clicking “design” keeps this shell and wheel mounted; the middle and
- * signature quadrants fill with the project in place (no route remount).
+ * Dialing “design” shows the project index in the middle; clicking a row
+ * opens that case study in place (no route remount).
  */
 export function HomeDesktop({ initialProject }: Props) {
   const [activeLabel, setActiveLabel] = useState(
@@ -74,23 +71,6 @@ export function HomeDesktop({ initialProject }: Props) {
     return () => mq.removeEventListener("change", u);
   }, []);
 
-  const openDesignProject = useCallback(() => {
-    if (projectRef.current) return;
-    const next = getProjectBySlug(EGWU_RECORDS_SLUG);
-    if (!next) return;
-    setEnteredFromLanding(true);
-    setMenuState("open");
-    setMenuVeil(false);
-    setProject(next);
-    if (window.location.pathname !== DESIGN_PROJECT_PATH) {
-      window.history.pushState(
-        { munaProject: EGWU_RECORDS_SLUG },
-        "",
-        DESIGN_PROJECT_PATH,
-      );
-    }
-  }, []);
-
   const goToLanding = useCallback(() => {
     setProject(null);
     setEnteredFromLanding(false);
@@ -102,7 +82,10 @@ export function HomeDesktop({ initialProject }: Props) {
   }, []);
 
   const onProjectChange = useCallback((next: ProjectDefinition) => {
-    setEnteredFromLanding(false);
+    /* Fade in when leaving the landing index for a case study. */
+    setEnteredFromLanding(projectRef.current == null);
+    setMenuState("open");
+    setMenuVeil(false);
     setProject(next);
   }, []);
 
@@ -169,6 +152,7 @@ export function HomeDesktop({ initialProject }: Props) {
             : undefined
         }
         onSignatureClick={projectOpen ? goToLanding : undefined}
+        signatureCompact={projectOpen}
         nav={
           <CircularNavWheel
             layout="desktop"
@@ -178,9 +162,6 @@ export function HomeDesktop({ initialProject }: Props) {
             onActiveLabelChange={setActiveLabel}
             onHoverLabelChange={setHoverNavLabel}
             onWheelInteractingChange={setWheelInteracting}
-            onLabelActivate={(label) => {
-              if (label === "design") openDesignProject();
-            }}
           />
         }
         center={
@@ -216,11 +197,7 @@ export function HomeDesktop({ initialProject }: Props) {
         stageOverlays={
           projectOpen ? null : (
             <>
-              <DesignCluster
-                visible={previewLabel === "design"}
-                variant="desktop"
-                stageLocked
-              />
+              <DesignLandingIndex visible={previewLabel === "design"} />
               <InstallationLottie
                 visible={previewLabel === "installation"}
                 layout="desktop"

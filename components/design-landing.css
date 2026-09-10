@@ -1,0 +1,111 @@
+/*
+ * Design landing list — Photoshop Character panel (master ÷ 2 → layout).
+ * Title: Arial Bold 95.2 / tracking −40 / leading 141.07
+ *
+ * [01] sizes from Character panel (95.2 brackets / 77 digits), then PS
+ * Superscript Size 58.3% + Position 33.3%.
+ */
+
+.design-landing-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: visible;
+}
+
+.design-landing-list__row {
+  margin: 0;
+  padding: 0;
+  height: 70.535px; /* leading 141.07 ÷ 2 */
+  overflow: visible;
+}
+
+.design-landing-list__item {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  color: #000;
+  cursor: pointer;
+  height: 100%;
+  overflow: visible;
+  /* Safari: `auto` + heavy weights can double-draw as a grey halo */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.design-landing-list__title {
+  font-family: "Arial MT Std", Arial, Helvetica, sans-serif;
+  font-size: 47.6px; /* 95.2 ÷ 2 */
+  font-weight: 800;
+  line-height: 70.535px; /* 141.07 ÷ 2 */
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  text-underline-offset: 0.12em;
+  text-decoration-thickness: 0.07em;
+  white-space: nowrap;
+}
+
+.design-landing-list__item[data-active] .design-landing-list__title {
+  text-decoration: underline;
+  text-decoration-color: var(--design-underline, #000);
+}
+
+.design-landing-list__num {
+  display: inline-block;
+  font-family: "LTC Garamont Display OT", "Times New Roman", serif;
+  font-size: 27.75px;
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+  text-transform: none;
+  vertical-align: 15.85px;
+  margin-right: 0.2em;
+}
+
+.design-landing-list__br {
+  font-size: 27.75px;
+  line-height: 1;
+}
+
+.design-landing-list__digits {
+  font-size: 22.45px;
+  line-height: 1;
+}
+
+/* No CSS shadow — Safari clips filter/box-shadow to a hard axis-aligned box
+   when the preview fades via opacity on a parent. */
+.design-landing-preview {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.design-landing-preview__clip {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  transform-origin: center center;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.design-landing-preview__image {
+  object-fit: contain;
+  object-position: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .design-landing-preview__clip {
+    transform: none !important;
+  }
+}

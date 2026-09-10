@@ -128,8 +128,12 @@ export function DesktopStageCanvas({ children, className }: Props) {
       }}
     >
       <div
-        className={`fixed inset-0 z-0 overflow-hidden bg-white ${className ?? ""}`}
+        className={`fixed inset-0 z-0 bg-white ${className ?? ""}`}
         data-stage-mode={view.mode}
+        style={{
+          /* Crop mode must clip; fit/expand let rotated design hovers bleed */
+          overflow: view.mode === "crop" ? "hidden" : "visible",
+        }}
       >
         <div
           className="absolute"

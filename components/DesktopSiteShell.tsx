@@ -47,6 +47,10 @@ type Props = {
    * reopens the menu — not when the menu is naturally open at scroll top.
    */
   menuVeil?: boolean;
+  /**
+   * Collapse nzeribe1.webp to the leading “m” when a design case study is open.
+   */
+  signatureCompact?: boolean;
   /** When set, bottom-right nzeribe signature navigates home (e.g. exit project). */
   onSignatureClick?: () => void;
   /**
@@ -55,6 +59,9 @@ type Props = {
    */
   layout?: "fluid" | "stage";
 };
+
+/** Source asset is 546×117; “m” ends ~80, “u” starts ~85 — sit in the gap. */
+const NZERIBE_M_SRC_W = 84;
 
 /**
  * Three-zone desktop shell:
@@ -70,6 +77,7 @@ export function DesktopSiteShell({
   onOpenMenu,
   onCloseMenu,
   menuVeil = false,
+  signatureCompact = false,
   onSignatureClick,
   layout = "fluid",
 }: Props) {
@@ -99,19 +107,51 @@ export function DesktopSiteShell({
         height: fluidMetrics.frameH,
       };
 
+  const fullMarkW = isStage ? stageMetrics.nzeribeW : fluidMetrics.nzeribeW;
+  const fullMarkH = isStage ? stageMetrics.nzeribeH : fluidMetrics.nzeribeH;
+  const compactMarkW = isStage
+    ? Math.ceil(stageMetrics.nzeribeW * (NZERIBE_M_SRC_W / NZERIBE_IMG_W))
+    : `calc(${NZERIBE_M_SRC_W} * ${fluidMetrics.u1624})`;
+  const markW = signatureCompact ? compactMarkW : fullMarkW;
+
   const signatureStyle = isStage
     ? {
         bottom: stageMetrics.inset,
         right: stageMetrics.inset,
-        width: stageMetrics.nzeribeW,
-        height: stageMetrics.nzeribeH,
+        width: markW,
+        height: fullMarkH,
       }
     : {
         bottom: fluidMetrics.inset,
         right: fluidMetrics.inset,
-        width: fluidMetrics.nzeribeW,
-        height: fluidMetrics.nzeribeH,
+        width: markW,
+        height: fullMarkH,
       };
+
+  const markTransition = reduceMotion
+    ? "none"
+    : "width 640ms cubic-bezier(0.22, 1, 0.36, 1)";
+
+  const markInner = (
+    <span
+      className="desktop-site-shell__signature-mark__inner"
+      style={
+        isStage
+          ? { width: stageMetrics.nzeribeW, height: stageMetrics.nzeribeH }
+          : { width: fluidMetrics.nzeribeW, height: fluidMetrics.nzeribeH }
+      }
+    >
+      <Image
+        src="/nzeribe1.webp"
+        alt={onSignatureClick ? "" : "Nzeribe"}
+        width={NZERIBE_IMG_W}
+        height={NZERIBE_IMG_H}
+        className="desktop-site-shell__signature-mark__image"
+        sizes={`${NZERIBE_IMG_W}px`}
+        priority
+      />
+    </span>
+  );
 
   return (
     <div
@@ -192,7 +232,11 @@ export function DesktopSiteShell({
       </div>
       <div
         className="desktop-site-shell__signature-mark"
-        style={signatureStyle}
+        data-compact={signatureCompact ? "" : undefined}
+        style={{
+          ...signatureStyle,
+          transition: markTransition,
+        }}
         aria-label="Site signature"
       >
         {onSignatureClick ? (
@@ -202,24 +246,10 @@ export function DesktopSiteShell({
             aria-label="Back to home"
             onClick={onSignatureClick}
           >
-            <Image
-              src="/nzeribe1.webp"
-              alt=""
-              width={NZERIBE_IMG_W}
-              height={NZERIBE_IMG_H}
-              className="block h-full w-full object-contain object-right object-bottom"
-              sizes={`${NZERIBE_IMG_W}px`}
-            />
+            {markInner}
           </button>
         ) : (
-          <Image
-            src="/nzeribe1.webp"
-            alt="Nzeribe"
-            width={NZERIBE_IMG_W}
-            height={NZERIBE_IMG_H}
-            className="block h-full w-full object-contain object-right object-bottom"
-            sizes={`${NZERIBE_IMG_W}px`}
-          />
+          markInner
         )}
       </div>
     </div>

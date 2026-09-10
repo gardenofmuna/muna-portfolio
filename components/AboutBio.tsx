@@ -35,8 +35,8 @@ const BIO_TEXT_SCALE = 0.5 * 1.1 * 1.1;
 const ABOUT_BIO_PIN_OFFSET_X = 63.0546875;
 const ABOUT_BIO_PIN_OFFSET_Y = -140.7421875;
 
-/** Matches Artboard_5 reference */
-const COL = {
+/** Matches Artboard_5 reference — coloured bio spans */
+export const ABOUT_BIO_INK = {
   lagos: "#ff7bb5",
   toronto: "#f9b109",
   medium: "#019f4b",
@@ -44,6 +44,8 @@ const COL = {
   afro: "#5d639f",
   blue: "#488bdc",
 } as const;
+
+const COL = ABOUT_BIO_INK;
 
 /**
  * Faux bold without triple ghosts: ±1px `text-shadow` draws fill + 2 offsets (3 stacked impressions).
