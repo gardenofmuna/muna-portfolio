@@ -63,9 +63,9 @@ export const DesktopStageViewContext =
   createContext<DesktopStageViewValue>(defaultStageView);
 
 /**
- * Height-fill when wide enough; width-fit on 16:10 laptops so Q3 keeps
- * right padding; crop only when the window goes square / too narrow.
- * Nav wheel always fills the viewport height.
+ * Height-fill when wide enough; width-fit on 16:10 laptops and iPad landscape
+ * so Q3 keeps right padding and equal gutters; crop only when the window goes
+ * square / too narrow. Nav wheel always fills the viewport height.
  */
 export function DesktopStageCanvas({ children, className }: Props) {
   const [view, setView] = useState({
@@ -118,7 +118,11 @@ export function DesktopStageCanvas({ children, className }: Props) {
     };
     update();
     window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
+    window.visualViewport?.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.visualViewport?.removeEventListener("resize", update);
+    };
   }, []);
 
   const offset =

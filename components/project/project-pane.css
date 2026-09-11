@@ -547,11 +547,7 @@
 }
 
 .project-asset-single--colors {
-  /*
-   * Align toward roman VI in .project-index-nav, then ×1.2 ×1.1 ×1.1.
-   * Base to VI ≈ 53.326% → 77.429%.
-   */
-  width: 77.429%;
+  width: 100%;
   max-width: 100%;
 }
 
@@ -568,7 +564,7 @@
           var(--egwu-bar-active)
       )
   );
-  width: 77.429%;
+  width: 100%;
   max-width: 100%;
   container-type: inline-size;
   container-name: egwu-colors;
@@ -598,15 +594,22 @@
   gap: 0;
   width: 100%;
   margin-top: 0;
-  /* Height = expanded tab width → active bar reads as a square. */
-  height: calc(100cqw * var(--egwu-bar-active-share));
   min-height: 0;
+  height: auto;
+  /* Row height = active-bar width, so the expanded swatch is 1:1. */
+  aspect-ratio: calc(
+    (
+        var(--egwu-bar-idle) * (var(--egwu-bar-count) - 1) +
+          var(--egwu-bar-active)
+      ) /
+      var(--egwu-bar-active)
+  );
 }
 
 .project-egwu-colors__bar {
   position: relative;
   display: block;
-  flex: var(--egwu-bar-idle) 1 0;
+  flex: var(--egwu-bar-idle) 0 0%;
   width: auto;
   min-width: 0;
   max-width: none;
@@ -1437,11 +1440,11 @@
   margin-top: 0;
   min-height: 0;
   flex: 0 0 auto;
-  height: calc(100cqw * var(--egwu-bar-active-share));
+  height: auto;
 }
 
 .project-narrow .project-egwu-colors__bar {
-  flex: var(--egwu-bar-idle) 1 0;
+  flex: var(--egwu-bar-idle) 0 0%;
   width: auto;
   min-width: 0;
   max-width: none;
@@ -2244,7 +2247,9 @@
 }
 
 @media (pointer: coarse) {
-  .project-pane .project-hscroll-wrap {
+  /* Phone / iPad portrait only. iPad landscape is .project-pane and must
+     keep the same Q2 gutters as a laptop (no full-bleed into Q3). */
+  .project-narrow .project-hscroll-wrap {
     width: calc(
       100% + var(--project-gutter-left, 0px) + var(--project-gutter-right, 0px)
     );
@@ -2256,16 +2261,16 @@
     mask-image: none;
   }
 
-  .project-pane .project-hscroll-wrap::before,
-  .project-pane .project-hscroll-wrap::after {
+  .project-narrow .project-hscroll-wrap::before,
+  .project-narrow .project-hscroll-wrap::after {
     content: none;
   }
 
-  .project-pane .project-hscroll {
+  .project-narrow .project-hscroll {
     overscroll-behavior-x: auto;
   }
 
-  .project-pane .project-hscroll__track {
+  .project-narrow .project-hscroll__track {
     padding-left: var(--project-gutter-left, 0px);
     padding-right: var(--project-gutter-right, 0px);
   }

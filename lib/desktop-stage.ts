@@ -92,8 +92,8 @@ export const DESKTOP_STAGE_ASPECT = DESKTOP_STAGE_W / DESKTOP_STAGE_H;
 
 export type StageFitMode = "expand" | "fit" | "crop";
 
-/** 16:10 / 3:2 still count as a desktop rectangle (e.g. 13" MacBook 1440×900). */
-export const STAGE_DESKTOP_MIN_ASPECT = 1.45;
+/** 4:3 iPad landscape and 16:10 laptops still count as a desktop rectangle. */
+export const STAGE_DESKTOP_MIN_ASPECT = 1.25;
 
 /** Always fill viewport height so the nav wheel has no top/bottom gap. */
 export function desktopStageHeightScale(viewportH: number): number {
@@ -106,8 +106,8 @@ export function desktopStageNaturalWidth(viewportH: number): number {
 
 /**
  * expand — window is wide enough: height-fill, extra width opens Q2/Q3.
- * fit — desktop rectangle but not wide enough (13" 16:10): width-fit so the
- *       right padding stays; nav still fills viewport height.
+ * fit — desktop rectangle but not wide enough (13" 16:10, iPad landscape):
+ *       width-fit so Q3 right padding and equal gutters stay; nav fills height.
  * crop — too square / squeezed from the sides: height-fill + horizontal crop.
  */
 export function desktopStageFitMode(
@@ -187,6 +187,15 @@ export type WindowFrame = {
 };
 
 export function readWindowFrame(): WindowFrame {
+  const vv = window.visualViewport;
+  if (vv && vv.width >= 200 && vv.height >= 200) {
+    return {
+      screenX: window.screenX + vv.offsetLeft,
+      screenY: window.screenY + vv.offsetTop,
+      width: vv.width,
+      height: vv.height,
+    };
+  }
   return {
     screenX: window.screenX,
     screenY: window.screenY,
