@@ -1,9 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import type { CSSProperties, ReactNode } from "react";
+import { useContext, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
+import { DesktopStageViewContext } from "@/components/DesktopStageCanvas";
 import {
   getDesktopCanvasMetrics,
   getDesktopShellGridStyle,
@@ -13,6 +15,7 @@ import {
 import {
   getDesktopStageMetrics,
   getDesktopStageShellStyle,
+  NZERIBE_MARK_M_SRC_W,
 } from "@/lib/desktop-stage";
 import "./desktop-site-shell.css";
 
@@ -60,9 +63,6 @@ type Props = {
   layout?: "fluid" | "stage";
 };
 
-/** Source asset is 546×117; “m” ends ~80, “u” starts ~85 — sit in the gap. */
-const NZERIBE_M_SRC_W = 84;
-
 /**
  * Three-zone desktop shell:
  * [ navigation zone ] [ center / project zone ] [ signature zone ]
@@ -82,10 +82,11 @@ export function DesktopSiteShell({
   layout = "fluid",
 }: Props) {
   const isStage = layout === "stage";
+  const stageView = useContext(DesktopStageViewContext);
   const fluidMetrics = getDesktopCanvasMetrics();
   const stageMetrics = getDesktopStageMetrics();
   const gridStyle = isStage
-    ? getDesktopStageShellStyle(menuState)
+    ? getDesktopStageShellStyle(menuState, signatureCompact)
     : getDesktopShellGridStyle(menuState);
   const reduceMotion = useReducedMotionPref();
   const showOpenHamburger = menuState === "hidden" && Boolean(onOpenMenu);
@@ -107,50 +108,47 @@ export function DesktopSiteShell({
         height: fluidMetrics.frameH,
       };
 
-  const fullMarkW = isStage ? stageMetrics.nzeribeW : fluidMetrics.nzeribeW;
-  const fullMarkH = isStage ? stageMetrics.nzeribeH : fluidMetrics.nzeribeH;
-  const compactMarkW = isStage
-    ? Math.ceil(stageMetrics.nzeribeW * (NZERIBE_M_SRC_W / NZERIBE_IMG_W))
-    : `calc(${NZERIBE_M_SRC_W} * ${fluidMetrics.u1624})`;
-  const markW = signatureCompact ? compactMarkW : fullMarkW;
+  const u = stageView.layoutScreenUnit;
+  const fullMarkLayoutW = Math.round(stageMetrics.nzeribeW);
+  const fullMarkLayoutH = Math.round(stageMetrics.nzeribeH);
+  const compactMarkLayoutW = Math.ceil(
+    stageMetrics.nzeribeW * (NZERIBE_MARK_M_SRC_W / NZERIBE_IMG_W),
+  );
+  const markScreenFullW = Math.round(fullMarkLayoutW * u);
+  const markScreenCompactW = Math.round(compactMarkLayoutW * u);
+  const markScreenH = Math.round(fullMarkLayoutH * u);
+  const markCssRight = Math.round(
+    stageView.viewportW -
+      (stageView.offsetLeft + (stageView.layoutW - stageMetrics.inset) * u),
+  );
+  const markCssBottom = Math.round(
+    stageView.viewportH -
+      (stageView.offsetTop + (stageView.layoutH - stageMetrics.inset) * u),
+  );
 
-  const signatureStyle = isStage
-    ? {
-        bottom: stageMetrics.inset,
-        right: stageMetrics.inset,
-        width: markW,
-        height: fullMarkH,
-      }
-    : {
-        bottom: fluidMetrics.inset,
-        right: fluidMetrics.inset,
-        width: markW,
-        height: fullMarkH,
-      };
+  const stageMarkStyle = {
+    right: markCssRight,
+    bottom: markCssBottom,
+    ["--mark-full-w" as string]: `${markScreenFullW}px`,
+    ["--mark-compact-w" as string]: `${markScreenCompactW}px`,
+    ["--mark-h" as string]: `${markScreenH}px`,
+  } satisfies CSSProperties;
 
-  const markTransition = reduceMotion
-    ? "none"
-    : "width 640ms cubic-bezier(0.22, 1, 0.36, 1)";
+  const fluidMarkStyle = {
+    bottom: fluidMetrics.inset,
+    right: fluidMetrics.inset,
+    ["--mark-full-w" as string]: fluidMetrics.nzeribeW,
+    ["--mark-compact-w" as string]: `calc(${NZERIBE_MARK_M_SRC_W} * ${fluidMetrics.u1624})`,
+    ["--mark-h" as string]: fluidMetrics.nzeribeH,
+  } satisfies CSSProperties;
 
-  const markInner = (
-    <span
-      className="desktop-site-shell__signature-mark__inner"
-      style={
-        isStage
-          ? { width: stageMetrics.nzeribeW, height: stageMetrics.nzeribeH }
-          : { width: fluidMetrics.nzeribeW, height: fluidMetrics.nzeribeH }
-      }
-    >
-      <Image
-        src="/nzeribe1.webp"
-        alt={onSignatureClick ? "" : "Nzeribe"}
-        width={NZERIBE_IMG_W}
-        height={NZERIBE_IMG_H}
-        className="desktop-site-shell__signature-mark__image"
-        sizes={`${NZERIBE_IMG_W}px`}
-        priority
-      />
-    </span>
+  const stageMark = (
+    <SignatureMark
+      compact={signatureCompact}
+      onSignatureClick={onSignatureClick}
+      className="desktop-site-shell__signature-mark--chrome"
+      style={stageMarkStyle}
+    />
   );
 
   return (
@@ -230,28 +228,65 @@ export function DesktopSiteShell({
           priority
         />
       </div>
-      <div
-        className="desktop-site-shell__signature-mark"
-        data-compact={signatureCompact ? "" : undefined}
-        style={{
-          ...signatureStyle,
-          transition: markTransition,
-        }}
-        aria-label="Site signature"
-      >
-        {onSignatureClick ? (
-          <button
-            type="button"
-            className="desktop-site-shell__signature-button"
-            aria-label="Back to home"
-            onClick={onSignatureClick}
-          >
-            {markInner}
-          </button>
-        ) : (
-          markInner
-        )}
-      </div>
+
+      {isStage
+        ? stageView.chromeEl
+          ? createPortal(stageMark, stageView.chromeEl)
+          : null
+        : (
+            <SignatureMark
+              compact={signatureCompact}
+              onSignatureClick={onSignatureClick}
+              style={fluidMarkStyle}
+            />
+          )}
+    </div>
+  );
+}
+
+function SignatureMark({
+  compact,
+  onSignatureClick,
+  className,
+  style,
+}: {
+  compact: boolean;
+  onSignatureClick?: () => void;
+  className?: string;
+  style: CSSProperties;
+}) {
+  return (
+    <div
+      className={["desktop-site-shell__signature-mark", className]
+        .filter(Boolean)
+        .join(" ")}
+      data-compact={compact ? "" : undefined}
+      style={style}
+      role="img"
+      aria-label="Nzeribe"
+    >
+      {/*
+        Real <img>, fixed full size. Parent width + overflow clips to “m”.
+        Safari will not reveal a background-image as the box grows.
+      */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/nzeribe1.webp"
+        alt=""
+        width={NZERIBE_IMG_W}
+        height={NZERIBE_IMG_H}
+        className="desktop-site-shell__signature-mark__image"
+        draggable={false}
+      />
+      <button
+        type="button"
+        className="desktop-site-shell__signature-button"
+        data-active={onSignatureClick ? "" : undefined}
+        aria-label={onSignatureClick ? "Back to home" : undefined}
+        aria-hidden={onSignatureClick ? undefined : true}
+        tabIndex={onSignatureClick ? 0 : -1}
+        onClick={onSignatureClick}
+      />
     </div>
   );
 }

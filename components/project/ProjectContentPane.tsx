@@ -13,7 +13,7 @@ import {
 
 import { DesktopStageViewContext } from "@/components/DesktopStageCanvas";
 import { scrollSectionToMenuAlign } from "@/components/project/scrollSectionToMenuAlign";
-import { DESKTOP_LAYOUT_W, getDesktopStageMetrics } from "@/lib/desktop-stage";
+import { DESKTOP_LAYOUT_W, getDesktopSignatureZoneWidth, getDesktopStageMetrics } from "@/lib/desktop-stage";
 import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 
 export type ProjectMenuState = "open" | "hidden";
@@ -33,6 +33,8 @@ export function useProjectScroll() {
 type Props = {
   menuState: ProjectMenuState;
   onMenuStateChange: (state: ProjectMenuState) => void;
+  /** Match shell: narrower signature column when wordmark is “m”. */
+  signatureCompact?: boolean;
   children: ReactNode;
 };
 
@@ -55,6 +57,7 @@ type SmartScale = {
 export function ProjectContentPane({
   menuState,
   onMenuStateChange,
+  signatureCompact = false,
   children,
 }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -93,8 +96,9 @@ export function ProjectContentPane({
     const inner = innerRef.current;
     if (!inner) return;
     const m = getDesktopStageMetrics();
-    const baseW = Math.max(1, layoutW - m.navZoneOpen - m.signatureZone);
-    const hiddenW = Math.max(1, layoutW - m.navZoneClosed - m.signatureZone);
+    const signatureZone = getDesktopSignatureZoneWidth(signatureCompact);
+    const baseW = Math.max(1, layoutW - m.navZoneOpen - signatureZone);
+    const hiddenW = Math.max(1, layoutW - m.navZoneClosed - signatureZone);
     const scale = menuState === "hidden" ? hiddenW / baseW : 1;
     const innerH = inner.offsetHeight;
     setSmart((prev) => {
@@ -103,7 +107,7 @@ export function ProjectContentPane({
       }
       return { scale, baseW, innerH };
     });
-  }, [layoutW, menuState]);
+  }, [layoutW, menuState, signatureCompact]);
 
   useLayoutEffect(() => {
     updateSmart();

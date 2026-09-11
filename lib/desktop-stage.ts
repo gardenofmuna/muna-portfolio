@@ -35,6 +35,9 @@ const NZERIBE_IMG_W = 546;
 const NZERIBE_IMG_H = 117;
 const ABOUT_GAP_FROM_WEBP_PX = 20;
 
+/** Leading “m” crop width of nzeribe1.webp (source px). */
+export const NZERIBE_MARK_M_SRC_W = 84;
+
 /**
  * Content column from equal-gutter centering between:
  *   - right edge of the longest open-menu label (“select works”)
@@ -315,12 +318,25 @@ export function getDesktopStageMetrics(): DesktopStageMetrics {
   };
 }
 
+/**
+ * Right grid column width. When the wordmark collapses to “m” on design
+ * case studies, shrink to inset + mark so the center quadrant can grow.
+ */
+export function getDesktopSignatureZoneWidth(compact = false): number {
+  const m = getDesktopStageMetrics();
+  if (!compact) return m.signatureZone;
+  const markW = Math.ceil(m.nzeribeW * (NZERIBE_MARK_M_SRC_W / NZERIBE_IMG_W));
+  return m.inset + markW;
+}
+
 export function getDesktopStageShellStyle(
   menuState: "open" | "hidden" = "open",
+  signatureCompact = false,
 ): CSSProperties {
   const m = getDesktopStageMetrics();
-  const baseW = Math.max(1, DESKTOP_LAYOUT_W - m.navZoneOpen - m.signatureZone);
-  const hiddenW = Math.max(1, DESKTOP_LAYOUT_W - m.navZoneClosed - m.signatureZone);
+  const signatureZone = getDesktopSignatureZoneWidth(signatureCompact);
+  const baseW = Math.max(1, DESKTOP_LAYOUT_W - m.navZoneOpen - signatureZone);
+  const hiddenW = Math.max(1, DESKTOP_LAYOUT_W - m.navZoneClosed - signatureZone);
   const smartScale = hiddenW / baseW;
   /**
    * Open: equal select-works ↔ content ↔ nzeribe air (projectGutterRight).
@@ -340,7 +356,7 @@ export function getDesktopStageShellStyle(
     ["--nav-zone-width" as string]: `${
       menuState === "open" ? m.navZoneOpen : m.navZoneClosed
     }px`,
-    ["--signature-zone-width" as string]: `${m.signatureZone}px`,
+    ["--signature-zone-width" as string]: `${signatureZone}px`,
     ["--shell-inset-top" as string]: `${m.inset}px`,
     ["--shell-inset-bottom" as string]: `${m.shellInsetBottom}px`,
     ["--project-gutter-left" as string]: `${m.projectGutter}px`,

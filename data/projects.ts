@@ -323,6 +323,13 @@ export const DOC_NOW_POSTERS: CoverFlowItem[] = [
   },
 ];
 
+/** Desktop board order: Donor Package → Bake Sale → film-strip. */
+export const DOC_NOW_POSTERS_BOARD: CoverFlowItem[] = [
+  DOC_NOW_POSTERS[2],
+  DOC_NOW_POSTERS[1],
+  DOC_NOW_POSTERS[0],
+];
+
 export const DOC_NOW_PROGRAM: CoverFlowItem[] = [
   {
     src: docNowSrc("Festival program/DOCNOW2025PROGRAM-Spread_page-0001.webp"),
@@ -495,12 +502,6 @@ export const DEVAULT_POSTERS: CoverFlowItem[] = [
     height: 1350,
   },
   {
-    src: devaultSrc("Posters/EPISODE 2.webp"),
-    alt: "Devault Presents episode 2 poster",
-    width: 1000,
-    height: 1000,
-  },
-  {
     src: devaultSrc("Posters/EPISODE 3.webp"),
     alt: "Devault Presents episode 3 poster",
     width: 1080,
@@ -533,12 +534,6 @@ export const DEVAULT_POSTERS: CoverFlowItem[] = [
   {
     src: devaultSrc("Posters/DP SEASON 2 EPISODE 1.webp"),
     alt: "Devault Presents season 2 episode 1 poster",
-    width: 1080,
-    height: 1350,
-  },
-  {
-    src: devaultSrc("Posters/DP S02 EP2.webp"),
-    alt: "Devault Presents season 2 episode 2 poster",
     width: 1080,
     height: 1350,
   },
@@ -697,6 +692,12 @@ export const DEVAULT_PODCAST: CoverFlowItem[] = [
     alt: "Devault Presents podcast cover 2",
     width: 1080,
     height: 1080,
+  },
+  {
+    src: devaultSrc("Podcast Cover Art/2022 RECAP.webp"),
+    alt: "Devault Presents 2022 Recap podcast cover",
+    width: 1000,
+    height: 1000,
   },
   {
     src: devaultSrc("Podcast Cover Art/Podcast Cover 3.webp"),

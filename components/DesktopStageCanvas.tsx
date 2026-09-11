@@ -29,25 +29,38 @@ type Props = {
   className?: string;
 };
 
-type StageView = {
+export type DesktopStageViewValue = {
   mode: StageFitMode;
   scale: number;
-  stageW: number;
-  stageH: number;
   layoutW: number;
   layoutH: number;
+  wheelLayoutH: number;
   viewportW: number;
   viewportH: number;
-  alignX: StageCropAlignX;
-  wheelLayoutH: number;
+  offsetLeft: number;
+  offsetTop: number;
+  /** Screen px per layout-coordinate unit (view.scale × artboard scale). */
+  layoutScreenUnit: number;
+  /** Unscaled overlay root — width tweens must not run under transform:scale. */
+  chromeEl: HTMLDivElement | null;
 };
 
-export const DesktopStageViewContext = createContext({
-  mode: "expand" as StageFitMode,
+const defaultStageView: DesktopStageViewValue = {
+  mode: "expand",
   scale: 1,
   layoutW: DESKTOP_LAYOUT_W,
+  layoutH: DESKTOP_LAYOUT_H,
   wheelLayoutH: DESKTOP_LAYOUT_H,
-});
+  viewportW: DESKTOP_STAGE_W,
+  viewportH: DESKTOP_STAGE_H,
+  offsetLeft: 0,
+  offsetTop: 0,
+  layoutScreenUnit: DESKTOP_LAYOUT_SCALE,
+  chromeEl: null,
+};
+
+export const DesktopStageViewContext =
+  createContext<DesktopStageViewValue>(defaultStageView);
 
 /**
  * Height-fill when wide enough; width-fit on 16:10 laptops so Q3 keeps
@@ -55,8 +68,8 @@ export const DesktopStageViewContext = createContext({
  * Nav wheel always fills the viewport height.
  */
 export function DesktopStageCanvas({ children, className }: Props) {
-  const [view, setView] = useState<StageView>({
-    mode: "expand",
+  const [view, setView] = useState({
+    mode: "expand" as StageFitMode,
     scale: 1,
     stageW: DESKTOP_STAGE_W,
     stageH: DESKTOP_STAGE_H,
@@ -64,9 +77,10 @@ export function DesktopStageCanvas({ children, className }: Props) {
     layoutH: DESKTOP_LAYOUT_H,
     viewportW: DESKTOP_STAGE_W,
     viewportH: DESKTOP_STAGE_H,
-    alignX: "left",
+    alignX: "left" as StageCropAlignX,
     wheelLayoutH: DESKTOP_LAYOUT_H,
   });
+  const [chromeEl, setChromeEl] = useState<HTMLDivElement | null>(null);
   const frameRef = useRef<ReturnType<typeof readWindowFrame> | null>(null);
   const alignXRef = useRef<StageCropAlignX>("left");
 
@@ -118,13 +132,22 @@ export function DesktopStageCanvas({ children, className }: Props) {
         )
       : { left: 0, top: 0 };
 
+  const layoutScreenUnit = view.scale * DESKTOP_LAYOUT_SCALE;
+
   return (
     <DesktopStageViewContext.Provider
       value={{
         mode: view.mode,
         scale: view.scale,
         layoutW: view.layoutW,
+        layoutH: view.layoutH,
         wheelLayoutH: view.wheelLayoutH,
+        viewportW: view.viewportW,
+        viewportH: view.viewportH,
+        offsetLeft: offset.left,
+        offsetTop: offset.top,
+        layoutScreenUnit,
+        chromeEl,
       }}
     >
       <div
@@ -160,6 +183,17 @@ export function DesktopStageCanvas({ children, className }: Props) {
             {children}
           </div>
         </div>
+        {/*
+          Unscaled chrome — signature width animation must not run under
+          transform:scale or Safari relayouts every frame (glitchy expand).
+        */}
+        <div
+          ref={(el) => {
+            setChromeEl((prev) => (prev === el ? prev : el));
+          }}
+          className="pointer-events-none absolute inset-0 z-[35]"
+          data-stage-chrome=""
+        />
       </div>
     </DesktopStageViewContext.Provider>
   );

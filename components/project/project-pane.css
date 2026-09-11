@@ -107,9 +107,8 @@
    * Artboard 9 open composition — a smart object.
    * Width is locked in JS; hidden menu scales this from top-left.
    */
-  --website-still-h: calc(
-    (var(--pane-content-w, 659px) - 8px - 52px) * 903 / 1600
-  );
+  --website-still-w: var(--pane-content-w, 659px);
+  --website-still-h: calc(var(--website-still-w) * 903 / 1600);
   position: absolute;
   top: 0;
   left: 0;
@@ -326,6 +325,164 @@
   margin-bottom: calc(64 * var(--pn-u));
 }
 
+/* DOC NOW posters — three same-height posters, equal gaps (portfolio board). */
+.project-pane .project-poster-static {
+  --poster-static-gap: 16px;
+  --poster-static-pad-x: 32px;
+  /* Sum of width/height ratios so all three fit the content width. */
+  --poster-static-h: calc(
+    (
+        var(--pane-content-w, 659px) - (2 * var(--poster-static-pad-x)) -
+          (2 * var(--poster-static-gap))
+      ) /
+      2.28
+  );
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--poster-static-gap);
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 48px var(--poster-static-pad-x);
+  background: #333;
+}
+
+.project-pane .project-poster-static__item {
+  margin: 0;
+  min-width: 0;
+  flex: 0 0 auto;
+  line-height: 0;
+}
+
+.project-pane .project-poster-static__item > span {
+  display: block !important;
+  height: var(--poster-static-h) !important;
+  width: auto !important;
+  max-width: none !important;
+  aspect-ratio: auto !important;
+}
+
+.project-pane .project-poster-static__image {
+  display: block;
+  height: var(--poster-static-h) !important;
+  width: auto !important;
+  max-width: none !important;
+  object-fit: contain;
+  object-position: center center;
+}
+
+/* Devault posters — three-up staircase carousel slides. */
+.project-pane .project-poster-stairs-wrap {
+  background: #111;
+  overflow: hidden;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+}
+
+.project-pane .project-poster-stairs-scroller {
+  overflow-x: auto;
+  overflow-y: hidden;
+  width: 100%;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.project-pane .project-poster-stairs-scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.project-pane .project-poster-stairs-track {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: max-content;
+}
+
+.project-pane .project-poster-stairs {
+  --stairs-gap: 16px;
+  --stairs-pad-x: 36px;
+  --stairs-pad-y: 44px;
+  --stairs-step: 56px;
+  --stairs-poster-h: calc(
+    (
+        var(--pane-content-w, 659px) - (2 * var(--stairs-pad-x)) -
+          (2 * var(--stairs-gap))
+      ) /
+      2.4
+  );
+  box-sizing: border-box;
+  flex: 0 0 100cqw;
+  width: 100cqw;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: var(--stairs-gap);
+  padding: var(--stairs-pad-y) var(--stairs-pad-x);
+  min-height: calc(
+    var(--stairs-poster-h) + (2 * var(--stairs-step)) + (2 * var(--stairs-pad-y))
+  );
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  margin: 0;
+}
+
+.project-pane .project-poster-stairs-wrap {
+  container-type: inline-size;
+  container-name: poster-stairs;
+}
+
+.project-pane .project-poster-stairs__item {
+  margin: 0;
+  flex: 0 0 auto;
+  line-height: 0;
+}
+
+.project-pane .project-poster-stairs__item > span {
+  display: block !important;
+  height: var(--stairs-poster-h) !important;
+  width: auto !important;
+  max-width: none !important;
+  aspect-ratio: auto !important;
+}
+
+.project-pane .project-poster-stairs__image {
+  display: block;
+  height: var(--stairs-poster-h) !important;
+  width: auto !important;
+  max-width: none !important;
+  object-fit: contain;
+}
+
+/* Fall: left high → right low (first portfolio board). */
+.project-pane .project-poster-stairs--fall .project-poster-stairs__item--0 {
+  margin-top: 0;
+}
+.project-pane .project-poster-stairs--fall .project-poster-stairs__item--1 {
+  margin-top: var(--stairs-step);
+}
+.project-pane .project-poster-stairs--fall .project-poster-stairs__item--2 {
+  margin-top: calc(2 * var(--stairs-step));
+}
+
+/* Rise: left low → right high (second portfolio board). */
+.project-pane .project-poster-stairs--rise .project-poster-stairs__item--0 {
+  margin-top: calc(2 * var(--stairs-step));
+}
+.project-pane .project-poster-stairs--rise .project-poster-stairs__item--1 {
+  margin-top: var(--stairs-step);
+}
+.project-pane .project-poster-stairs--rise .project-poster-stairs__item--2 {
+  margin-top: 0;
+}
+
 /* Logo — equal quadrant gaps in both menu states */
 
 /* Logo — boxes from PS: 500², wordmark 446×190, badge 453×310 (master) */
@@ -390,8 +547,11 @@
 }
 
 .project-asset-single--colors {
-  /* Match .project-egwu-logos row: 250 + 77.5 gap + 223 */
-  width: calc(250px + 77.5px + 223px);
+  /*
+   * Align toward roman VI in .project-index-nav, then ×1.2 ×1.1 ×1.1.
+   * Base to VI ≈ 53.326% → 77.429%.
+   */
+  width: 77.429%;
   max-width: 100%;
 }
 
@@ -408,8 +568,7 @@
           var(--egwu-bar-active)
       )
   );
-  /* Same full content width as I–X roman numerals (.project-index-nav). */
-  width: 100%;
+  width: 77.429%;
   max-width: 100%;
   container-type: inline-size;
   container-name: egwu-colors;
@@ -1255,13 +1414,11 @@
 }
 
 .project-narrow .project-asset-single--colors {
-  /* Match narrow logo row: 300 + 92 gap + 271 */
-  width: calc((300 + 92 + 271) * var(--pn-u));
+  width: 100%;
   max-width: 100%;
 }
 
 .project-narrow .project-egwu-colors {
-  /* Same full content width as I–X roman numerals. */
   width: 100%;
   max-width: 100%;
 }
@@ -1790,8 +1947,125 @@
   width: max-content;
 }
 
+/* Desktop posters / merchandise — band carousel (flat row, peeks, markers). */
+.project-pane .project-hscroll-wrap--poster,
+.project-pane .project-hscroll-wrap--merchandise {
+  padding-block: 40px;
+  overflow: hidden;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+}
+
+.project-pane .project-hscroll-wrap--poster {
+  background: #333;
+}
+
+.project-pane .project-hscroll-wrap--merchandise {
+  background: #9caf88;
+}
+
+.project-pane .project-hscroll-wrap--merchandise .project-hscroll__control {
+  color: #111;
+}
+
+.project-pane .project-hscroll-wrap--poster[data-fade-left],
+.project-pane .project-hscroll-wrap--poster[data-fade-right],
+.project-pane .project-hscroll-wrap--poster[data-fade-left][data-fade-right],
+.project-pane .project-hscroll-wrap--merchandise[data-fade-left],
+.project-pane .project-hscroll-wrap--merchandise[data-fade-right],
+.project-pane
+  .project-hscroll-wrap--merchandise[data-fade-left][data-fade-right] {
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+}
+
+.project-pane .project-hscroll-wrap--poster .project-hscroll,
+.project-pane .project-hscroll-wrap--merchandise .project-hscroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+}
+
+.project-pane .project-hscroll-wrap--poster .project-hscroll__track,
+.project-pane .project-hscroll-wrap--merchandise .project-hscroll__track {
+  gap: 80px;
+  padding-left: 64px;
+  padding-right: 64px;
+  align-items: center;
+}
+
+.project-pane .project-hscroll__control {
+  position: absolute;
+  top: 50%;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 64px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-50%);
+  transition: opacity 160ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.project-pane .project-hscroll__control--prev {
+  left: 10px;
+}
+
+.project-pane .project-hscroll__control--next {
+  right: 10px;
+}
+
+.project-pane .project-hscroll-wrap:hover .project-hscroll__control,
+.project-pane .project-hscroll-wrap:focus-within .project-hscroll__control {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.project-pane .project-hscroll-wrap:hover .project-hscroll__control:disabled,
+.project-pane .project-hscroll-wrap:focus-within .project-hscroll__control:disabled {
+  opacity: 0.28;
+  cursor: default;
+  pointer-events: none;
+}
+
+.project-pane .project-hscroll__control:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+@media (pointer: coarse) {
+  .project-pane .project-hscroll__control {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .project-pane .project-hscroll__control:disabled {
+    opacity: 0.28;
+    pointer-events: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .project-pane .project-hscroll__control {
+    transition: none;
+  }
+}
+
 .project-pane .project-hscroll--poster .project-hscroll__item {
   height: 428px;
+  scroll-snap-align: center;
 }
 
 /* Next/Image wraps in a span with aspect-ratio from width/height props —
@@ -1812,8 +2086,153 @@
   object-fit: contain;
 }
 
+/* Narrow / mobile keep the existing light strip (no band, no markers). */
+.project-narrow .project-hscroll-wrap--poster,
+.project-narrow .project-hscroll-wrap--merchandise {
+  background: transparent;
+  padding-block: 0;
+  overflow: visible;
+}
+
+.project-narrow .project-hscroll__control {
+  display: none;
+}
+
+/* Desktop website stills — one full-bleed slide per content quadrant. */
+.project-pane .project-hscroll-wrap--website {
+  background: transparent;
+  padding-block: 0;
+  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+  container-type: inline-size;
+  container-name: website-strip;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+}
+
+.project-pane .project-hscroll-wrap--website[data-fade-left],
+.project-pane .project-hscroll-wrap--website[data-fade-right],
+.project-pane .project-hscroll-wrap--website[data-fade-left][data-fade-right] {
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+}
+
+.project-pane .project-hscroll-wrap--website .project-hscroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  width: 100%;
+  scroll-snap-type: x mandatory;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+}
+
+.project-pane .project-hscroll-wrap--website .project-hscroll__track {
+  gap: 0;
+  padding-left: 0;
+  padding-right: 0;
+  align-items: stretch;
+}
+
+.project-pane .project-hscroll-wrap--website .project-hscroll__control--prev {
+  left: 12px;
+}
+
+.project-pane .project-hscroll-wrap--website .project-hscroll__control--next {
+  right: 12px;
+}
+
+.project-pane .project-hscroll--website .project-hscroll__item {
+  flex: 0 0 100cqw;
+  width: 100cqw;
+  height: calc(100cqw * 903 / 1600);
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.project-pane .project-hscroll--website .project-hscroll__item > span {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  aspect-ratio: auto !important;
+}
+
+.project-pane .project-hscroll--website .project-hscroll__image {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: cover;
+  object-position: center center;
+}
+
+.project-narrow .project-hscroll-wrap--website {
+  background: transparent;
+  padding-block: 0;
+  overflow: visible;
+}
+
+.project-pane .project-website-design {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  min-width: 0;
+}
+
+.project-pane .project-website-videos {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 20px;
+  align-items: flex-start;
+  min-width: 0;
+  width: 100%;
+}
+
+/* Flex shares match each clip’s aspect ratio so equal height, no crop. */
+.project-pane .project-website-videos .project-video-toggle-wrap:nth-child(1) {
+  flex: 1.77146814 1 0%; /* 1280 / 722 */
+}
+
+.project-pane .project-website-videos .project-video-toggle-wrap:nth-child(2) {
+  flex: 0.4953125 1 0%; /* 634 / 1280 */
+}
+
+.project-pane .project-website-videos .project-video-toggle-wrap {
+  position: relative;
+  width: auto !important;
+  max-width: none;
+  min-width: 0;
+  height: auto;
+  aspect-ratio: auto;
+  overflow: visible;
+  line-height: 0;
+  background: transparent;
+}
+
+.project-pane .project-website-videos video,
+.project-pane .project-website-videos__video {
+  position: static;
+  inset: auto;
+  width: 100% !important;
+  height: auto !important;
+  max-width: none;
+  display: block;
+  object-fit: contain;
+  background: transparent;
+}
+
 .project-pane .project-hscroll--merchandise .project-hscroll__item {
   height: 424px;
+  scroll-snap-align: center;
+}
+
+.project-pane .project-hscroll--merchandise .project-hscroll__item > span {
+  display: block !important;
+  height: 424px !important;
+  width: auto !important;
+  max-width: none !important;
+  aspect-ratio: auto !important;
 }
 
 .project-pane .project-hscroll--merchandise .project-hscroll__image {
@@ -1822,24 +2241,6 @@
   max-width: none !important;
   max-height: none !important;
   object-fit: contain;
-}
-
-.project-pane .project-hscroll--website .project-hscroll__item {
-  height: var(--website-still-h, 340px);
-}
-
-.project-pane .project-hscroll--website .project-hscroll__track {
-  gap: 4px;
-  align-items: flex-start;
-}
-
-.project-pane .project-hscroll--website .project-hscroll__image {
-  height: var(--website-still-h, 340px) !important;
-  width: auto !important;
-  max-width: none !important;
-  max-height: none !important;
-  object-fit: contain;
-  object-position: left top;
 }
 
 @media (pointer: coarse) {

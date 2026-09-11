@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { startTransition, useCallback, useEffect, useRef, useState } from "react";
 
 import { AboutBio } from "@/components/AboutBio";
 import { CircularNavWheel } from "@/components/CircularNavWheel";
@@ -53,6 +53,11 @@ export function HomeDesktop({ initialProject }: Props) {
   const [project, setProject] = useState<ProjectDefinition | null>(
     initialProject ?? null,
   );
+  /* Center pane trails project on close so the mark width tween isn’t
+     starved by unmounting the case study on the same frame. */
+  const [paneProject, setPaneProject] = useState<ProjectDefinition | null>(
+    initialProject ?? null,
+  );
   const [enteredFromLanding, setEnteredFromLanding] = useState(false);
   const [menuState, setMenuState] = useState<ProjectMenuState>("open");
   const [menuVeil, setMenuVeil] = useState(false);
@@ -76,6 +81,9 @@ export function HomeDesktop({ initialProject }: Props) {
     setEnteredFromLanding(false);
     setMenuState("open");
     setMenuVeil(false);
+    startTransition(() => {
+      setPaneProject(null);
+    });
     if (window.location.pathname !== "/") {
       window.history.pushState(null, "", "/");
     }
@@ -87,6 +95,7 @@ export function HomeDesktop({ initialProject }: Props) {
     setMenuState("open");
     setMenuVeil(false);
     setProject(next);
+    setPaneProject(next);
   }, []);
 
   useEffect(() => {
@@ -96,11 +105,13 @@ export function HomeDesktop({ initialProject }: Props) {
         setEnteredFromLanding(false);
         setMenuState("open");
         setMenuVeil(false);
+        startTransition(() => setPaneProject(null));
         return;
       }
       const match = /^\/design\/([^/]+)/.exec(window.location.pathname);
       const next = match ? getProjectBySlug(match[1] ?? "") : undefined;
       setProject(next ?? null);
+      setPaneProject(next ?? null);
       setEnteredFromLanding(false);
       setMenuState("open");
       setMenuVeil(false);
@@ -165,16 +176,23 @@ export function HomeDesktop({ initialProject }: Props) {
           />
         }
         center={
-          project ? (
+          paneProject ? (
             <div
               className={
                 enteredFromLanding && !reduceMotion
                   ? "desktop-site-shell__center-slot desktop-site-shell__quadrant-fill"
                   : "desktop-site-shell__center-slot"
               }
+              style={
+                projectOpen
+                  ? undefined
+                  : { visibility: "hidden", pointerEvents: "none" }
+              }
+              aria-hidden={!projectOpen}
             >
               <ProjectContentPane
                 menuState={menuState}
+                signatureCompact={projectOpen}
                 onMenuStateChange={(next) => {
                   setMenuState(next);
                   if (next === "hidden") setMenuVeil(false);
@@ -182,12 +200,12 @@ export function HomeDesktop({ initialProject }: Props) {
               >
                 <div className="project-pane__chrome">
                   <ProjectIndexNav
-                    activeNumber={project.number}
-                    total={project.indexTotal}
+                    activeNumber={paneProject.number}
+                    total={paneProject.indexTotal}
                   />
                 </div>
-                <ProjectHeader project={project} menuState={menuState} />
-                <ProjectCaseStudy project={project} menuState={menuState} />
+                <ProjectHeader project={paneProject} menuState={menuState} />
+                <ProjectCaseStudy project={paneProject} menuState={menuState} />
               </ProjectContentPane>
             </div>
           ) : (
@@ -195,63 +213,63 @@ export function HomeDesktop({ initialProject }: Props) {
           )
         }
         stageOverlays={
-          projectOpen ? null : (
-            <>
-              <DesignLandingIndex visible={previewLabel === "design"} />
-              <InstallationLottie
-                visible={previewLabel === "installation"}
-                layout="desktop"
+          <>
+            <DesignLandingIndex
+              visible={!projectOpen && previewLabel === "design"}
+            />
+            <InstallationLottie
+              visible={!projectOpen && previewLabel === "installation"}
+              layout="desktop"
+              stageLocked
+            />
+            <PhotosHoverCluster
+              visible={!projectOpen && previewLabel === "photos"}
+              variant="desktop"
+              stageLocked
+            />
+            <FilmHoverGif
+              visible={!projectOpen && previewLabel === "film"}
+              layout="desktop"
+              stageLocked
+            />
+            <CvPressHoverAccordion
+              visible={!projectOpen && previewLabel === "cv + press"}
+              layout="desktop"
+              stageLocked
+            />
+            <SelectedWorksHoverGif
+              visible={!projectOpen && previewLabel === "select works"}
+              layout="desktop"
+              stageLocked
+            />
+            <ContactTopLinks
+              visible={isContact}
+              stageLocked
+              top={`${m.inset}px`}
+              left={`${DESKTOP_LAYOUT_BIO_LEFT}px`}
+              right={`${contactBarRight}px`}
+            />
+            <div
+              aria-hidden={!showAboutBio}
+              className="pointer-events-none absolute z-[30] flex flex-row items-end"
+              style={{
+                left: DESKTOP_LAYOUT_BIO_LEFT,
+                right: bioRightClearOfNzeribe,
+                bottom: m.inset,
+                opacity: showAboutBio ? 1 : 0,
+                transition: reduceMotion
+                  ? "none"
+                  : `opacity ${fadeMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+              }}
+            >
+              <AboutBio
+                visible={showAboutBio}
+                embedded
                 stageLocked
+                whiteBodyText={isContact}
               />
-              <PhotosHoverCluster
-                visible={previewLabel === "photos"}
-                variant="desktop"
-                stageLocked
-              />
-              <FilmHoverGif
-                visible={previewLabel === "film"}
-                layout="desktop"
-                stageLocked
-              />
-              <CvPressHoverAccordion
-                visible={previewLabel === "cv + press"}
-                layout="desktop"
-                stageLocked
-              />
-              <SelectedWorksHoverGif
-                visible={previewLabel === "select works"}
-                layout="desktop"
-                stageLocked
-              />
-              <ContactTopLinks
-                visible={isContact}
-                stageLocked
-                top={`${m.inset}px`}
-                left={`${DESKTOP_LAYOUT_BIO_LEFT}px`}
-                right={`${contactBarRight}px`}
-              />
-              <div
-                aria-hidden={!showAboutBio}
-                className="pointer-events-none absolute z-[30] flex flex-row items-end"
-                style={{
-                  left: DESKTOP_LAYOUT_BIO_LEFT,
-                  right: bioRightClearOfNzeribe,
-                  bottom: m.inset,
-                  opacity: showAboutBio ? 1 : 0,
-                  transition: reduceMotion
-                    ? "none"
-                    : `opacity ${fadeMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
-                }}
-              >
-                <AboutBio
-                  visible={showAboutBio}
-                  embedded
-                  stageLocked
-                  whiteBodyText={isContact}
-                />
-              </div>
-            </>
-          )
+            </div>
+          </>
         }
       />
     </DesktopStageCanvas>

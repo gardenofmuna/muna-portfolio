@@ -9,6 +9,8 @@ import type { ProjectMenuState } from "@/components/project/ProjectContentPane";
 import { ProjectFooter } from "@/components/project/ProjectFooter";
 import { ProjectHorizontalStrip } from "@/components/project/ProjectHorizontalStrip";
 import { ProjectSection } from "@/components/project/ProjectSection";
+import { DevaultPosterStairs } from "@/components/project/projects/devault/DevaultPosterStairs";
+import { useProjectSurface } from "@/components/project/useProjectSurface";
 import {
   DEVAULT_LOGOS,
   DEVAULT_PLAYLIST,
@@ -36,6 +38,29 @@ function DevaultGallery({
         variant="poster"
       />
     </LazyMount>
+  );
+}
+
+function DevaultPostersMedia() {
+  const { probeRef, surface } = useProjectSurface();
+
+  return (
+    <div ref={probeRef}>
+      {surface === "pane" ? (
+        <DevaultPosterStairs
+          items={DEVAULT_POSTERS}
+          ariaLabel="Devault Presents posters"
+        />
+      ) : surface === "narrow" ? (
+        <ProjectHorizontalStrip
+          items={DEVAULT_POSTERS}
+          ariaLabel="Devault Presents posters"
+          variant="poster"
+        />
+      ) : (
+        <div style={{ minHeight: 280 }} aria-hidden />
+      )}
+    </div>
   );
 }
 
@@ -92,10 +117,9 @@ export function DevaultPresentsProject({ menuState }: Props) {
         </div>
       </ProjectSection>
       <ProjectSection id="posters" title="Posters">
-        <DevaultGallery
-          items={DEVAULT_POSTERS}
-          ariaLabel="Devault Presents posters"
-        />
+        <LazyMount minHeight={320}>
+          <DevaultPostersMedia />
+        </LazyMount>
       </ProjectSection>
       <ProjectSection id="playlist-cover" title="Playlist Cover Art">
         <DevaultGallery
