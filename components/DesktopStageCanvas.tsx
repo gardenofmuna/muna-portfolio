@@ -133,6 +133,10 @@ export function DesktopStageCanvas({ children, className }: Props) {
       : { left: 0, top: 0 };
 
   const layoutScreenUnit = view.scale * DESKTOP_LAYOUT_SCALE;
+  /* Nested scale() + 811.5 layout height rounds short in Safari — 1 CSS px
+     extra so the last device pixel is covered (white seam at Q2 bottom). */
+  const seamBleedLayout = layoutScreenUnit > 0 ? 1 / layoutScreenUnit : 0;
+  const seamBleedStage = view.scale > 0 ? 1 / view.scale : 0;
 
   return (
     <DesktopStageViewContext.Provider
@@ -162,7 +166,7 @@ export function DesktopStageCanvas({ children, className }: Props) {
           className="absolute"
           style={{
             width: view.stageW,
-            height: view.stageH,
+            height: view.stageH + seamBleedStage,
             left: offset.left,
             top: offset.top,
             transform: `scale(${view.scale})`,
@@ -175,7 +179,7 @@ export function DesktopStageCanvas({ children, className }: Props) {
             className="absolute left-0 top-0"
             style={{
               width: view.layoutW,
-              height: view.layoutH,
+              height: view.layoutH + seamBleedLayout,
               transform: `scale(${DESKTOP_LAYOUT_SCALE})`,
               transformOrigin: "top left",
             }}

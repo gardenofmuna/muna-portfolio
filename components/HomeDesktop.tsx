@@ -213,7 +213,11 @@ export function HomeDesktop({ initialProject }: Props) {
           )
         }
         stageOverlays={
-          <>
+          <div
+            className="pointer-events-none absolute inset-0 z-[50]"
+            hidden={projectOpen}
+            aria-hidden={projectOpen}
+          >
             <DesignLandingIndex
               visible={!projectOpen && previewLabel === "design"}
             />
@@ -269,7 +273,7 @@ export function HomeDesktop({ initialProject }: Props) {
                 whiteBodyText={isContact}
               />
             </div>
-          </>
+          </div>
         }
       />
     </DesktopStageCanvas>

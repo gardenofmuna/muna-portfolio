@@ -335,7 +335,11 @@ export function ProjectContentPane({
                   bleed > 0
                     ? `calc(${bleed}px + var(--project-gutter-left, 0px))`
                     : undefined,
-                transform: `scale(${smart.scale})`,
+                /* scale(1) still makes a Safari compositor layer and a 1px seam. */
+                transform:
+                  Math.abs(smart.scale - 1) < 0.0005
+                    ? undefined
+                    : `scale(${smart.scale})`,
                 transformOrigin: `${bleed}px top`,
                 transition,
                 ["--pane-content-w" as string]: paneContentW
