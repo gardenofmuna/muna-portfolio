@@ -6,9 +6,12 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { ABOUT_BIO_INK } from "@/components/AboutBio";
 import { useDesignProjectNav } from "@/components/project/DesignProjectNav";
 import {
+  BOUNCE_RADIO_SLUG,
   DEVAULT_PRESENTS_SLUG,
   DOC_NOW_SLUG,
   EGWU_RECORDS_SLUG,
+  MAMA_IN_YOUR_ABSENCE_SLUG,
+  STUDIO_ORRY_SLUG,
 } from "@/data/projects";
 import { DESKTOP_LAYOUT_H } from "@/lib/desktop-stage";
 
@@ -129,6 +132,7 @@ export const DESIGN_LANDING_ITEMS: DesignLandingItem[] = [
   {
     id: "04",
     title: "BOUNCE RADIO",
+    slug: BOUNCE_RADIO_SLUG,
     /* Lime green waves → magenta pink */
     underline: ABOUT_BIO_INK.lagos,
     preview: {
@@ -141,6 +145,7 @@ export const DESIGN_LANDING_ITEMS: DesignLandingItem[] = [
   {
     id: "05",
     title: "STUDIO ORRY",
+    slug: STUDIO_ORRY_SLUG,
     /* Orange circles → blue */
     underline: ABOUT_BIO_INK.blue,
     preview: {
@@ -153,6 +158,7 @@ export const DESIGN_LANDING_ITEMS: DesignLandingItem[] = [
   {
     id: "06",
     title: "MIYA",
+    slug: MAMA_IN_YOUR_ABSENCE_SLUG,
     /* Cool B&W / teal collage → warm orange */
     underline: ABOUT_BIO_INK.interdisciplinary,
     preview: {
@@ -255,7 +261,10 @@ export function DesignLandingIndex({ visible }: Props) {
                     } as CSSProperties
                   }
                 >
-                  <span className="design-landing-list__title">
+                  <span
+                    className="design-landing-list__title"
+                    data-long={row.title.replace(/\s/g, "").length > 16 ? "" : undefined}
+                  >
                     <span className="design-landing-list__num" aria-hidden>
                       <span className="design-landing-list__br">[</span>
                       <span className="design-landing-list__digits">

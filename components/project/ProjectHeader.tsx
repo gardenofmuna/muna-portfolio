@@ -20,7 +20,13 @@ export function ProjectHeader({ project, menuState }: Props) {
     <header className="project-header" data-menu-state={menuState}>
       <h1
         className="project-header__title"
-        data-long={project.title.replace(/\s/g, "").length > 13 ? "" : undefined}
+        data-long={
+          project.title.replace(/\s/g, "").length > 16
+            ? "xl"
+            : project.title.replace(/\s/g, "").length > 13
+              ? ""
+              : undefined
+        }
       >
         {project.title}
       </h1>

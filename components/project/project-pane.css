@@ -376,10 +376,18 @@
 
 /* Devault posters — three-up staircase carousel slides. */
 .project-pane .project-poster-stairs-wrap {
-  background: #111;
+  background: transparent;
   overflow: hidden;
   -webkit-mask-image: none !important;
   mask-image: none !important;
+}
+
+.project-pane .project-poster-stairs-wrap .project-hscroll__control {
+  color: #111;
+}
+
+.project-pane .project-poster-stairs-wrap .project-hscroll__control:focus-visible {
+  outline-color: #111;
 }
 
 .project-pane .project-poster-stairs-scroller {
@@ -406,29 +414,20 @@
 
 .project-pane .project-poster-stairs {
   --stairs-gap: 16px;
-  --stairs-pad-x: 36px;
-  --stairs-pad-y: 44px;
-  --stairs-step: 56px;
-  --stairs-poster-h: calc(
-    (
-        var(--pane-content-w, 659px) - (2 * var(--stairs-pad-x)) -
-          (2 * var(--stairs-gap))
-      ) /
-      2.4
-  );
+  --stairs-step: 28px;
+  /* All Devault posters are 1080×1350 (0.8w). 3×0.8h + 2 gaps = the column. */
+  --stairs-poster-h: calc((100cqw - (2 * var(--stairs-gap))) / 2.4);
   box-sizing: border-box;
   flex: 0 0 100cqw;
   width: 100cqw;
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: flex-start;
   gap: var(--stairs-gap);
-  padding: var(--stairs-pad-y) var(--stairs-pad-x);
-  min-height: calc(
-    var(--stairs-poster-h) + (2 * var(--stairs-step)) + (2 * var(--stairs-pad-y))
-  );
+  padding: 0;
+  min-height: calc(var(--stairs-poster-h) + (2 * var(--stairs-step)));
   scroll-snap-align: start;
   scroll-snap-stop: always;
   margin: 0;
@@ -734,6 +733,64 @@
   }
 }
 
+.project-egwu-merch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: 100%;
+  max-width: 100%;
+}
+
+.project-egwu-merch__box {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+}
+
+.project-egwu-merch__box--shirts {
+  background: #9caf88;
+}
+
+.project-egwu-merch__box--bandanas {
+  background: #86cdf2;
+}
+
+.project-egwu-merch__stage {
+  position: absolute;
+  inset: 10%;
+}
+
+.project-egwu-merch__slide {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 280ms ease;
+}
+
+.project-egwu-merch__slide.is-active {
+  opacity: 1;
+}
+
+.project-egwu-merch__image {
+  object-fit: contain;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .project-egwu-merch__slide {
+    transition: none;
+  }
+}
+
+.project-narrow .project-egwu-merch {
+  grid-template-columns: 1fr;
+  gap: calc(16 * var(--pn-u));
+}
+
 .project-asset-single--playlist {
   width: 449px;
   max-width: 100%;
@@ -744,15 +801,211 @@
   max-width: 100%;
 }
 
-.project-pane .project-sections--devault .project-section__title {
+.project-pane .project-sections--devault .project-section__title,
+.project-pane .project-sections--bounce .project-section__title,
+.project-pane .project-sections--orry .project-section__title,
+.project-pane .project-sections--mama .project-section__title {
   margin-bottom: 24px;
 }
 
 /* Same desktop rhythm as DOC NOW gallery sections (title 24 / below 53.5).
    #posters must be named — the EGWÚ id rule otherwise wins. */
 .project-pane .project-sections--devault .project-section,
-.project-pane .project-sections--devault #posters.project-section {
+.project-pane .project-sections--devault #posters.project-section,
+.project-pane .project-sections--bounce .project-section,
+.project-pane .project-sections--orry .project-section,
+.project-pane .project-sections--mama .project-section {
   margin-bottom: 53.5px;
+}
+
+.project-orry-flyers {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+  background: transparent;
+}
+
+.project-orry-flyers__item,
+.project-orry-notes__item {
+  margin: 0;
+  min-width: 0;
+}
+
+.project-orry-flyers__item {
+  flex: 1 1 0;
+}
+
+.project-orry-flyers__image,
+.project-orry-notes__image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.project-orry-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  background: transparent;
+}
+
+.project-narrow .project-orry-flyers {
+  gap: calc(14 * var(--pn-u));
+}
+
+.project-narrow .project-orry-notes {
+  gap: calc(31 * var(--pn-u));
+}
+
+.project-mama-figure {
+  margin: 0;
+  width: 100%;
+  background: transparent;
+}
+
+.project-mama-figure__image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@property --mama-flip {
+  syntax: "<angle>";
+  inherits: true;
+  initial-value: 0deg;
+}
+
+.project-mama-postcards {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 16px;
+  width: 100%;
+  background: transparent;
+  overflow: visible;
+}
+
+/* Grow by image aspect (w/h) so both columns share one height and fill the row. */
+.project-mama-postcards__mockup {
+  flex: calc(2500 / 3128) 1 0;
+  min-width: 0;
+  margin: 0;
+}
+
+.project-mama-postcards__mockup-image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.project-mama-flip {
+  --mama-flip: 0deg;
+  --mama-shadow: 1;
+  --mama-shadow-o: 1;
+  flex: calc(1481 / 2074) 1 0;
+  min-width: 0;
+  display: block;
+  position: relative;
+  isolation: isolate;
+  overflow: visible;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.project-mama-flip:focus-visible {
+  outline: 2px solid #111;
+  outline-offset: 4px;
+}
+
+.project-mama-flip__shadow {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: 0;
+  height: 12%;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 0.22) 0%,
+    rgba(0, 0, 0, 0.08) 48%,
+    rgba(0, 0, 0, 0) 74%
+  );
+  pointer-events: none;
+  z-index: 0;
+  transform-origin: center;
+  transform-style: flat;
+  -webkit-transform-style: flat;
+  /* Stay a single oval on the floor — fade/thin before the card can cut through it. */
+  transform: translateY(40%) scaleX(var(--mama-shadow)) scaleY(0.45);
+  opacity: var(--mama-shadow-o);
+}
+
+.project-mama-flip__scene {
+  display: block;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  aspect-ratio: 1481 / 2074;
+  perspective: 1800px;
+  -webkit-perspective: 1800px;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+}
+
+.project-mama-flip__card {
+  display: block;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  transform: rotateY(var(--mama-flip));
+}
+
+.project-mama-flip__face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #fff;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.project-mama-flip__face--front {
+  transform: translateZ(1px);
+}
+
+.project-mama-flip__face--back {
+  transform: rotateY(180deg) translateZ(1px);
+}
+
+.project-mama-flip__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.project-narrow .project-mama-postcards {
+  flex-direction: column;
+  gap: calc(31 * var(--pn-u));
+}
+
+.project-narrow .project-mama-postcards__mockup,
+.project-narrow .project-mama-flip {
+  flex: none;
+  width: 100%;
 }
 
 .project-logo-stack {
@@ -1338,6 +1591,10 @@
   font-size: calc(66 * var(--pn-u));
 }
 
+.project-narrow .project-header__title[data-long="xl"] {
+  font-size: calc(52 * var(--pn-u));
+}
+
 .project-narrow .project-section {
   /* ~64 artboard between section blocks in the tall Figma comp */
   margin-bottom: calc(64 * var(--pn-u));
@@ -1363,6 +1620,7 @@
 
 .project-narrow #posters.project-section .project-section__title,
 .project-narrow #merchandise.project-section .project-section__title,
+.project-narrow #article-cover.project-section .project-section__title,
 .project-narrow #playlist-cover.project-section .project-section__title,
 .project-narrow #podcast-cover.project-section .project-section__title {
   /* Shared title → media gap (playlist-cover reference) */
@@ -1371,13 +1629,19 @@
 
 /* EGWÚ narrow: same space below Posters+ as DOC NOW Posters. */
 .project-narrow
-  .project-sections:not(.project-sections--doc-now):not(.project-sections--devault)
+  .project-sections:not(.project-sections--doc-now):not(.project-sections--devault):not(
+    .project-sections--bounce
+  )
   #posters.project-section,
 .project-narrow
-  .project-sections:not(.project-sections--doc-now):not(.project-sections--devault)
+  .project-sections:not(.project-sections--doc-now):not(.project-sections--devault):not(
+    .project-sections--bounce
+  )
   #merchandise.project-section,
 .project-narrow
-  .project-sections:not(.project-sections--doc-now):not(.project-sections--devault)
+  .project-sections:not(.project-sections--doc-now):not(.project-sections--devault):not(
+    .project-sections--bounce
+  )
   #playlist-cover.project-section {
   margin-bottom: calc(64 * var(--pn-u));
 }
@@ -2170,6 +2434,14 @@
   object-position: center center;
 }
 
+/* Bounce article landscapes are 1800×800, not the DOC NOW 1600×903 stills. */
+.project-pane
+  .project-sections--bounce
+  .project-hscroll--website
+  .project-hscroll__item {
+  height: calc(100cqw * 800 / 1800);
+}
+
 .project-narrow .project-hscroll-wrap--website {
   background: transparent;
   padding-block: 0;
@@ -2247,20 +2519,9 @@
 }
 
 @media (pointer: coarse) {
-  /* Phone / iPad portrait only. iPad landscape is .project-pane and must
-     keep the same Q2 gutters as a laptop (no full-bleed into Q3). */
-  .project-narrow .project-hscroll-wrap {
-    width: calc(
-      100% + var(--project-gutter-left, 0px) + var(--project-gutter-right, 0px)
-    );
-    max-width: none;
-    margin-left: calc(-1 * var(--project-gutter-left, 0px));
-    margin-right: calc(-1 * var(--project-gutter-right, 0px));
-    /* No edge fade on tablet / touch. */
-    -webkit-mask-image: none;
-    mask-image: none;
-  }
-
+  /* Phone / iPad portrait keep the --pn-inset bleed above so strips can
+     leave the page padding. Do not remap to --project-gutter-* (unset here).
+     iPad landscape is .project-pane and keeps laptop Q2 gutters. */
   .project-narrow .project-hscroll-wrap::before,
   .project-narrow .project-hscroll-wrap::after {
     content: none;
@@ -2268,11 +2529,6 @@
 
   .project-narrow .project-hscroll {
     overscroll-behavior-x: auto;
-  }
-
-  .project-narrow .project-hscroll__track {
-    padding-left: var(--project-gutter-left, 0px);
-    padding-right: var(--project-gutter-right, 0px);
   }
 }
 
@@ -2332,10 +2588,58 @@
 
 /* Festival program flipbook — desktop pane only */
 
-.festival-book {
+.festival-book-wrap {
   position: relative;
   width: 100%;
-  height: calc(var(--pane-content-w, 659px) * 800 / 1236);
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 40px 56px;
+  background: #333;
+}
+
+.festival-book__control {
+  position: absolute;
+  top: 50%;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 64px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  transform: translateY(-50%);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.festival-book__control--prev {
+  left: 10px;
+}
+
+.festival-book__control--next {
+  right: 10px;
+}
+
+.festival-book__control:disabled {
+  opacity: 0.28;
+  cursor: default;
+}
+
+.festival-book__control:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+.festival-book {
+  position: relative;
+  width: auto;
+  max-width: 100%;
+  height: 428px;
+  aspect-ratio: 1236 / 800;
+  margin-inline: auto;
   outline: none;
   user-select: none;
   -webkit-user-select: none;

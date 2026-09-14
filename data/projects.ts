@@ -23,6 +23,9 @@ export type ProjectDefinition = {
 export const EGWU_RECORDS_SLUG = "egwu-records";
 export const DOC_NOW_SLUG = "doc-now-2025";
 export const DEVAULT_PRESENTS_SLUG = "devault-presents";
+export const BOUNCE_RADIO_SLUG = "bounce-radio";
+export const STUDIO_ORRY_SLUG = "studio-orry";
+export const MAMA_IN_YOUR_ABSENCE_SLUG = "mama-in-your-absence";
 
 const EGWU_RECORDS: ProjectDefinition = {
   slug: EGWU_RECORDS_SLUG,
@@ -80,11 +83,11 @@ const DEVAULT_PRESENTS: ProjectDefinition = {
   indexTotal: 10,
   title: "DEVAULT PRESENTS",
   description:
-    "Ongoing graphic design and art direction for Devault Presents, a Nigerian culture and music podcast and its parent brand Devault Magazine. The identity spans bold logos, episode-specific poster art, and the Devault Settings playlist series, pulling from cassette culture, vinyl sleeves, and retro print references for each drop.",
+    "Ongoing graphic design and art direction for Devault Presents, a Nigerian pop culture podcast and its parent brand Devault Magazine. The identity spans bold logos, episode-specific poster art, and the Devault Settings playlist series, pulling from cassette culture, vinyl sleeves, and retro print references for each drop.",
   sidebarActiveLabel: "design",
   sectionLinks: [
-    { id: "logo", label: "Logo,", color: "#019f4b" },
-    { id: "posters", label: "Posters,", color: "#488bdc" },
+    { id: "logo", label: "Logo,", color: "#488bdc" },
+    { id: "posters", label: "Posters,", color: "#019f4b" },
     { id: "playlist-cover", label: "Playlist Cover Art,", color: "#fe5418" },
     { id: "podcast-cover", label: "Podcast Cover Art,", color: "#f9b109" },
   ],
@@ -96,16 +99,76 @@ const DEVAULT_PRESENTS: ProjectDefinition = {
   ],
 };
 
+const STUDIO_ORRY: ProjectDefinition = {
+  slug: STUDIO_ORRY_SLUG,
+  number: "V",
+  indexTotal: 10,
+  title: "STUDIO ORRY",
+  description:
+    "Exhibition flyer and prop currency design for A wà ńbẹ̀, a solo exhibition by Nigerian artist Orry Shenjobi at the European Cultural Centre, Venice, as part of the 60th Venice Biennale. The show documents the Nigerian Owambe party through collage, photography, and mixed media, including a fictional Central Bank of Fàáji note nodding to the culture of \"spraying\" money at these celebrations.",
+  sidebarActiveLabel: "design",
+  sectionLinks: [
+    { id: "exhibition-poster", label: "Exhibition Poster,", color: "#488bdc" },
+    { id: "prop-currency", label: "Prop Currency Design,", color: "#019f4b" },
+  ],
+  sections: [
+    { id: "exhibition-poster", title: "Exhibition Poster" },
+    { id: "prop-currency", title: "Prop Currency Design" },
+  ],
+};
+
+const MAMA_IN_YOUR_ABSENCE: ProjectDefinition = {
+  slug: MAMA_IN_YOUR_ABSENCE_SLUG,
+  number: "VI",
+  indexTotal: 10,
+  title: "MAMA, IN YOUR ABSENCE",
+  description:
+    "Postcard and poster design for Mama, in Your Absence, an interactive documentary by Muna Nzeribe, screened at ARTSPACE TMU as part of DOC NOW 2025, June 5th–21st. Designed as a keepsake for viewers, the postcard uses a mosaic, woven-photo treatment of archival family imagery paired with a QR code linking viewers to watch the documentary from home on PC or Mac.",
+  sidebarActiveLabel: "design",
+  sectionLinks: [
+    { id: "postcard", label: "Postcard,", color: "#488bdc" },
+    { id: "poster", label: "Poster,", color: "#019f4b" },
+  ],
+  sections: [
+    { id: "postcard", title: "Postcard" },
+    { id: "poster", title: "Poster" },
+  ],
+};
+
+const BOUNCE_RADIO: ProjectDefinition = {
+  slug: BOUNCE_RADIO_SLUG,
+  number: "IV",
+  indexTotal: 10,
+  title: "BOUNCE RADIO",
+  description:
+    "Article and playlist cover art for Bounce Networks, a Lagos-based digital media platform covering youth culture through Afrobeats, sports, and cultural events. Pulling from halftone screen-print textures and retro radio and cassette references, the work spans editorial covers for features and event recaps alongside a running series of genre and mood-based playlist art.",
+  sidebarActiveLabel: "design",
+  sectionLinks: [
+    { id: "playlist-cover", label: "Playlist Covers,", color: "#488bdc" },
+    { id: "article-cover", label: "Article Cover Art,", color: "#019f4b" },
+  ],
+  sections: [
+    { id: "playlist-cover", title: "Playlist Covers" },
+    { id: "article-cover", title: "Article Cover Art" },
+  ],
+};
+
 export const PROJECTS: Record<string, ProjectDefinition> = {
   [EGWU_RECORDS_SLUG]: EGWU_RECORDS,
   [DOC_NOW_SLUG]: DOC_NOW_2025,
   [DEVAULT_PRESENTS_SLUG]: DEVAULT_PRESENTS,
+  [BOUNCE_RADIO_SLUG]: BOUNCE_RADIO,
+  [STUDIO_ORRY_SLUG]: STUDIO_ORRY,
+  [MAMA_IN_YOUR_ABSENCE_SLUG]: MAMA_IN_YOUR_ABSENCE,
 };
 
 export const PROJECTS_BY_NUMBER: Partial<Record<string, string>> = {
   I: EGWU_RECORDS_SLUG,
   II: DOC_NOW_SLUG,
   III: DEVAULT_PRESENTS_SLUG,
+  IV: BOUNCE_RADIO_SLUG,
+  V: STUDIO_ORRY_SLUG,
+  VI: MAMA_IN_YOUR_ABSENCE_SLUG,
 };
 
 export function getProjectBySlug(slug: string): ProjectDefinition | undefined {
@@ -214,7 +277,7 @@ export const EGWU_POSTERS: CoverFlowItem[] = [
 /** Default resting item in reference: black tee with green stamp graphic. */
 export const EGWU_MERCHANDISE_INITIAL_INDEX = 0;
 
-export const EGWU_MERCHANDISE: CoverFlowItem[] = [
+export const EGWU_MERCH_SHIRTS: CoverFlowItem[] = [
   {
     src: "/projects/egwu/merchandise/tshirt-black-front.webp",
     alt: "Black EGWÚ Records t-shirt with postage-stamp graphic on the front",
@@ -250,6 +313,9 @@ export const EGWU_MERCHANDISE: CoverFlowItem[] = [
     height: 2000,
     label: "Black t-shirt alternate front",
   },
+];
+
+export const EGWU_MERCH_BANDANAS: CoverFlowItem[] = [
   {
     src: "/projects/egwu/merchandise/bandana-red.webp",
     alt: "Red EGWÚ Records bandana with all-over print",
@@ -266,6 +332,11 @@ export const EGWU_MERCHANDISE: CoverFlowItem[] = [
     scale: 1.08,
     label: "Black bandana",
   },
+];
+
+export const EGWU_MERCHANDISE: CoverFlowItem[] = [
+  ...EGWU_MERCH_SHIRTS,
+  ...EGWU_MERCH_BANDANAS,
 ];
 
 export const EGWU_COLORS = {
@@ -706,4 +777,229 @@ export const DEVAULT_PODCAST: CoverFlowItem[] = [
     height: 1080,
   },
 ];
+
+const BOUNCE_DIR = "/projects/BOUNCE RADIO";
+
+function bounceSrc(relativePath: string) {
+  return `${BOUNCE_DIR}/${relativePath}`;
+}
+
+export type BounceArticleSlide = {
+  id: string;
+  wide: CoverFlowItem;
+  square: CoverFlowItem;
+};
+
+function bounceArticleCover(
+  n: number,
+  alt: string,
+  width: number,
+  height: number,
+): CoverFlowItem {
+  return {
+    src: bounceSrc(`Article Cover Art/BARTICLECOVER${n}.webp`),
+    alt,
+    width,
+    height,
+  };
+}
+
+export const BOUNCE_ARTICLE_SLIDES: BounceArticleSlide[] = [
+  {
+    id: "layi-wasabi",
+    wide: bounceArticleCover(
+      1,
+      "Layi Wasabi: The Subtle Genius of Nigerian Skit-Making landscape article cover",
+      1800,
+      800,
+    ),
+    square: bounceArticleCover(
+      3,
+      "Layi Wasabi: The Subtle Genius of Nigerian Skit-Making square article cover",
+      1080,
+      1080,
+    ),
+  },
+  {
+    id: "burna-boy",
+    wide: bounceArticleCover(
+      4,
+      "Burna Boy genre-shift landscape article cover",
+      1800,
+      800,
+    ),
+    square: bounceArticleCover(
+      6,
+      "Burna Boy genre-shift square article cover",
+      1080,
+      1080,
+    ),
+  },
+  {
+    id: "bbnaija",
+    wide: bounceArticleCover(
+      7,
+      "Big Brother Naija landscape article cover",
+      1800,
+      800,
+    ),
+    square: bounceArticleCover(
+      9,
+      "Big Brother Naija square article cover",
+      1080,
+      1080,
+    ),
+  },
+  {
+    id: "airport",
+    wide: bounceArticleCover(
+      12,
+      "Bounce Radio Independence Day landscape article cover",
+      1800,
+      800,
+    ),
+    square: bounceArticleCover(
+      10,
+      "Bounce Radio Independence Day square article cover",
+      1080,
+      1080,
+    ),
+  },
+  {
+    id: "spotify-plane",
+    wide: bounceArticleCover(
+      14,
+      "Bounce Radio Spotify Afrobeats landscape article cover",
+      1800,
+      800,
+    ),
+    square: bounceArticleCover(
+      15,
+      "Bounce Radio Spotify Afrobeats square article cover",
+      1080,
+      1080,
+    ),
+  },
+  {
+    id: "spotify-takeaways",
+    wide: bounceArticleCover(
+      17,
+      "Takeaways from Spotify’s Journey of Afrobeats Eventent landscape article cover",
+      1800,
+      800,
+    ),
+    square: bounceArticleCover(
+      18,
+      "Takeaways from Spotify’s Journey of Afrobeats Eventent square article cover",
+      1080,
+      1080,
+    ),
+  },
+];
+
+export const BOUNCE_ARTICLE_WIDE = BOUNCE_ARTICLE_SLIDES.map((slide) => slide.wide);
+export const BOUNCE_ARTICLE_SQUARE = BOUNCE_ARTICLE_SLIDES.map((slide) => slide.square);
+
+export const BOUNCE_PLAYLIST_COVERS: CoverFlowItem[] = [
+  {
+    src: bounceSrc("Playlist Covers/Artboard 1.webp"),
+    alt: "Bounce Radio Riddim Radio playlist cover",
+    width: 1080,
+    height: 1080,
+  },
+  {
+    src: bounceSrc("Playlist Covers/Artboard 2.webp"),
+    alt: "Bounce Radio Nu Groove Sound playlist cover",
+    width: 1080,
+    height: 1080,
+  },
+  {
+    src: bounceSrc("Playlist Covers/Artboard 3.webp"),
+    alt: "Bounce Radio New Music Premiere playlist cover",
+    width: 1080,
+    height: 1080,
+  },
+  {
+    src: bounceSrc("Playlist Covers/Artboard 4.webp"),
+    alt: "Bounce Radio Musik Konfidential playlist cover",
+    width: 1080,
+    height: 1080,
+  },
+  {
+    src: bounceSrc("Playlist Covers/Artboard 5.webp"),
+    alt: "Bounce Radio Grime & Tings playlist cover",
+    width: 1080,
+    height: 1080,
+  },
+];
+
+const ORRY_DIR = "/projects/STUDIO ORRY";
+
+function orrySrc(relativePath: string) {
+  return `${ORRY_DIR}/${relativePath}`;
+}
+
+export const ORRY_FLYERS: CoverFlowItem[] = [
+  {
+    src: orrySrc("Exhibition Flyer Design/exhibition-flyer-front.jpg"),
+    alt: "A wà ńbẹ̀ exhibition flyer vinyl, front",
+    width: 1500,
+    height: 1500,
+  },
+  {
+    src: orrySrc("Exhibition Flyer Design/exhibition-flyer-back.jpg"),
+    alt: "A wà ńbẹ̀ exhibition flyer vinyl, back",
+    width: 1500,
+    height: 1500,
+  },
+];
+
+export const ORRY_CURRENCY = [
+  {
+    src: orrySrc("Prop Currency Design/ORRY MONEY V2.webp"),
+    alt: "Central Bank of Fàáji prop currency note, front",
+    width: 1756,
+    height: 880,
+  },
+  {
+    src: orrySrc("Prop Currency Design/ORRY MONEY BACK V2.webp"),
+    alt: "Central Bank of Fàáji prop currency note, back",
+    width: 1744,
+    height: 880,
+  },
+] as const;
+
+const MAMA_DIR = "/projects/MAMA, IN YOUR ABSENCE";
+
+function mamaSrc(relativePath: string) {
+  return `${MAMA_DIR}/${relativePath}`;
+}
+
+export const MAMA_POSTCARD_MOCKUP = {
+  src: mamaSrc("Postcard/mama-postcard.jpg"),
+  alt: "Mama, in Your Absence postcard in a vellum envelope, with woven portrait and QR code",
+  width: 2500,
+  height: 3128,
+} as const;
+
+export const MAMA_POSTCARD_FRONT = {
+  src: mamaSrc("Postcard/postcard-front.jpg"),
+  alt: "Mama, in Your Absence postcard front, with woven archival portrait",
+  width: 1481,
+  height: 2074,
+} as const;
+
+export const MAMA_POSTCARD_BACK = {
+  src: mamaSrc("Postcard/postcard-back.jpg"),
+  alt: "Mama, in Your Absence postcard back, with QR code and POST CARD",
+  width: 2962,
+  height: 4148,
+} as const;
+
+export const MAMA_POSTER = {
+  src: mamaSrc("Poster/artspace-poster.jpg"),
+  alt: "Mama, in Your Absence poster for ARTSPACE TMU and DOC NOW 2025",
+  width: 1481,
+  height: 2074,
+} as const;
 

@@ -197,7 +197,7 @@ export function DevaultPosterStairs({ items, ariaLabel }: Props) {
                       width={item.width}
                       height={item.height}
                       className="project-poster-stairs__image"
-                      sizes="(max-width: 900px) 42vw, 200px"
+                      sizes="(max-width: 900px) 42vw, 280px"
                       quality={85}
                     />
                   </figure>

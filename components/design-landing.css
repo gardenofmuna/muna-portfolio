@@ -52,6 +52,10 @@
   white-space: nowrap;
 }
 
+.design-landing-list__title[data-long] {
+  font-size: 38px;
+}
+
 .design-landing-list__item[data-active] .design-landing-list__title {
   text-decoration: underline;
   text-decoration-color: var(--design-underline, #000);

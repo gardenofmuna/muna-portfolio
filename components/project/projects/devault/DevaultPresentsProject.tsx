@@ -12,6 +12,7 @@ import { ProjectSection } from "@/components/project/ProjectSection";
 import { DevaultPosterStairs } from "@/components/project/projects/devault/DevaultPosterStairs";
 import { useProjectSurface } from "@/components/project/useProjectSurface";
 import {
+  BOUNCE_RADIO_SLUG,
   DEVAULT_LOGOS,
   DEVAULT_PLAYLIST,
   DEVAULT_PODCAST,
@@ -136,7 +137,8 @@ export function DevaultPresentsProject({ menuState }: Props) {
       <ProjectFooter
         previousLabel="DOC NOW 2025"
         previousHref={`/design/${DOC_NOW_SLUG}`}
-        nextLabel=""
+        nextLabel="BOUNCE RADIO"
+        nextHref={`/design/${BOUNCE_RADIO_SLUG}`}
       />
     </div>
   );

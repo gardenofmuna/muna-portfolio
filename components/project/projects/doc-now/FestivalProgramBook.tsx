@@ -145,6 +145,23 @@ function destinationPage(
   return current - 2;
 }
 
+function BookMarker({ dir }: { dir: "prev" | "next" }) {
+  return (
+    <svg
+      width="16"
+      height="26"
+      viewBox="0 0 16 26"
+      aria-hidden
+      focusable="false"
+    >
+      <path
+        d={dir === "prev" ? "M15 1 L1 13 L15 25 Z" : "M1 1 L15 13 L1 25 Z"}
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
 function trackBookShift(
   flip: {
     getCurrentPageIndex: () => number;
@@ -153,9 +170,12 @@ function trackBookShift(
     on: (event: string, cb: (e: { data: unknown }) => void) => unknown;
   },
   host: HTMLElement,
+  onShift: (shift: BookShift) => void,
 ) {
   const apply = (pageIndex: number) => {
-    host.dataset.bookShift = shiftForPage(pageIndex, flip.getPageCount());
+    const next = shiftForPage(pageIndex, flip.getPageCount());
+    host.dataset.bookShift = next;
+    onShift(next);
   };
 
   apply(flip.getCurrentPageIndex());
@@ -184,6 +204,7 @@ function FestivalProgramFlipbook({ items }: { items: CoverFlowItem[] }) {
     flipPrev: (corner?: "top" | "bottom") => void;
   } | null>(null);
   const pages = useMemo(() => bookPagesFromSpreads(items), [items]);
+  const [shift, setShift] = useState<BookShift>("front");
 
   const measure = useCallback(() => {
     const host = hostRef.current;
@@ -275,7 +296,7 @@ function FestivalProgramFlipbook({ items }: { items: CoverFlowItem[] }) {
       }
       patchMouseForStageScale(flip);
       softenFlipLandingShadow(flip);
-      trackBookShift(flip, host);
+      trackBookShift(flip, host, setShift);
       instance = flip;
       flipRef.current = flip;
     };
@@ -293,6 +314,7 @@ function FestivalProgramFlipbook({ items }: { items: CoverFlowItem[] }) {
       if (root?.parentNode) root.remove();
       stage.replaceChildren();
       host.dataset.bookShift = "front";
+      setShift("front");
     };
   }, [pages, size.pageH, size.pageW]);
 
@@ -307,16 +329,36 @@ function FestivalProgramFlipbook({ items }: { items: CoverFlowItem[] }) {
   };
 
   return (
-    <div
-      ref={hostRef}
-      className="festival-book"
-      data-book-shift="front"
-      role="region"
-      aria-label="DOC NOW 2025 festival program. Click or drag a page to turn. Arrow keys also turn pages."
-      tabIndex={0}
-      onKeyDown={onKeyDown}
-    >
-      <div ref={stageRef} className="festival-book__stage" />
+    <div className="festival-book-wrap">
+      <button
+        type="button"
+        className="festival-book__control festival-book__control--prev"
+        aria-label="Previous program page"
+        disabled={shift === "front"}
+        onClick={() => flipRef.current?.flipPrev()}
+      >
+        <BookMarker dir="prev" />
+      </button>
+      <button
+        type="button"
+        className="festival-book__control festival-book__control--next"
+        aria-label="Next program page"
+        disabled={shift === "back"}
+        onClick={() => flipRef.current?.flipNext()}
+      >
+        <BookMarker dir="next" />
+      </button>
+      <div
+        ref={hostRef}
+        className="festival-book"
+        data-book-shift="front"
+        role="region"
+        aria-label="DOC NOW 2025 festival program. Drag a page or use the arrows to turn. Arrow keys also turn pages."
+        tabIndex={0}
+        onKeyDown={onKeyDown}
+      >
+        <div ref={stageRef} className="festival-book__stage" />
+      </div>
     </div>
   );
 }
