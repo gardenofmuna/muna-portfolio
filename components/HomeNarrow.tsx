@@ -20,10 +20,12 @@ import {
   getProjectBySlug,
   type ProjectDefinition,
 } from "@/data/projects";
+import { NARROW_NAV_LABELS } from "@/lib/narrow-nav-ring";
 
 import "./home-narrow.css";
 
 const DESIGN_PROJECT_PATH = `/design/${EGWU_RECORDS_SLUG}`;
+type NarrowLabel = (typeof NARROW_NAV_LABELS)[number];
 
 type Props = {
   /** Direct visit to a project URL — same shell, already in project view. */
@@ -38,7 +40,7 @@ type Props = {
  */
 export function HomeNarrow({ initialProject }: Props) {
   const { vx } = useNarrowArtboardMetrics();
-  const [activeLabel, setActiveLabel] = useState(
+  const [activeLabel, setActiveLabel] = useState<NarrowLabel>(
     initialProject ? "design" : "contact",
   );
   const [hoverNavLabel, setHoverNavLabel] = useState<string | null>(null);
@@ -135,7 +137,9 @@ export function HomeNarrow({ initialProject }: Props) {
   const installationOpen = showInstallation && !projectOpen;
 
   const leaveInstallation = useCallback((label: string) => {
-    setActiveLabel(label);
+    if ((NARROW_NAV_LABELS as readonly string[]).includes(label)) {
+      setActiveLabel(label as NarrowLabel);
+    }
     setWheelEpoch((n) => n + 1);
   }, []);
 
@@ -164,7 +168,11 @@ export function HomeNarrow({ initialProject }: Props) {
             initialActiveLabel={
               initialProject && wheelEpoch === 0 ? "design" : activeLabel
             }
-            onActiveLabelChange={setActiveLabel}
+            onActiveLabelChange={(label) => {
+              if ((NARROW_NAV_LABELS as readonly string[]).includes(label)) {
+                setActiveLabel(label as NarrowLabel);
+              }
+            }}
             onHoverLabelChange={setHoverNavLabel}
             onWheelInteractingChange={setWheelInteracting}
             onLabelActivate={(label) => {
