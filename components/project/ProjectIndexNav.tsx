@@ -47,11 +47,15 @@ export function ProjectIndexNav({ activeNumber, total }: Props) {
     <nav className="project-index-nav" aria-label="Project index">
       {numerals.map((numeral) => {
         const slug = getProjectSlugByNumber(numeral);
-        const className =
-          numeral === activeNumber
-            ? "project-index-nav__item project-index-nav__item--active"
-            : "project-index-nav__item";
         const isCurrent = numeral === activeNumber;
+        const empty = !slug;
+        const className = [
+          "project-index-nav__item",
+          isCurrent ? "project-index-nav__item--active" : "",
+          empty ? "project-index-nav__item--empty" : "",
+        ]
+          .filter(Boolean)
+          .join(" ");
 
         if (slug && !isCurrent) {
           return (
@@ -70,6 +74,7 @@ export function ProjectIndexNav({ activeNumber, total }: Props) {
             key={numeral}
             className={className}
             aria-current={isCurrent ? "page" : undefined}
+            aria-disabled={empty ? true : undefined}
           >
             {numeral}
           </span>

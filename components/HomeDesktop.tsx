@@ -10,7 +10,7 @@ import { DesignLandingIndex } from "@/components/DesignLandingIndex";
 import { DesktopSiteShell } from "@/components/DesktopSiteShell";
 import { DesktopStageCanvas } from "@/components/DesktopStageCanvas";
 import { FilmHoverGif } from "@/components/FilmHoverGif";
-import { InstallationLottie } from "@/components/InstallationLottie";
+import { InstallationGallery } from "@/components/InstallationGallery";
 import { PhotosHoverCluster } from "@/components/PhotosHoverCluster";
 import { SelectedWorksHoverGif } from "@/components/SelectedWorksHoverGif";
 import { DesignProjectNavProvider } from "@/components/project/DesignProjectNav";
@@ -163,7 +163,9 @@ export function HomeDesktop({ initialProject }: Props) {
             : undefined
         }
         onSignatureClick={projectOpen ? goToLanding : undefined}
-        signatureCompact={projectOpen}
+        signatureCompact={
+          projectOpen || (!projectOpen && previewLabel === "installation")
+        }
         nav={
           <CircularNavWheel
             layout="desktop"
@@ -221,10 +223,8 @@ export function HomeDesktop({ initialProject }: Props) {
             <DesignLandingIndex
               visible={!projectOpen && previewLabel === "design"}
             />
-            <InstallationLottie
+            <InstallationGallery
               visible={!projectOpen && previewLabel === "installation"}
-              layout="desktop"
-              stageLocked
             />
             <PhotosHoverCluster
               visible={!projectOpen && previewLabel === "photos"}

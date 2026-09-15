@@ -1,0 +1,142 @@
+/*
+ * Installation landing gallery — Photoshop mockup on 1167.5×1624.5,
+ * mapped into layout coords. Three in-view tiles (no far peeks); frame
+ * boxes keep mockup gutters; images object-fit:contain. Title 72÷2 base,
+ * meta 44.76÷2.
+ */
+
+.installation-gallery {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  /* Never steal hits over the nav wheel — only the strip is interactive. */
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.installation-gallery[data-visible] {
+  opacity: 1;
+  visibility: visible;
+}
+
+.installation-gallery[data-visible] .installation-gallery__strip {
+  pointer-events: auto;
+}
+
+.installation-gallery__strip {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  overflow: visible;
+  touch-action: none;
+  cursor: grab;
+  outline: none;
+}
+
+.installation-gallery__strip:active {
+  cursor: grabbing;
+}
+
+.installation-gallery__stage {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+.installation-gallery__card {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  overflow: hidden;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  transform-origin: center center;
+  will-change: transform;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.installation-gallery__card[data-active] {
+  cursor: default;
+  pointer-events: none;
+}
+
+.installation-gallery__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.installation-gallery__meta {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  text-align: right;
+  pointer-events: none;
+}
+
+.installation-gallery__year,
+.installation-gallery__kind {
+  margin: 0;
+  font-family: "LTC Garamont Display OT", "Times New Roman", serif;
+  font-size: 22.38px; /* 44.76 ÷ 2 */
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1.15;
+  letter-spacing: -0.04em;
+  color: #000;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+  -webkit-text-stroke: 0.75px currentColor;
+  paint-order: stroke fill;
+}
+
+.installation-gallery__kind {
+  margin-top: 0.05em;
+}
+
+.installation-gallery__title {
+  margin: 0.35em 0 0.4em;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 36px; /* 72 ÷ 2 — may shrink per show so each line stays one row */
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  text-transform: none;
+}
+
+.installation-gallery__title-line {
+  display: block;
+  white-space: nowrap;
+}
+
+.installation-gallery__venue {
+  margin: 0;
+  font-family: "LTC Garamont Display OT", "Times New Roman", serif;
+  font-size: 22.38px;
+  font-weight: 400;
+  font-style: italic;
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+  color: #000;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+}
+
+.installation-gallery__venue-line {
+  display: block;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .installation-gallery__card {
+    transition: none;
+  }
+}

@@ -69,6 +69,9 @@ html, body {
   overflow: hidden;
   box-sizing: border-box;
   background-color: #fff;
+  /* Block double-tap / pinch zoom so the artboard scale stays locked. */
+  touch-action: manipulation;
+  -ms-touch-action: manipulation;
 }
 
 body {

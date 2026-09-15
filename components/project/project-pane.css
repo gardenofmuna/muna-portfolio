@@ -179,6 +179,11 @@
   text-underline-offset: 0.2em;
 }
 
+.project-index-nav__item--empty {
+  color: #c4c4c4;
+  pointer-events: none;
+}
+
 /* Header */
 
 .project-header {

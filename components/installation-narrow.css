@@ -1,0 +1,221 @@
+/*
+ * Narrow / tablet installation landing — vertical scroll feed.
+ * Side padding matches --narrow-gutter (wordmark + hamburger).
+ */
+
+.installation-narrow {
+  --in-gutter: var(--narrow-gutter, 20px);
+  --in-chrome-pad: var(--narrow-chrome-pad, 24px);
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: #fff;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.installation-narrow[data-visible] {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.installation-narrow__header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  padding: var(--in-chrome-pad) var(--in-gutter);
+  pointer-events: none;
+  background: #fff;
+  transition: box-shadow 180ms ease;
+}
+
+.installation-narrow__header[data-scrolled] {
+  box-shadow: 0 1px 0 rgb(0 0 0 / 6%);
+}
+
+.installation-narrow[data-menu-state="open"] .installation-narrow__header {
+  background: transparent;
+  box-shadow: none;
+}
+
+.installation-narrow__header .project-narrow__wordmark,
+.installation-narrow__menu-toggle {
+  pointer-events: auto;
+}
+
+.installation-narrow[data-menu-state="open"] .project-narrow__wordmark {
+  visibility: hidden;
+}
+
+.installation-narrow__menu-toggle {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  width: var(--in-menu-w);
+  height: var(--in-menu-h, var(--in-nzeribe-h));
+  -webkit-tap-highlight-color: transparent;
+}
+
+.installation-narrow__menu-toggle svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.installation-narrow__scroll {
+  position: absolute;
+  inset: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
+  background: #fff;
+}
+
+.installation-narrow__page {
+  --in-caption-pad: 1.75rem;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  /* Clear fixed wordmark / hamburger band, then feed. */
+  padding: calc(var(--in-chrome-pad) + var(--in-nzeribe-h, 40px) + 28px)
+    var(--in-gutter) 0;
+}
+
+.installation-narrow__show {
+  margin: 0;
+}
+
+.installation-narrow__frame {
+  width: 100%;
+  margin: 0;
+}
+
+.installation-narrow__image {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  object-position: center;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/*
+ * Equal air above the year and below the venue — including after the
+ * final “Ecobank Pan-African Centre” (padding so it can’t collapse).
+ */
+.installation-narrow__meta {
+  margin-top: var(--in-caption-pad);
+  margin-bottom: 0;
+  padding-bottom: var(--in-caption-pad);
+  text-align: right;
+}
+
+.installation-narrow__year,
+.installation-narrow__kind {
+  margin: 0;
+  font-family: "LTC Garamont Display OT", "Times New Roman", serif;
+  font-size: clamp(15px, 3.6vw, 20px);
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1.15;
+  letter-spacing: -0.04em;
+  color: #000;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+  -webkit-text-stroke: 0.55px currentColor;
+  paint-order: stroke fill;
+}
+
+.installation-narrow__kind {
+  margin-top: 0.05em;
+}
+
+.installation-narrow__title {
+  margin: 0.4em 0 0.45em;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(22px, 6vw, 36px);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  text-transform: none;
+}
+
+.installation-narrow__title-line {
+  display: block;
+  white-space: nowrap;
+}
+
+.installation-narrow__venue {
+  margin: 0;
+  font-family: "LTC Garamont Display OT", "Times New Roman", serif;
+  font-size: clamp(15px, 3.6vw, 20px);
+  font-weight: 400;
+  font-style: italic;
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+  color: #000;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+}
+
+.installation-narrow__venue-line {
+  display: block;
+}
+
+.installation-narrow__nav-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  overflow: hidden;
+  background: #fff;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Match project hamburger overlay active label paint. */
+.installation-narrow__nav-stage .overlay-nav-rotator [id^="circular-nav-item-"] {
+  color: #a3a3a3;
+  display: inline-block;
+  width: max-content;
+  max-width: none;
+  line-height: 1;
+  height: 1em;
+  padding: 0;
+  margin: 0;
+  pointer-events: auto;
+}
+
+.installation-narrow__nav-stage
+  .overlay-nav-rotator
+  [id^="circular-nav-item-"][data-active] {
+  color: #000000;
+}
+
+.installation-narrow__nav-stage {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: left top;
+  touch-action: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .installation-narrow {
+    transition: none;
+  }
+}

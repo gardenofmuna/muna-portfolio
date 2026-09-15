@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AboutBio } from "@/components/AboutBio";
 import { CircularNavWheel } from "@/components/CircularNavWheel";
 import { DesignCluster } from "@/components/DesignCluster";
-import { InstallationLottie } from "@/components/InstallationLottie";
+import { InstallationNarrow } from "@/components/InstallationNarrow";
 import { MobileFooterLinks } from "@/components/MobileFooterLinks";
 import { NarrowWheelFit, useNarrowArtboardMetrics } from "@/components/NarrowArtboard";
 import { PhotosHoverCluster } from "@/components/PhotosHoverCluster";
@@ -44,6 +44,8 @@ export function HomeNarrow({ initialProject }: Props) {
   const [hoverNavLabel, setHoverNavLabel] = useState<string | null>(null);
   const [wheelInteracting, setWheelInteracting] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
+  /** Remount landing wheel after leaving installation via hamburger menu. */
+  const [wheelEpoch, setWheelEpoch] = useState(0);
   const [project, setProject] = useState<ProjectDefinition | null>(
     initialProject ?? null,
   );
@@ -114,7 +116,8 @@ export function HomeNarrow({ initialProject }: Props) {
     !project && (previewLabel === "about" || previewLabel === "contact");
   const showPhotos = !project && previewLabel === "photos";
   const showDesign = !project && previewLabel === "design";
-  const showInstallation = !project && previewLabel === "installation";
+  /** Full-page feed — only after the wheel settles on installation. */
+  const showInstallation = !project && activeLabel === "installation";
   const showCvPress = !project && previewLabel === "cv + press";
   const showFilm = !project && previewLabel === "film";
   const showSelectedWorks = !project && previewLabel === "selected works";
@@ -129,10 +132,16 @@ export function HomeNarrow({ initialProject }: Props) {
 
   const projectOpen = project != null;
   const mountLanding = !projectOpen || enteredFromLanding || !initialProject;
+  const installationOpen = showInstallation && !projectOpen;
+
+  const leaveInstallation = useCallback((label: string) => {
+    setActiveLabel(label);
+    setWheelEpoch((n) => n + 1);
+  }, []);
 
   return (
     <div className="narrow-app fixed inset-0 overflow-hidden bg-white">
-      {projectOpen ? null : (
+      {projectOpen || installationOpen ? null : (
       <div
         className="narrow-persist-wordmark"
         style={vx ? { left: `calc(${vx}px + var(--narrow-gutter))` } : undefined}
@@ -143,15 +152,18 @@ export function HomeNarrow({ initialProject }: Props) {
       {mountLanding ? (
       <div
         className="narrow-landing"
-        data-hidden={projectOpen ? "" : undefined}
-        aria-hidden={projectOpen}
-        inert={projectOpen ? true : undefined}
+        data-hidden={projectOpen || installationOpen ? "" : undefined}
+        aria-hidden={projectOpen || installationOpen}
+        inert={projectOpen || installationOpen ? true : undefined}
       >
-        <MobileFooterLinks />
+        {installationOpen ? null : <MobileFooterLinks />}
         <NarrowWheelFit>
           <CircularNavWheel
+            key={wheelEpoch}
             layout="narrow"
-            initialActiveLabel={initialProject ? "design" : "contact"}
+            initialActiveLabel={
+              initialProject && wheelEpoch === 0 ? "design" : activeLabel
+            }
             onActiveLabelChange={setActiveLabel}
             onHoverLabelChange={setHoverNavLabel}
             onWheelInteractingChange={setWheelInteracting}
@@ -162,7 +174,6 @@ export function HomeNarrow({ initialProject }: Props) {
             }}
           />
           <DesignCluster visible={showDesign} variant="narrow" />
-          <InstallationLottie visible={showInstallation} layout="narrow" />
           <FilmHoverGif visible={showFilm} layout="narrow" />
           <CvPressHoverAccordion visible={showCvPress} layout="narrow" />
           <SelectedWorksHoverGif visible={showSelectedWorks} layout="narrow" />
@@ -179,6 +190,11 @@ export function HomeNarrow({ initialProject }: Props) {
         </NarrowWheelFit>
       </div>
       ) : null}
+      <InstallationNarrow
+        visible={installationOpen}
+        onNavigate={leaveInstallation}
+        onOpenDesign={openDesignProject}
+      />
       {project ? (
         <div
           className={
