@@ -63,6 +63,8 @@ export function HomeDesktop({ initialProject }: Props) {
   const [menuVeil, setMenuVeil] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
   const [wheelInteracting, setWheelInteracting] = useState(false);
+  /** Remount dial so signature “m” / exits can hard-reset angle + focus. */
+  const [wheelEpoch, setWheelEpoch] = useState(0);
   const m = getDesktopStageMetrics();
   const projectOpen = project != null;
   const projectRef = useRef(project);
@@ -76,11 +78,15 @@ export function HomeDesktop({ initialProject }: Props) {
     return () => mq.removeEventListener("change", u);
   }, []);
 
-  const goToLanding = useCallback(() => {
+  const goToLanding = useCallback((label = "contact") => {
+    setActiveLabel(label);
+    setHoverNavLabel(null);
+    setWheelInteracting(false);
     setProject(null);
     setEnteredFromLanding(false);
     setMenuState("open");
     setMenuVeil(false);
+    setWheelEpoch((n) => n + 1);
     startTransition(() => {
       setPaneProject(null);
     });
@@ -94,6 +100,7 @@ export function HomeDesktop({ initialProject }: Props) {
     setEnteredFromLanding(projectRef.current == null);
     setMenuState("open");
     setMenuVeil(false);
+    setActiveLabel("design");
     setProject(next);
     setPaneProject(next);
   }, []);
@@ -101,10 +108,14 @@ export function HomeDesktop({ initialProject }: Props) {
   useEffect(() => {
     const onPop = () => {
       if (window.location.pathname === "/") {
+        setActiveLabel("contact");
+        setHoverNavLabel(null);
+        setWheelInteracting(false);
         setProject(null);
         setEnteredFromLanding(false);
         setMenuState("open");
         setMenuVeil(false);
+        setWheelEpoch((n) => n + 1);
         startTransition(() => setPaneProject(null));
         return;
       }
@@ -115,6 +126,7 @@ export function HomeDesktop({ initialProject }: Props) {
       setEnteredFromLanding(false);
       setMenuState("open");
       setMenuVeil(false);
+      if (next) setActiveLabel("design");
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
@@ -123,13 +135,28 @@ export function HomeDesktop({ initialProject }: Props) {
   /* Previews follow the dial only while clicking/dragging — not mouse hover. */
   const previewLabel =
     wheelInteracting && hoverNavLabel ? hoverNavLabel : activeLabel;
-  const isContact = !projectOpen && previewLabel === "contact";
-  const showAboutBio = !projectOpen && (previewLabel === "about" || isContact);
+  const isContact = previewLabel === "contact";
+  const showAboutBio = previewLabel === "about" || isContact;
   const fadeMs = wheelInteracting
     ? 120
     : reduceMotion
       ? 80
       : 520;
+  const crossfade = reduceMotion
+    ? "none"
+    : `opacity ${fadeMs}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+
+  /**
+   * While a case study is open, keep landing overlays off — only the dial
+   * moves. Settling on a non-design label exits back to that landing section.
+   */
+  const showLandingPreviews = !projectOpen;
+
+  useEffect(() => {
+    if (!projectOpen || wheelInteracting) return;
+    if (activeLabel === "design") return;
+    goToLanding(activeLabel);
+  }, [activeLabel, goToLanding, projectOpen, wheelInteracting]);
 
   /** Clear signature column for bio; contact bar meets polaroid flush (no black gap). */
   const bioRightClearOfNzeribe = m.inset + m.nzeribeW + m.gapScaled;
@@ -141,7 +168,7 @@ export function HomeDesktop({ initialProject }: Props) {
       <DesktopSiteShell
         layout="stage"
         showPolaroid={
-          !projectOpen &&
+          showLandingPreviews &&
           (previewLabel === "about" || previewLabel === "contact")
         }
         menuState={projectOpen ? menuState : "open"}
@@ -162,16 +189,22 @@ export function HomeDesktop({ initialProject }: Props) {
               }
             : undefined
         }
-        onSignatureClick={projectOpen ? goToLanding : undefined}
+        onSignatureClick={
+          projectOpen ? () => goToLanding("contact") : undefined
+        }
         signatureCompact={
-          projectOpen || (!projectOpen && previewLabel === "installation")
+          projectOpen ||
+          (!projectOpen && previewLabel === "installation")
         }
         nav={
           <CircularNavWheel
+            key={wheelEpoch}
             layout="desktop"
             containment="stage"
             spinFeel="narrow"
-            initialActiveLabel={initialProject ? "design" : "contact"}
+            initialActiveLabel={
+              initialProject && wheelEpoch === 0 ? "design" : activeLabel
+            }
             onActiveLabelChange={setActiveLabel}
             onHoverLabelChange={setHoverNavLabel}
             onWheelInteractingChange={setWheelInteracting}
@@ -188,7 +221,12 @@ export function HomeDesktop({ initialProject }: Props) {
               style={
                 projectOpen
                   ? undefined
-                  : { visibility: "hidden", pointerEvents: "none" }
+                  : {
+                      opacity: 0,
+                      transition: crossfade,
+                      pointerEvents: "none",
+                      visibility: "hidden",
+                    }
               }
               aria-hidden={!projectOpen}
             >
@@ -217,57 +255,63 @@ export function HomeDesktop({ initialProject }: Props) {
         stageOverlays={
           <div
             className="pointer-events-none absolute inset-0 z-[50]"
-            hidden={projectOpen}
-            aria-hidden={projectOpen}
+            style={{
+              opacity: showLandingPreviews ? 1 : 0,
+              transition: crossfade,
+              /* Block hit-testing + paint while a case study owns the stage. */
+              visibility: showLandingPreviews ? "visible" : "hidden",
+            }}
+            aria-hidden={!showLandingPreviews}
           >
             <DesignLandingIndex
-              visible={!projectOpen && previewLabel === "design"}
+              visible={
+                showLandingPreviews &&
+                (activeLabel === "design" || previewLabel === "design")
+              }
             />
             <InstallationGallery
-              visible={!projectOpen && previewLabel === "installation"}
+              visible={showLandingPreviews && previewLabel === "installation"}
             />
             <PhotosHoverCluster
-              visible={!projectOpen && previewLabel === "photos"}
+              visible={showLandingPreviews && previewLabel === "photos"}
               variant="desktop"
               stageLocked
             />
             <FilmHoverGif
-              visible={!projectOpen && previewLabel === "film"}
+              visible={showLandingPreviews && previewLabel === "film"}
               layout="desktop"
               stageLocked
             />
             <CvPressHoverAccordion
-              visible={!projectOpen && previewLabel === "cv + press"}
+              visible={showLandingPreviews && previewLabel === "cv + press"}
               layout="desktop"
               stageLocked
             />
             <SelectedWorksHoverGif
-              visible={!projectOpen && previewLabel === "select works"}
+              visible={showLandingPreviews && previewLabel === "select works"}
               layout="desktop"
               stageLocked
             />
             <ContactTopLinks
-              visible={isContact}
+              visible={showLandingPreviews && isContact}
               stageLocked
               top={`${m.inset}px`}
               left={`${DESKTOP_LAYOUT_BIO_LEFT}px`}
               right={`${contactBarRight}px`}
             />
             <div
-              aria-hidden={!showAboutBio}
+              aria-hidden={!(showLandingPreviews && showAboutBio)}
               className="pointer-events-none absolute z-[30] flex flex-row items-end"
               style={{
                 left: DESKTOP_LAYOUT_BIO_LEFT,
                 right: bioRightClearOfNzeribe,
                 bottom: m.inset,
-                opacity: showAboutBio ? 1 : 0,
-                transition: reduceMotion
-                  ? "none"
-                  : `opacity ${fadeMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+                opacity: showLandingPreviews && showAboutBio ? 1 : 0,
+                transition: crossfade,
               }}
             >
               <AboutBio
-                visible={showAboutBio}
+                visible={showLandingPreviews && showAboutBio}
                 embedded
                 stageLocked
                 whiteBodyText={isContact}

@@ -21,7 +21,8 @@ import "./project-pane.css";
 type Props = {
   project: ProjectDefinition;
   hideWordmark?: boolean;
-  onGoHome?: () => void;
+  /** Return to landing; optional nav label opens that section (e.g. installation). */
+  onGoHome?: (label?: string) => void;
   onProjectChange?: (project: ProjectDefinition) => void;
 };
 
@@ -102,10 +103,13 @@ export function ProjectNarrowClient({
     [onProjectChange],
   );
 
-  const goHome = useCallback(() => {
-    closeMenu();
-    onGoHome?.();
-  }, [closeMenu, onGoHome]);
+  const goHome = useCallback(
+    (label?: string) => {
+      closeMenu();
+      onGoHome?.(label);
+    },
+    [closeMenu, onGoHome],
+  );
 
   return (
     <DesignProjectNavProvider onProjectChange={handleProjectChange}>
@@ -200,7 +204,9 @@ export function ProjectNarrowClient({
                   closeMenu();
                   return;
                 }
-                goHome();
+                if (label === "installation") {
+                  goHome("installation");
+                }
               }}
             />
           </div>

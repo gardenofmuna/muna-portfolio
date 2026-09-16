@@ -181,6 +181,7 @@ export function DesignLandingIndex({ visible }: Props) {
   const nav = useDesignProjectNav();
   const [reduceMotion, setReduceMotion] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [coarsePointer, setCoarsePointer] = useState(false);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -194,6 +195,14 @@ export function DesignLandingIndex({ visible }: Props) {
     if (!visible) setActiveIndex(null);
   }, [visible]);
 
+  useEffect(() => {
+    const mq = window.matchMedia("(pointer: coarse), (hover: none)");
+    const sync = () => setCoarsePointer(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
   const fadeMs = reduceMotion ? 80 : 520;
   const hovering = activeIndex !== null;
   const item = hovering
@@ -202,6 +211,14 @@ export function DesignLandingIndex({ visible }: Props) {
   const scatter = hovering
     ? PREVIEW_SCATTER[activeIndex]!
     : PREVIEW_SCATTER[0]!;
+
+  const stepHover = (delta: number) => {
+    setActiveIndex((prev) => {
+      if (prev === null) return null;
+      const n = DESIGN_LANDING_ITEMS.length;
+      return ((prev + delta) % n + n) % n;
+    });
+  };
 
   return (
     <div
@@ -225,10 +242,19 @@ export function DesignLandingIndex({ visible }: Props) {
           width: DESIGN_LIST_WIDTH,
           pointerEvents: visible ? "auto" : "none",
         }}
+        onWheel={(event) => {
+          if (!visible || activeIndex === null) return;
+          event.preventDefault();
+          event.stopPropagation();
+          if (Math.abs(event.deltaY) < 1) return;
+          stepHover(event.deltaY > 0 ? 1 : -1);
+        }}
       >
         <ul
           className="design-landing-list"
-          onMouseLeave={() => setActiveIndex(null)}
+          onMouseLeave={() => {
+            if (!coarsePointer) setActiveIndex(null);
+          }}
         >
           {DESIGN_LANDING_ITEMS.map((row, index) => {
             const hot = index === activeIndex;
@@ -242,16 +268,24 @@ export function DesignLandingIndex({ visible }: Props) {
                   tabIndex={visible ? 0 : -1}
                   aria-current={hot ? "true" : undefined}
                   aria-label={`[${row.id}] ${row.title}`}
-                  onPointerEnter={() => setActiveIndex(index)}
-                  onMouseEnter={() => setActiveIndex(index)}
+                  onPointerEnter={() => {
+                    if (!coarsePointer) setActiveIndex(index);
+                  }}
+                  onMouseEnter={() => {
+                    if (!coarsePointer) setActiveIndex(index);
+                  }}
                   onFocus={() => setActiveIndex(index)}
                   onBlur={(e) => {
                     const next = e.relatedTarget as Node | null;
                     if (!e.currentTarget.closest("ul")?.contains(next)) {
-                      setActiveIndex(null);
+                      if (!coarsePointer) setActiveIndex(null);
                     }
                   }}
                   onClick={() => {
+                    if (coarsePointer && activeIndex !== index) {
+                      setActiveIndex(index);
+                      return;
+                    }
                     if (row.slug) nav?.goToProject(row.slug);
                   }}
                   style={

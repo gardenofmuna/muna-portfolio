@@ -51,6 +51,7 @@ const CV_DESKTOP_NUDGE_LEFT_PX = 28;
 
 /**
  * Hub preview for “cv + press” — appears on nav hover; desktop unfolds on paper hover.
+ * Touch / iPad: no sticky hover — hide as soon as the wheel leaves this section.
  */
 export function CvPressHoverAccordion({
   visible,
@@ -59,22 +60,34 @@ export function CvPressHoverAccordion({
 }: Props) {
   const [reduceMotion, setReduceMotion] = useState(false);
   const [isPaperHovered, setIsPaperHovered] = useState(false);
+  /** iPad / touch: hover doesn’t clear when the wheel moves — don’t stick open. */
+  const [coarsePointer, setCoarsePointer] = useState(false);
   const isDesktop = layout === "desktop";
 
   useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const u = () => setReduceMotion(mq.matches);
-    u();
-    mq.addEventListener("change", u);
-    return () => mq.removeEventListener("change", u);
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const coarse = window.matchMedia("(pointer: coarse), (hover: none)");
+    const syncMotion = () => setReduceMotion(motion.matches);
+    const syncCoarse = () => setCoarsePointer(coarse.matches);
+    syncMotion();
+    syncCoarse();
+    motion.addEventListener("change", syncMotion);
+    coarse.addEventListener("change", syncCoarse);
+    return () => {
+      motion.removeEventListener("change", syncMotion);
+      coarse.removeEventListener("change", syncCoarse);
+    };
   }, []);
 
-  /** Keep preview mounted while moving from nav label onto the paper. */
-  const showDesktop = visible || isPaperHovered;
+  /**
+   * Mouse: keep mounted while moving from the nav label onto the paper.
+   * Touch: follow `visible` only so spinning the wheel always dismisses.
+   */
+  const showDesktop = visible || (!coarsePointer && isPaperHovered);
 
   useEffect(() => {
-    if (!showDesktop) setIsPaperHovered(false);
-  }, [showDesktop]);
+    if (!visible && coarsePointer) setIsPaperHovered(false);
+  }, [visible, coarsePointer]);
 
   const fadeMs = reduceMotion ? 80 : 480;
   const fadeStyle = {
@@ -135,8 +148,15 @@ export function CvPressHoverAccordion({
     <div
       className={`${stageLocked ? "absolute" : "fixed"} z-[50] select-none ${showDesktop ? "pointer-events-auto" : "pointer-events-none"}`}
       aria-hidden={!showDesktop}
-      onMouseEnter={() => setIsPaperHovered(true)}
+      onMouseEnter={() => {
+        if (!coarsePointer) setIsPaperHovered(true);
+      }}
       onMouseLeave={() => setIsPaperHovered(false)}
+      onPointerUp={(event) => {
+        if (!coarsePointer || event.pointerType === "mouse") return;
+        if (!visible) return;
+        setIsPaperHovered((open) => !open);
+      }}
       style={{
         top: "50%",
         left: "50%",

@@ -79,10 +79,14 @@ export function HomeNarrow({ initialProject }: Props) {
     }
   }, []);
 
-  const goToLanding = useCallback(() => {
+  const goToLanding = useCallback((label?: string) => {
     setProject(null);
     setEnteredFromLanding(false);
     document.title = "Muna | Portfolio";
+    if (label && (NARROW_NAV_LABELS as readonly string[]).includes(label)) {
+      setActiveLabel(label as NarrowLabel);
+      setWheelEpoch((n) => n + 1);
+    }
     if (window.location.pathname !== "/") {
       window.history.pushState(null, "", "/");
     }

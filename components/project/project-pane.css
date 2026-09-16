@@ -330,29 +330,26 @@
   margin-bottom: calc(64 * var(--pn-u));
 }
 
-/* DOC NOW posters — three same-height posters, equal gaps (portfolio board). */
+/* DOC NOW posters — three same-height posters spanning the content quadrant. */
 .project-pane .project-poster-static {
   --poster-static-gap: 16px;
-  --poster-static-pad-x: 32px;
-  /* Sum of width/height ratios so all three fit the content width. */
+  container-type: inline-size;
+  container-name: poster-static;
+  /* Fill the actual column width (not a stale --pane-content-w guess). */
   --poster-static-h: calc(
-    (
-        var(--pane-content-w, 659px) - (2 * var(--poster-static-pad-x)) -
-          (2 * var(--poster-static-gap))
-      ) /
-      2.28
+    (100cqw - (2 * var(--poster-static-gap))) / 2.28
   );
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   gap: var(--poster-static-gap);
   box-sizing: border-box;
   width: 100%;
   margin: 0;
-  padding: 48px var(--poster-static-pad-x);
-  background: #333;
+  padding: 0;
+  background: transparent;
 }
 
 .project-pane .project-poster-static__item {

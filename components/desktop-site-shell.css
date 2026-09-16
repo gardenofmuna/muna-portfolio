@@ -65,28 +65,44 @@
   z-index: 90;
 }
 
-/* White veil over center + signature — only after hamburger reopen (data-menu-veil).
-   Left edge fades under the circular nav so content exiting the wheel has no hard cut. */
+/* Frosted glass over case study when the menu is reopened (data-menu-veil).
+   Full-bleed layer, masked so frost eases in under the dial (no hard cut). */
 .desktop-site-shell:has(.project-pane)::before {
   content: "";
   position: absolute;
   inset: 0;
   z-index: 80;
-  --menu-veil: rgba(255, 255, 255, 0.55);
-  --menu-veil-fade: 110px;
-  background: linear-gradient(
+  pointer-events: none;
+  --frost-fade: 160px;
+  background:
+    linear-gradient(
+      135deg,
+      rgb(255 255 255 / 0.38) 0%,
+      rgb(255 255 255 / 0.18) 48%,
+      rgb(255 255 255 / 0.28) 100%
+    );
+  -webkit-backdrop-filter: blur(22px) saturate(1.45);
+  backdrop-filter: blur(22px) saturate(1.45);
+  -webkit-mask-image: linear-gradient(
     to right,
     transparent 0,
-    transparent max(0px, calc(var(--nav-zone-width) - var(--menu-veil-fade))),
-    rgb(255 255 255 / 0.12) calc(var(--nav-zone-width) - var(--menu-veil-fade) * 0.72),
-    rgb(255 255 255 / 0.32) calc(var(--nav-zone-width) - var(--menu-veil-fade) * 0.48),
-    rgb(255 255 255 / 0.55) calc(var(--nav-zone-width) - var(--menu-veil-fade) * 0.24),
-    var(--menu-veil) var(--nav-zone-width),
-    var(--menu-veil) 100%
+    transparent max(0px, calc(var(--nav-zone-width) - var(--frost-fade))),
+    rgb(0 0 0 / 0.2) calc(var(--nav-zone-width) - var(--frost-fade) * 0.55),
+    rgb(0 0 0 / 0.65) calc(var(--nav-zone-width) - var(--frost-fade) * 0.2),
+    black var(--nav-zone-width),
+    black 100%
   );
-  pointer-events: none;
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    transparent max(0px, calc(var(--nav-zone-width) - var(--frost-fade))),
+    rgb(0 0 0 / 0.2) calc(var(--nav-zone-width) - var(--frost-fade) * 0.55),
+    rgb(0 0 0 / 0.65) calc(var(--nav-zone-width) - var(--frost-fade) * 0.2),
+    black var(--nav-zone-width),
+    black 100%
+  );
   opacity: 0;
-  transition: opacity 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity 480ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .desktop-site-shell:has(.project-pane)[data-menu-veil="true"]::before {

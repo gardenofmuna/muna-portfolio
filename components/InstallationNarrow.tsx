@@ -242,10 +242,14 @@ export function InstallationNarrow({
               containment="stage"
               spinFeel="narrow"
               initialActiveLabel="installation"
-              onLabelActivate={leaveInstallation}
-              onActiveLabelChange={(label) => {
-                if (label === "installation") return;
-                leaveInstallation(label);
+              onLabelActivate={(label) => {
+                if (label === "installation") {
+                  closeMenu();
+                  return;
+                }
+                if (label === "design") {
+                  leaveInstallation("design");
+                }
               }}
             />
           </div>

@@ -258,11 +258,27 @@ function nearestDesktopLabelSnap(
 }
 const NARROW_SNAP_MS = 380;
 
-function initialNarrowRotation(
-  initialActiveLabel: (typeof LABELS)[number] | undefined,
+function resolveLabelIndex(
+  label: string | undefined,
+  labels: readonly string[],
 ): number {
-  const i = initialActiveLabel ? LABELS.indexOf(initialActiveLabel) : 0;
-  const idx = i >= 0 ? i : 0;
+  if (!label) return 0;
+  const direct = labels.indexOf(label);
+  if (direct >= 0) return direct;
+  /* Desktop “select works” ↔ narrow “selected works” share a slot index. */
+  if (label === "select works") {
+    const i = labels.indexOf("selected works");
+    if (i >= 0) return i;
+  }
+  if (label === "selected works") {
+    const i = labels.indexOf("select works");
+    if (i >= 0) return i;
+  }
+  return 0;
+}
+
+function initialNarrowRotation(initialActiveLabel: string | undefined): number {
+  const idx = resolveLabelIndex(initialActiveLabel, LABELS);
   return narrowSnapRotation(idx, NARROW_BAKED_LABEL_ANGLES, 0);
 }
 
@@ -275,7 +291,7 @@ export type CircularNavWheelProps = {
   /** True while the narrow wheel is dragging or coasting (live preview mode). */
   onWheelInteractingChange?: (interacting: boolean) => void;
   /** Section selected on first paint (wheel angle + focus). Default: first label (`about`). */
-  initialActiveLabel?: (typeof LABELS)[number];
+  initialActiveLabel?: string;
   /** Artboard_2: centered full circle; desktop: arc off left edge. */
   layout?: "desktop" | "narrow";
   /**
@@ -329,11 +345,12 @@ export function CircularNavWheel({
     ReturnType<typeof narrowHitOverlayRects>
   >([]);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const [focusedIndex, setFocusedIndex] = useState(() => {
-    if (!initialActiveLabel) return 0;
-    const i = LABELS.indexOf(initialActiveLabel);
-    return i >= 0 ? i : 0;
-  });
+  const [focusedIndex, setFocusedIndex] = useState(() =>
+    resolveLabelIndex(
+      initialActiveLabel,
+      layout === "narrow" ? LABELS : DESKTOP_LABELS,
+    ),
+  );
   const [reduceMotion, setReduceMotion] = useState(false);
   const focusedRef = useRef(0);
   // During overlay drag, paintOverlayHot owns focusedRef — don't clobber it
@@ -691,7 +708,27 @@ export function CircularNavWheel({
         : coarseRef.current
           ? DESKTOP_WHEEL_ROT_SCALE * 1.9
           : DESKTOP_WHEEL_ROT_SCALE;
-      setRotation((prev) => prev + e.deltaY * rotScale);
+      setWheelInteracting(true);
+      const next = rotationRef.current + e.deltaY * rotScale;
+      rotationRef.current = next;
+      setRotation(next);
+      if (isNarrowRef.current) {
+        syncNarrowTopHover(next);
+      } else {
+        const { tileIndex } = nearestDesktopLabelSnap(
+          next,
+          snapRotationForIndexRef.current,
+          NRef.current,
+          spinFeelRef.current === "narrow" ? undefined : focusedRef.current,
+        );
+        if (spinFeelRef.current === "narrow") {
+          paintOverlayHot(tileIndex);
+        } else {
+          setHoveredIndex((prevHot) =>
+            prevHot === tileIndex ? prevHot : tileIndex,
+          );
+        }
+      }
       if (idle) clearTimeout(idle);
       const snapMs =
         isNarrowRef.current || spinFeelRef.current === "narrow"
@@ -705,6 +742,7 @@ export function CircularNavWheel({
         if (isNarrowRef.current) {
           const bestI = narrowIndexAtTop(φ, labelAnglesRef.current);
           setFocusedIndex(bestI);
+          setWheelInteracting(false);
           return;
         }
         const { tileIndex, rotation: nextRot } = nearestDesktopLabelSnap(
@@ -715,6 +753,8 @@ export function CircularNavWheel({
         );
         setFocusedIndex(tileIndex);
         setRotation(nextRot);
+        setHoveredIndex(null);
+        setWheelInteracting(false);
       }, snapMs);
     };
     el.addEventListener("wheel", onWheel, { passive: false });
