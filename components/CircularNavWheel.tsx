@@ -1068,24 +1068,18 @@ export function CircularNavWheel({
           const p = pointerLocal(e.clientX, e.clientY);
           i = nearestIndexToPointer(p.x, p.y, φ);
         }
-        const nextRot = snapRotationForIndex(i, φ);
-        const centerNow = nearestDesktopLabelSnap(
-          φ,
-          snapRotationForIndex,
-          N,
-        ).tileIndex;
-        const alreadyCentered =
-          i === centerNow && Math.abs(nextRot - φ) < 0.04;
 
         setHoveredIndex(null);
-        setFocusedIndex(i);
-        rotationRef.current = nextRot;
-        setRotation(nextRot);
-
-        if (startItemIndex != null && alreadyCentered) {
-          const label = items[i]?.label;
-          if (label) onActivateRef.current?.(label);
-        }
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            setFocusedIndex(i);
+            setRotation((prev) => snapRotationForIndex(i, prev));
+            if (startItemIndex != null) {
+              const label = items[i]?.label;
+              if (label) onActivateRef.current?.(label);
+            }
+          });
+        });
         setWheelInteracting(false);
       }
     } else if (isNarrow && wasDragging) {
@@ -1121,8 +1115,12 @@ export function CircularNavWheel({
         N,
         focusedRef.current,
       );
-      setFocusedIndex(tileIndex);
-      setRotation(nextRot);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setFocusedIndex(tileIndex);
+          setRotation(nextRot);
+        });
+      });
       setWheelInteracting(false);
     }
 
@@ -1415,9 +1413,13 @@ export function CircularNavWheel({
                     setHoveredIndex(item.index);
                     if (!allowDesktopHoverSnap()) return;
                     setFocusedIndex(item.index);
-                    setRotation((prev) =>
-                      snapRotationForIndex(item.index, prev),
-                    );
+                    requestAnimationFrame(() => {
+                      requestAnimationFrame(() => {
+                        setRotation((prev) =>
+                          snapRotationForIndex(item.index, prev),
+                        );
+                      });
+                    });
                   }}
                   onBlur={() => onItemLeave(item.index)}
                   onClick={() => {
