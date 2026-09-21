@@ -98,6 +98,19 @@
   margin: 0;
 }
 
+.installation-narrow__open {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  color: inherit;
+}
+
 .installation-narrow__frame {
   width: 100%;
   margin: 0;

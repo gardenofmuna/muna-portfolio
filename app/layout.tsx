@@ -20,6 +20,8 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
+  /* Keyboard / browser UI overlays instead of resizing the layout. */
+  interactiveWidget: "overlays-content",
 };
 
 export const metadata: Metadata = {

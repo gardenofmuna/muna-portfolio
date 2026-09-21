@@ -32,7 +32,7 @@ const PHOTOSHOP_AUTO_LEADING = 1.2;
 const BIO_TEXT_SCALE = 0.5 * 1.1 * 1.1;
 
 /** Pinned `translate(x, y)` from measured drag (Chrome localStorage). */
-const ABOUT_BIO_PIN_OFFSET_X = 63.0546875;
+export const ABOUT_BIO_PIN_OFFSET_X = 63.0546875;
 const ABOUT_BIO_PIN_OFFSET_Y = -140.7421875;
 
 /** Matches Artboard_5 reference — coloured bio spans */
@@ -137,6 +137,11 @@ type Props = {
   stageLocked?: boolean;
   /** Centre bio inside the narrow wheel hub (about / contact). */
   hubCentered?: boolean;
+  /**
+   * Mobile about page: wrapping paragraph that fills the content column
+   * (polaroid + bio stack), not the fixed nine-line desktop wraps.
+   */
+  flow?: boolean;
 };
 
 /**
@@ -151,6 +156,7 @@ export function AboutBio({
   narrowStage = false,
   stageLocked = false,
   hubCentered = false,
+  flow = false,
 }: Props) {
   const stageOpts = narrowStage
     ? { refW: NARROW_W, refH: NARROW_H }
@@ -182,6 +188,7 @@ export function AboutBio({
   );
 
   useLayoutEffect(() => {
+    if (flow) return;
     const read = () => {
       const vw =
         narrowStage && embedded
@@ -206,7 +213,7 @@ export function AboutBio({
       ro.disconnect();
       window.removeEventListener("resize", read);
     };
-  }, [embedded, narrowStage, stageLocked, layoutOpts]);
+  }, [embedded, narrowStage, stageLocked, layoutOpts, flow]);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -220,7 +227,7 @@ export function AboutBio({
   const { fontSize, lineHeight, width, height, left, leftMin, top } = layout;
   const pinBottom = Boolean(alignBottom && !embedded);
   const pinchRight = Boolean(alignRight && !embedded);
-  const bottomAnchored = (pinBottom || embedded) && !hubCentered;
+  const bottomAnchored = (pinBottom || embedded) && !hubCentered && !flow;
   const contentJustify = hubCentered
     ? "center"
     : bottomAnchored
@@ -232,25 +239,69 @@ export function AboutBio({
   const textStyle = {
     margin: 0,
     padding: 0,
-    fontSize,
+    fontSize: flow ? undefined : fontSize,
     letterSpacing: `${TRACKING_EM}em`,
-    lineHeight,
+    lineHeight: flow ? 1.35 : lineHeight,
     fontFamily: '"LTC Garamont Display OT", "Times New Roman", serif',
     color: bodyInk,
     WebkitTextFillColor: bodyInk,
     textAlign: (hubCentered ? "center" : "left") as "center" | "left",
-    whiteSpace: "nowrap",
-    ...(hubCentered ? { width: "100%" } : {}),
+    whiteSpace: (flow ? "normal" : "nowrap") as "normal" | "nowrap",
+    ...(hubCentered || flow ? { width: "100%" } : {}),
   } as const;
 
   const fadeTranslateY = visible ? 0 : 10;
-  const pinOffsetX = narrowStage && embedded ? 0 : ABOUT_BIO_PIN_OFFSET_X;
+  const pinOffsetX = flow || (narrowStage && embedded) ? 0 : ABOUT_BIO_PIN_OFFSET_X;
   const pinOffsetY =
-    (narrowStage && embedded
+    (flow || (narrowStage && embedded)
       ? 0
       : bottomAnchored
         ? 0
         : ABOUT_BIO_PIN_OFFSET_Y) + fadeTranslateY;
+
+  const bioCopy = (
+    <>
+      Muna Nzeribe (b. 2001) is a designer and artist born in{" "}
+      <span style={fauxBold(COL.lagos)}>Lagos,</span> Nigeria and currently
+      living and working in{" "}
+      <span style={fauxBold(COL.toronto)}>Toronto,</span> Canada. With a Bsc. in
+      Mass Communication (2022) and an MFA in Documentary Media (2025), she sees
+      her practice as an embodiment of Marshall McLuhan&rsquo;s theory that{" "}
+      <span style={fauxBold(COL.medium)}>
+        &lsquo;the medium is the message.&rsquo;
+      </span>{" "}
+      Utilizing an inherently{" "}
+      <span style={fauxBold(COL.interdisciplinary)}>interdisciplinary</span>{" "}
+      approach and <span style={fauxBold(COL.afro)}>Afro-modernist</span> lens,
+      she waves her creative wand excited to reveal the{" "}
+      <span style={fauxBold(COL.blue)}>
+        hidden correspondence embedded in emerging technology.
+      </span>
+    </>
+  );
+
+  if (flow) {
+    return (
+      <div
+        className={`about-bio-flow relative z-auto cursor-text select-text ${visible ? "pointer-events-auto" : "pointer-events-none"}`}
+        aria-hidden={!visible}
+        style={{
+          WebkitUserSelect: "text",
+          userSelect: "text",
+          boxSizing: "border-box",
+          width: "100%",
+          opacity: visible ? 1 : 0,
+          transition: reduceMotion
+            ? "none"
+            : `opacity ${fadeMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+        }}
+      >
+        <p className="about-bio-flow__text" style={textStyle}>
+          {bioCopy}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div

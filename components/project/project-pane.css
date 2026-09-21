@@ -151,7 +151,7 @@
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
-  /* I at content left, X flush with right-aligned tags / commas */
+  /* I at content left, VI flush with right-aligned tags / commas */
   justify-content: space-between;
   gap: 0;
   margin: 0;
@@ -1064,7 +1064,7 @@
   max-width: 100%;
 }
 
-/* Center posters / merch in the content quadrant (I–X column). */
+/* Center posters / merch in the content quadrant (I–VI column). */
 .project-cover-flow--poster,
 .project-cover-flow--merchandise {
   margin-left: auto;
@@ -1428,7 +1428,7 @@
   }
 
   .project-narrow__page {
-    /* Match phone gap from wordmark bottom to I–X, plus a tad on iPad. */
+    /* Match phone gap from wordmark bottom to I–VI, plus a tad on iPad. */
     padding-top: calc(24px + var(--pn-nzeribe-h) + 48px);
   }
 
@@ -1539,7 +1539,7 @@
 }
 
 .project-narrow .project-index-nav {
-  /* I at left gutter, X at right gutter (under menu) */
+  /* I at left gutter, VI at right gutter (under menu) */
   width: 100%;
   max-width: none;
   margin: 0 0 calc(34 * var(--pn-u));

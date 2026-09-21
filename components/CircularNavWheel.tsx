@@ -192,14 +192,6 @@ function narrowHitIndexAtPoint(clientX: number, clientY: number): number | null 
   return null;
 }
 
-/** Wheel / trackpad → radians per delta unit (narrow). */
-const WHEEL_ROT_SCALE = 0.0022;
-/** Idle after wheel before snapping to nearest slot (narrow). */
-const WHEEL_SNAP_MS = 140;
-
-/** Desktop: slower scroll + longer settle so trackpad does not skip labels. */
-const DESKTOP_WHEEL_ROT_SCALE = 0.00075;
-const DESKTOP_WHEEL_SNAP_MS = 400;
 /** Desktop drag: dampen finger travel vs wheel angle. */
 const DESKTOP_DRAG_GAIN = 0.62;
 /** Desktop: keep current label unless another snap is clearly closer (rad). */
@@ -695,74 +687,6 @@ export function CircularNavWheel({
     selectNarrowIndex(bestI, φ);
     setWheelInteracting(false);
   }, [selectNarrowIndex, setWheelInteracting]);
-
-  useEffect(() => {
-    const el = wrapRef.current;
-    if (!el) return;
-    let idle: ReturnType<typeof setTimeout> | null = null;
-    const onWheel = (e: WheelEvent) => {
-      if (isDraggingRef.current) return;
-      e.preventDefault();
-      const rotScale = isNarrowRef.current || spinFeelRef.current === "narrow"
-        ? WHEEL_ROT_SCALE
-        : coarseRef.current
-          ? DESKTOP_WHEEL_ROT_SCALE * 1.9
-          : DESKTOP_WHEEL_ROT_SCALE;
-      setWheelInteracting(true);
-      const next = rotationRef.current + e.deltaY * rotScale;
-      rotationRef.current = next;
-      setRotation(next);
-      if (isNarrowRef.current) {
-        syncNarrowTopHover(next);
-      } else {
-        const { tileIndex } = nearestDesktopLabelSnap(
-          next,
-          snapRotationForIndexRef.current,
-          NRef.current,
-          spinFeelRef.current === "narrow" ? undefined : focusedRef.current,
-        );
-        if (spinFeelRef.current === "narrow") {
-          paintOverlayHot(tileIndex);
-        } else {
-          setHoveredIndex((prevHot) =>
-            prevHot === tileIndex ? prevHot : tileIndex,
-          );
-        }
-      }
-      if (idle) clearTimeout(idle);
-      const snapMs =
-        isNarrowRef.current || spinFeelRef.current === "narrow"
-          ? WHEEL_SNAP_MS
-          : DESKTOP_WHEEL_SNAP_MS;
-      idle = setTimeout(() => {
-        idle = null;
-        const φ = rotationRef.current;
-        const snapFn = snapRotationForIndexRef.current;
-        const n = NRef.current;
-        if (isNarrowRef.current) {
-          const bestI = narrowIndexAtTop(φ, labelAnglesRef.current);
-          setFocusedIndex(bestI);
-          setWheelInteracting(false);
-          return;
-        }
-        const { tileIndex, rotation: nextRot } = nearestDesktopLabelSnap(
-          φ,
-          snapFn,
-          n,
-          spinFeelRef.current === "narrow" ? undefined : focusedRef.current,
-        );
-        setFocusedIndex(tileIndex);
-        setRotation(nextRot);
-        setHoveredIndex(null);
-        setWheelInteracting(false);
-      }, snapMs);
-    };
-    el.addEventListener("wheel", onWheel, { passive: false });
-    return () => {
-      el.removeEventListener("wheel", onWheel);
-      if (idle) clearTimeout(idle);
-    };
-  }, []);
 
   useEffect(() => {
     setFocusedIndex((i) => clamp(i, 0, N - 1));

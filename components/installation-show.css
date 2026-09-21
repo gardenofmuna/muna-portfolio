@@ -1,0 +1,629 @@
+/*
+ * Installation detail page.
+ * Desktop: lives in the design-page center quadrant (project-pane).
+ * Narrow: full-viewport overlay with its own hamburger.
+ */
+
+/* ── Desktop (shell center) ── */
+
+.installation-show--desktop.project-pane {
+  --is-meta-w: 260px;
+  --is-meta-gap: 28px;
+  --is-hero-w: minmax(0, 1fr);
+  /* Landing meta × smart-object scale (set inline from measured pair). */
+  --is-meta-size: 22.38px;
+  --is-title-size: 36px;
+  /* PS 44 / 47 / −20 → layout ÷2 (same rule as design body). */
+  --is-body-size: 22px;
+  --is-body-leading: 23.5px;
+  --is-body-track: -0.02em;
+  background: #fff;
+}
+
+/*
+ * Content rail: same left inset as design (nav zone / hamburger column),
+ * top flush with the hamburger (36px) — no project-pane__inner smart-object pad.
+ */
+.installation-show--desktop .installation-show__rail {
+  box-sizing: border-box;
+  margin-left: var(--nav-zone-width);
+  width: calc(100% - var(--nav-zone-width));
+  padding-top: 36px;
+  /* Scrollport keeps --shell-inset-top so footer aligns with the “m” bottom. */
+  padding-bottom: 0;
+  padding-left: var(--project-gutter-left, 0px);
+  padding-right: var(--project-gutter-right, 0px);
+  background: #fff;
+}
+
+.installation-show--desktop[data-entering] .installation-show__hero-media[data-css-rise] {
+  animation: is-hero-rise 680ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.installation-show--desktop[data-entering] .installation-show__fade {
+  animation: is-fade-in 480ms 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.installation-show--desktop[data-entering] .installation-show__pair-slot,
+.installation-show--desktop[data-entering] .installation-show__hero-media,
+.installation-show--desktop[data-entering] .installation-show__meta {
+  opacity: 0 !important;
+  animation: none !important;
+}
+
+.installation-show--desktop[data-leaving] .installation-show__fade {
+  animation: is-fade-out 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.installation-show--desktop[data-leaving] {
+  pointer-events: none;
+  background: transparent;
+}
+
+.installation-show--desktop[data-leaving] .installation-show__rail,
+.installation-show--desktop[data-leaving].project-pane {
+  background: transparent;
+}
+
+.installation-show--desktop[data-leaving] .installation-show__pair-slot,
+.installation-show--desktop[data-leaving] .installation-show__hero-media,
+.installation-show--desktop[data-leaving] .installation-show__meta {
+  opacity: 0 !important;
+  animation: none !important;
+}
+
+.installation-show--desktop .installation-show__page {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  display: block;
+}
+
+/*
+ * True smart object: landing pixel layout inside, one uniform scale outside.
+ * Text never changes font-size — only the group transform moves/sizes it.
+ */
+.installation-show--desktop .installation-show__pair-slot {
+  position: relative;
+  overflow: visible;
+  flex-shrink: 0;
+}
+
+.installation-show--desktop .installation-show__pair-smart {
+  display: grid;
+  align-items: start;
+  justify-content: start;
+  box-sizing: border-box;
+  transform-origin: 0 0;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.installation-show--desktop .installation-show__pair-smart .installation-show__hero-media {
+  position: relative;
+  max-width: none;
+  aspect-ratio: auto;
+  transform-origin: left top;
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.1),
+    0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.installation-show--desktop .installation-show__pair-smart .installation-show__meta {
+  text-align: right;
+  padding-top: 0;
+  align-self: center;
+}
+
+.installation-show--desktop .installation-show__body {
+  margin: 36px 0 0;
+  max-width: none;
+  width: 100%;
+}
+
+.installation-show--desktop .installation-show__gallery,
+.installation-show--desktop .installation-show__collage,
+.installation-show--desktop .installation-show__film,
+.installation-show--desktop .installation-show__film-caption,
+.installation-show--desktop .installation-show__footer {
+  max-width: none;
+  width: 100%;
+}
+
+/* ── Shared type (carousel families, enlarged) ── */
+
+.installation-show__year,
+.installation-show__kind {
+  margin: 0;
+  font-family: "LTC Garamont Display OT", "Times New Roman", serif;
+  font-size: var(--is-meta-size, 30px);
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1.15;
+  letter-spacing: -0.04em;
+  color: #000;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+  -webkit-text-stroke: 0.75px currentColor;
+  paint-order: stroke fill;
+}
+
+.installation-show__kind {
+  margin-top: 0.05em;
+}
+
+.installation-show__title {
+  margin: 0.35em 0 0.4em;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: var(--is-title-size, 48px);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  text-transform: none;
+}
+
+.installation-show__title-line {
+  display: block;
+  white-space: nowrap;
+}
+
+.installation-show__venue {
+  margin: 0;
+  font-family: "LTC Garamont Display OT", "Times New Roman", serif;
+  font-size: var(--is-meta-size, 30px);
+  font-weight: 400;
+  font-style: italic;
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+  color: #000;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+}
+
+.installation-show__venue-line {
+  display: block;
+}
+
+.installation-show__body p {
+  margin: 0 0 1.15em;
+  font-family: "LTC Garamont Display OT", "Times New Roman", serif;
+  font-size: var(--is-body-size, 44px);
+  line-height: var(--is-body-leading, 47px);
+  letter-spacing: var(--is-body-track, -0.02em);
+  font-weight: 400;
+  color: #000;
+}
+
+.installation-show__body p:last-child {
+  margin-bottom: 0;
+}
+
+/* Gallery fills the middle quadrant width (full content column). */
+.installation-show__gallery {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 48px 0;
+}
+
+.installation-show__gallery-item {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  background: #f0f0f0;
+}
+
+.installation-show__gallery-item img {
+  object-fit: cover;
+}
+
+.installation-show__placeholder {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  background: #e8e8e8;
+  border: 1px solid #d0d0d0;
+}
+
+.installation-show__gallery-item .installation-show__placeholder {
+  position: absolute;
+  inset: 0;
+}
+
+.installation-show__fill-img.installation-show__placeholder {
+  height: auto;
+  min-height: 0;
+}
+
+.installation-show__collage {
+  position: relative;
+  width: 100%;
+  margin: 0 0 36px;
+}
+
+.installation-show__film {
+  position: relative;
+  width: 100%;
+  /* Tight gap to the caption under the still. */
+  margin: 0 0 8px;
+}
+
+.installation-show__fill-img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.installation-show__film-caption {
+  margin: 0 0 40px;
+  width: 100%;
+  text-align: left;
+  font-family: "LTC Garamont Display OT", "Times New Roman", serif;
+  font-size: 22.38px;
+  line-height: 1.3;
+  letter-spacing: -0.04em;
+  color: #000;
+}
+
+.installation-show__footer {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+}
+
+.installation-show__nav {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-family: "LTC Garamont Display OT", "Times New Roman", serif;
+  /* Match scroll-to-top control: 21px icon + 8px pad each side. */
+  font-size: 28px;
+  line-height: 37px;
+  height: 37px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: #000;
+  text-align: left;
+  /* Faux bold — same stroke thicken as bio / project Garamont. */
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+  -webkit-text-stroke: 1px currentColor;
+  paint-order: stroke fill;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.installation-show__nav--next {
+  text-align: right;
+  justify-self: end;
+}
+
+.installation-show__top-btn {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 8px;
+  width: 44px;
+  height: 37px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: #000;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@keyframes is-hero-rise {
+  from {
+    transform: translate3d(0, 12vh, 0) scale(0.78);
+    opacity: 0.85;
+  }
+  to {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes is-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes is-fade-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes is-menu-slide {
+  from {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+  to {
+    transform: translate3d(-110%, 0, 0);
+    opacity: 0;
+  }
+}
+
+/* ── Narrow overlay ── */
+
+.installation-show--narrow {
+  --is-gutter: clamp(20px, 4vw, 52px);
+  --is-chrome: 24px;
+  --is-meta-w: min(42vw, 220px);
+  --is-meta-gap: 16px;
+  --is-meta-size: clamp(16px, 4.2vw, 22px);
+  --is-title-size: clamp(22px, 6vw, 32px);
+  --is-body-size: clamp(18px, 5.2vw, 28px);
+  --is-body-leading: 1.28;
+  --is-body-track: -0.02em;
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  background: #fff;
+  color: #000;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.installation-show--narrow[data-visible] {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.installation-show--narrow[data-entering]::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: min(28vw, 320px);
+  z-index: 6;
+  pointer-events: none;
+  background: linear-gradient(
+    to right,
+    #fff 0%,
+    #fff 55%,
+    rgb(255 255 255 / 0)
+  );
+  animation: is-menu-slide 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.installation-show--narrow[data-entering] .installation-show__hero-media[data-css-rise] {
+  animation: is-hero-rise 680ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.installation-show--narrow[data-entering] .installation-show__fade {
+  animation: is-fade-in 480ms 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.installation-show--narrow[data-entering] .installation-show__hero-media,
+.installation-show--narrow[data-entering] .installation-show__meta {
+  opacity: 0 !important;
+  animation: none !important;
+}
+
+.installation-show--narrow[data-leaving] .installation-show__fade {
+  animation: is-fade-out 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.installation-show--narrow[data-leaving] {
+  pointer-events: none;
+  background: transparent;
+}
+
+.installation-show--narrow[data-leaving] .installation-show__hero-media,
+.installation-show--narrow[data-leaving] .installation-show__meta {
+  opacity: 0 !important;
+  animation: none !important;
+}
+
+/* Fixed viewport handoff — escapes stage scale / overflow clip.
+   Hero + meta share one uniform scale so the 28px gap stays proportional. */
+.installation-handoff {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  pointer-events: none;
+}
+
+.installation-handoff__pair {
+  will-change: transform;
+}
+
+.installation-handoff__grid {
+  display: grid;
+  /* Match page header (align-items: start) so FLIP top-left = hero top-left. */
+  align-items: start;
+  box-sizing: border-box;
+}
+
+.installation-handoff__hero {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.1),
+    0 2px 6px rgba(0, 0, 0, 0.06);
+  background: #fff;
+  align-self: start;
+}
+
+.installation-handoff__hero-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: left top;
+}
+
+.installation-handoff__meta {
+  text-align: right;
+  color: #000;
+  overflow: visible;
+  align-self: center;
+  /* Landing type — scales with the pair (smart object), not page overrides. */
+  --is-meta-size: 22.38px;
+  --is-title-size: 36px;
+}
+
+.installation-handoff__meta .installation-show__title,
+.installation-handoff__meta .installation-show__title-line {
+  white-space: nowrap;
+}
+
+.installation-show--narrow .installation-show__shell {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.installation-show--narrow .installation-show__header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding: var(--is-chrome) var(--is-gutter);
+  pointer-events: none;
+}
+
+.installation-show--narrow .installation-show__menu-toggle {
+  pointer-events: auto;
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  width: 36px;
+  height: 25px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.installation-show--narrow .installation-show__menu-toggle svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.installation-show--narrow .installation-show__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
+}
+
+.installation-show--narrow .installation-show__page {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: calc(var(--is-chrome) + 48px) var(--is-gutter)
+    calc(var(--is-chrome) + 64px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--is-meta-w);
+  column-gap: var(--is-meta-gap);
+  align-items: start;
+}
+
+.installation-show--narrow .installation-show__top {
+  display: contents;
+}
+
+.installation-show--narrow .installation-show__hero-media {
+  grid-column: 1;
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--is-hero-ar, 16 / 9);
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.1),
+    0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.installation-show--narrow .installation-show__meta {
+  grid-column: 2;
+  text-align: right;
+  align-self: center;
+}
+
+.installation-show--narrow .installation-show__body {
+  grid-column: 1;
+  margin: 28px 0 0;
+}
+
+.installation-show--narrow .installation-show__gallery,
+.installation-show--narrow .installation-show__collage,
+.installation-show--narrow .installation-show__film,
+.installation-show--narrow .installation-show__film-caption,
+.installation-show--narrow .installation-show__footer {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 900px) {
+  .installation-show--narrow .installation-show__page {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .installation-show--narrow .installation-show__meta {
+    grid-column: 1;
+    text-align: left;
+    order: -1;
+    align-self: start;
+  }
+
+  .installation-show--narrow .installation-show__hero-media,
+  .installation-show--narrow .installation-show__body {
+    grid-column: 1;
+  }
+
+  .installation-show--narrow .installation-show__gallery {
+    grid-template-columns: 1fr;
+  }
+
+  .installation-show--narrow .installation-show__gallery-item {
+    aspect-ratio: 4 / 3;
+  }
+
+  .installation-show--narrow .installation-show__title-line {
+    white-space: normal;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .installation-show[data-entering]::before,
+  .installation-show[data-entering] .installation-show__hero-media,
+  .installation-show[data-entering] .installation-show__fade,
+  .installation-show[data-leaving] .installation-show__fade {
+    animation: none !important;
+  }
+}

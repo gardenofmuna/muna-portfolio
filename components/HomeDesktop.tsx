@@ -2,7 +2,7 @@
 
 import { startTransition, useCallback, useEffect, useRef, useState } from "react";
 
-import { AboutBio } from "@/components/AboutBio";
+import { AboutBio, ABOUT_BIO_PIN_OFFSET_X } from "@/components/AboutBio";
 import { CircularNavWheel } from "@/components/CircularNavWheel";
 import { ContactTopLinks } from "@/components/ContactTopLinks";
 import { CvPressHoverAccordion } from "@/components/CvPressHoverAccordion";
@@ -11,6 +11,7 @@ import { DesktopSiteShell } from "@/components/DesktopSiteShell";
 import { DesktopStageCanvas } from "@/components/DesktopStageCanvas";
 import { FilmHoverGif } from "@/components/FilmHoverGif";
 import { InstallationGallery } from "@/components/InstallationGallery";
+import { InstallationShowPage } from "@/components/InstallationShowPage";
 import { PhotosHoverCluster } from "@/components/PhotosHoverCluster";
 import { SelectedWorksHoverGif } from "@/components/SelectedWorksHoverGif";
 import { DesignProjectNavProvider } from "@/components/project/DesignProjectNav";
@@ -25,6 +26,11 @@ import {
   DESKTOP_LAYOUT_BIO_LEFT,
   getDesktopStageMetrics,
 } from "@/lib/desktop-stage";
+import { installationCardSize } from "@/lib/installation-layout";
+import {
+  getInstallationShowById,
+  type InstallationShow,
+} from "@/data/installation";
 import {
   getProjectBySlug,
   type ProjectDefinition,
@@ -35,6 +41,8 @@ import "@/components/project/project-pane.css";
 type Props = {
   /** Direct visit to a project URL — same shell, already in project view. */
   initialProject?: ProjectDefinition;
+  /** Deep link `/installation/[id]`. */
+  initialInstallationId?: string;
 };
 
 /**
@@ -45,9 +53,12 @@ type Props = {
  * Dialing “design” shows the project index in the middle; clicking a row
  * opens that case study in place (no route remount).
  */
-export function HomeDesktop({ initialProject }: Props) {
+export function HomeDesktop({
+  initialProject,
+  initialInstallationId,
+}: Props) {
   const [activeLabel, setActiveLabel] = useState(
-    initialProject ? "design" : "contact",
+    initialProject ? "design" : initialInstallationId ? "installation" : "contact",
   );
   const [hoverNavLabel, setHoverNavLabel] = useState<string | null>(null);
   const [project, setProject] = useState<ProjectDefinition | null>(
@@ -65,10 +76,42 @@ export function HomeDesktop({ initialProject }: Props) {
   const [wheelInteracting, setWheelInteracting] = useState(false);
   /** Remount dial so signature “m” / exits can hard-reset angle + focus. */
   const [wheelEpoch, setWheelEpoch] = useState(0);
+  const [installationShow, setInstallationShow] =
+    useState<InstallationShow | null>(() =>
+      initialInstallationId
+        ? (getInstallationShowById(initialInstallationId) ?? null)
+        : null,
+    );
+  const [installFocusId, setInstallFocusId] = useState<string | null>(
+    initialInstallationId ?? null,
+  );
+  const [heroOrigin, setHeroOrigin] = useState<{
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  } | null>(null);
+  const [landingPairOrigin, setLandingPairOrigin] = useState<{
+    card: { left: number; top: number; width: number; height: number };
+    meta: { left: number; top: number; width: number; height: number };
+  } | null>(null);
+  /** Keep carousel mounted briefly so neighbors fade while the hero FLIPs. */
+  const [galleryHandoff, setGalleryHandoff] = useState(false);
+  const [installClosing, setInstallClosing] = useState(false);
+  const [animateInstallEnter, setAnimateInstallEnter] = useState(false);
   const m = getDesktopStageMetrics();
   const projectOpen = project != null;
   const projectRef = useRef(project);
   projectRef.current = project;
+  const installationShowRef = useRef(installationShow);
+  installationShowRef.current = installationShow;
+  const installClosingRef = useRef(installClosing);
+  installClosingRef.current = installClosing;
+  /**
+   * Opening a case study sets activeLabel to "design". Skip one settle so we
+   * don't immediately bounce back to the design landing.
+   */
+  const skipDesignLandingExitRef = useRef(Boolean(initialProject));
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -78,18 +121,143 @@ export function HomeDesktop({ initialProject }: Props) {
     return () => mq.removeEventListener("change", u);
   }, []);
 
-  const goToLanding = useCallback((label = "contact") => {
-    setActiveLabel(label);
+  const settleInstallEnter = useCallback(() => {
+    if (installClosingRef.current) return;
+    setGalleryHandoff(false);
+    setAnimateInstallEnter(false);
+    /* Keep landingPairOrigin — needed so close reverses to the same place. */
+  }, []);
+
+  const settleInstallClose = useCallback(() => {
+    setInstallationShow(null);
+    setInstallClosing(false);
+    setGalleryHandoff(false);
+    setHeroOrigin(null);
+    setLandingPairOrigin(null);
+    setAnimateInstallEnter(false);
+    setActiveLabel("installation");
+  }, []);
+
+  const openInstallationShow = useCallback((show: InstallationShow) => {
+    if (installClosingRef.current) return;
+    const card = document.getElementById(`installation-card-${show.id}`);
+    const gMeta = document.getElementById("installation-gallery-meta");
+    const cardRect = card?.getBoundingClientRect();
+    const metaRect = gMeta?.getBoundingClientRect();
+    if (cardRect && cardRect.width > 1 && cardRect.height > 1) {
+      const cardBox = {
+        left: cardRect.left,
+        top: cardRect.top,
+        width: cardRect.width,
+        height: cardRect.height,
+      };
+      setHeroOrigin(cardBox);
+      if (metaRect && metaRect.width > 1) {
+        setLandingPairOrigin({
+          card: cardBox,
+          meta: {
+            left: metaRect.left,
+            top: metaRect.top,
+            width: metaRect.width,
+            height: metaRect.height,
+          },
+        });
+      } else {
+        const unit =
+          cardBox.width /
+          Math.max(1, installationCardSize(show, 1).w);
+        setLandingPairOrigin({
+          card: cardBox,
+          meta: {
+            left: cardBox.left + cardBox.width + 28 * unit,
+            top: cardBox.top,
+            width: 260 * unit,
+            height: cardBox.height,
+          },
+        });
+      }
+    } else {
+      setHeroOrigin(null);
+      setLandingPairOrigin(null);
+    }
+    setInstallClosing(false);
+    setAnimateInstallEnter(true);
+    setGalleryHandoff(true);
+    setInstallationShow(show);
+    setActiveLabel("installation");
+    const path = `/installation/${show.id}`;
+    if (window.location.pathname !== path) {
+      window.history.pushState({ munaInstallation: show.id }, "", path);
+    }
+  }, []);
+
+  const closeInstallationShow = useCallback(() => {
+    const current = installationShowRef.current;
+    if (!current || installClosingRef.current) return;
+
+    setInstallFocusId(current.id);
+    setActiveLabel("installation");
+    if (window.location.pathname.startsWith("/installation/")) {
+      window.history.pushState(null, "", "/");
+    }
+
+    if (reduceMotion) {
+      setInstallationShow(null);
+      setGalleryHandoff(false);
+      setHeroOrigin(null);
+      setLandingPairOrigin(null);
+      setAnimateInstallEnter(false);
+      setInstallClosing(false);
+      return;
+    }
+
+    setAnimateInstallEnter(false);
+    setGalleryHandoff(true);
+    setInstallClosing(true);
+  }, [reduceMotion]);
+
+  const goToLanding = useCallback(
+    (label = "contact", opts?: { preserveWheel?: boolean }) => {
+      setActiveLabel(label);
+      setHoverNavLabel(null);
+      setWheelInteracting(false);
+      setProject(null);
+      setInstallationShow(null);
+      setGalleryHandoff(false);
+      setInstallClosing(false);
+      setHeroOrigin(null);
+      setLandingPairOrigin(null);
+      setAnimateInstallEnter(false);
+      setEnteredFromLanding(false);
+      setMenuState("open");
+      setMenuVeil(false);
+      /* Dial already spun to the label — remounting flashes a “reload”. */
+      if (!opts?.preserveWheel) {
+        setWheelEpoch((n) => n + 1);
+      }
+      startTransition(() => {
+        setPaneProject(null);
+      });
+      if (window.location.pathname !== "/") {
+        window.history.pushState(null, "", "/");
+      }
+    },
+    [],
+  );
+
+  /**
+   * Exit a design case study into the design index — only the middle quadrant
+   * swaps (no dial remount / crossfade “reload”).
+   */
+  const goToDesignLanding = useCallback(() => {
     setHoverNavLabel(null);
     setWheelInteracting(false);
-    setProject(null);
-    setEnteredFromLanding(false);
-    setMenuState("open");
+    setActiveLabel("design");
     setMenuVeil(false);
-    setWheelEpoch((n) => n + 1);
-    startTransition(() => {
-      setPaneProject(null);
-    });
+    setMenuState("open");
+    setEnteredFromLanding(false);
+    setProject(null);
+    setPaneProject(null);
     if (window.location.pathname !== "/") {
       window.history.pushState(null, "", "/");
     }
@@ -100,10 +268,21 @@ export function HomeDesktop({ initialProject }: Props) {
     setEnteredFromLanding(projectRef.current == null);
     setMenuState("open");
     setMenuVeil(false);
+    skipDesignLandingExitRef.current = true;
     setActiveLabel("design");
     setProject(next);
     setPaneProject(next);
   }, []);
+
+  const onNavLabelActivate = useCallback(
+    (label: string) => {
+      /* Click the centered “design” label while a case study is open → index. */
+      if (label === "design" && projectRef.current) {
+        goToDesignLanding();
+      }
+    },
+    [goToDesignLanding],
+  );
 
   useEffect(() => {
     const onPop = () => {
@@ -112,6 +291,11 @@ export function HomeDesktop({ initialProject }: Props) {
         setHoverNavLabel(null);
         setWheelInteracting(false);
         setProject(null);
+        setInstallationShow(null);
+        setGalleryHandoff(false);
+        setHeroOrigin(null);
+        setAnimateInstallEnter(false);
+        setInstallClosing(false);
         setEnteredFromLanding(false);
         setMenuState("open");
         setMenuVeil(false);
@@ -119,14 +303,33 @@ export function HomeDesktop({ initialProject }: Props) {
         startTransition(() => setPaneProject(null));
         return;
       }
+      const installMatch = /^\/installation\/([^/]+)/.exec(
+        window.location.pathname,
+      );
+      if (installMatch) {
+        const next = getInstallationShowById(installMatch[1] ?? "");
+        setProject(null);
+        setPaneProject(null);
+        setGalleryHandoff(false);
+        setHeroOrigin(null);
+        setAnimateInstallEnter(false);
+        setInstallClosing(false);
+        setInstallationShow(next ?? null);
+        setActiveLabel("installation");
+        return;
+      }
       const match = /^\/design\/([^/]+)/.exec(window.location.pathname);
       const next = match ? getProjectBySlug(match[1] ?? "") : undefined;
+      setInstallationShow(null);
       setProject(next ?? null);
       setPaneProject(next ?? null);
       setEnteredFromLanding(false);
       setMenuState("open");
       setMenuVeil(false);
-      if (next) setActiveLabel("design");
+      if (next) {
+        skipDesignLandingExitRef.current = true;
+        setActiveLabel("design");
+      }
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
@@ -147,16 +350,50 @@ export function HomeDesktop({ initialProject }: Props) {
     : `opacity ${fadeMs}ms cubic-bezier(0.22, 1, 0.36, 1)`;
 
   /**
-   * While a case study is open, keep landing overlays off — only the dial
-   * moves. Settling on a non-design label exits back to that landing section.
+   * While a case study is open, the dial can still spin. Settling on a
+   * non-design label exits to that landing section without remounting the
+   * wheel (it already sits on the chosen label). Returning to the design
+   * index only happens when the user explicitly activates “design” (click the
+   * centered label) or spins back onto design from another label — not when a
+   * pointer-up leaves “design” still selected.
    */
-  const showLandingPreviews = !projectOpen;
+  const showLandingPreviews = !projectOpen && installationShow == null;
+  const installOpen = installationShow != null;
+  const showInstallGallery =
+    (!projectOpen && previewLabel === "installation" && !installOpen) ||
+    galleryHandoff;
+  const prevNavLabelRef = useRef(activeLabel);
 
   useEffect(() => {
-    if (!projectOpen || wheelInteracting) return;
-    if (activeLabel === "design") return;
-    goToLanding(activeLabel);
-  }, [activeLabel, goToLanding, projectOpen, wheelInteracting]);
+    if (!projectOpen || wheelInteracting || installOpen) {
+      if (!wheelInteracting) prevNavLabelRef.current = activeLabel;
+      return;
+    }
+
+    const prev = prevNavLabelRef.current;
+    prevNavLabelRef.current = activeLabel;
+
+    if (activeLabel === "design") {
+      if (skipDesignLandingExitRef.current) {
+        skipDesignLandingExitRef.current = false;
+        return;
+      }
+      /* Spun from another label onto design → design index. */
+      if (prev !== "design") {
+        goToDesignLanding();
+      }
+      return;
+    }
+
+    goToLanding(activeLabel, { preserveWheel: true });
+  }, [
+    activeLabel,
+    goToDesignLanding,
+    goToLanding,
+    installOpen,
+    projectOpen,
+    wheelInteracting,
+  ]);
 
   /** Clear signature column for bio; contact bar meets polaroid flush (no black gap). */
   const bioRightClearOfNzeribe = m.inset + m.nzeribeW + m.gapScaled;
@@ -167,11 +404,25 @@ export function HomeDesktop({ initialProject }: Props) {
     <DesktopStageCanvas>
       <DesktopSiteShell
         layout="stage"
-        showPolaroid={
-          showLandingPreviews &&
-          (previewLabel === "about" || previewLabel === "contact")
+        showPolaroid={showLandingPreviews && previewLabel === "about"}
+        menuState={
+          projectOpen
+            ? menuState
+            : /* Open zone as soon as close starts so the dial is present with
+               the gallery neighbors — not after the hero FLIP settles. */
+              installOpen && !installClosing
+              ? "hidden"
+              : "open"
         }
-        menuState={projectOpen ? menuState : "open"}
+        navLayerState={
+          projectOpen
+            ? undefined
+            : installOpen && !installClosing
+              ? "hidden"
+              : "open"
+        }
+        /* Dial slide shares the hero FLIP duration/ease (in and out). */
+        navHandoff={!projectOpen && installOpen}
         menuVeil={projectOpen && menuVeil}
         onOpenMenu={
           projectOpen
@@ -179,7 +430,9 @@ export function HomeDesktop({ initialProject }: Props) {
                 setMenuVeil(true);
                 setMenuState("open");
               }
-            : undefined
+            : installOpen && !installClosing
+              ? closeInstallationShow
+              : undefined
         }
         onCloseMenu={
           projectOpen
@@ -190,10 +443,13 @@ export function HomeDesktop({ initialProject }: Props) {
             : undefined
         }
         onSignatureClick={
-          projectOpen ? () => goToLanding("contact") : undefined
+          projectOpen || installOpen
+            ? () => goToLanding("contact")
+            : undefined
         }
         signatureCompact={
           projectOpen ||
+          installOpen ||
           (!projectOpen && previewLabel === "installation")
         }
         nav={
@@ -206,12 +462,48 @@ export function HomeDesktop({ initialProject }: Props) {
               initialProject && wheelEpoch === 0 ? "design" : activeLabel
             }
             onActiveLabelChange={setActiveLabel}
+            onLabelActivate={onNavLabelActivate}
             onHoverLabelChange={setHoverNavLabel}
             onWheelInteractingChange={setWheelInteracting}
           />
         }
         center={
-          paneProject ? (
+          installOpen ? (
+            <div className="desktop-site-shell__center-slot">
+              <InstallationShowPage
+                show={installationShow}
+                variant="desktop"
+                animateEnter={animateInstallEnter && !reduceMotion}
+                closing={installClosing}
+                heroOrigin={heroOrigin}
+                landingPairOrigin={landingPairOrigin}
+                closeTargetId={
+                  installationShow
+                    ? `installation-card-${installationShow.id}`
+                    : null
+                }
+                onEnterSettled={settleInstallEnter}
+                onCloseSettled={settleInstallClose}
+                onClose={closeInstallationShow}
+                onNavigateShow={(next) => {
+                  if (installClosing) return;
+                  setAnimateInstallEnter(false);
+                  setHeroOrigin(null);
+                  setLandingPairOrigin(null);
+                  setGalleryHandoff(false);
+                  setInstallationShow(next);
+                  const path = `/installation/${next.id}`;
+                  if (window.location.pathname !== path) {
+                    window.history.pushState(
+                      { munaInstallation: next.id },
+                      "",
+                      path,
+                    );
+                  }
+                }}
+              />
+            </div>
+          ) : paneProject ? (
             <div
               className={
                 enteredFromLanding && !reduceMotion
@@ -256,12 +548,18 @@ export function HomeDesktop({ initialProject }: Props) {
           <div
             className="pointer-events-none absolute inset-0 z-[50]"
             style={{
-              opacity: showLandingPreviews ? 1 : 0,
-              transition: crossfade,
+              opacity: showLandingPreviews || galleryHandoff ? 1 : 0,
+              /* Project → design index: hard cut. Install handoff: none. Else fade. */
+              transition:
+                galleryHandoff ||
+                (showLandingPreviews && previewLabel === "design")
+                  ? "none"
+                  : crossfade,
               /* Block hit-testing + paint while a case study owns the stage. */
-              visibility: showLandingPreviews ? "visible" : "hidden",
+              visibility:
+                showLandingPreviews || galleryHandoff ? "visible" : "hidden",
             }}
-            aria-hidden={!showLandingPreviews}
+            aria-hidden={!(showLandingPreviews || galleryHandoff)}
           >
             <DesignLandingIndex
               visible={
@@ -270,7 +568,11 @@ export function HomeDesktop({ initialProject }: Props) {
               }
             />
             <InstallationGallery
-              visible={showLandingPreviews && previewLabel === "installation"}
+              visible={showInstallGallery}
+              exiting={galleryHandoff && !installClosing}
+              closing={installClosing}
+              onOpenShow={openInstallationShow}
+              focusShowId={installFocusId}
             />
             <PhotosHoverCluster
               visible={showLandingPreviews && previewLabel === "photos"}
@@ -296,7 +598,7 @@ export function HomeDesktop({ initialProject }: Props) {
               visible={showLandingPreviews && isContact}
               stageLocked
               top={`${m.inset}px`}
-              left={`${DESKTOP_LAYOUT_BIO_LEFT}px`}
+              left={`${DESKTOP_LAYOUT_BIO_LEFT + ABOUT_BIO_PIN_OFFSET_X}px`}
               right={`${contactBarRight}px`}
             />
             <div

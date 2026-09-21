@@ -15,6 +15,10 @@ import { SiteWordmark } from "@/components/SiteWordmark";
 import { INSTALLATION_SHOWS } from "@/data/installation";
 import { DESKTOP_LAYOUT_H, DESKTOP_LAYOUT_W } from "@/lib/desktop-stage";
 import { NARROW_NZERIBE } from "@/lib/narrow-stage";
+import {
+  readStableLayoutSize,
+  subscribeStableLayout,
+} from "@/lib/stable-viewport";
 
 import "./installation-narrow.css";
 
@@ -22,6 +26,7 @@ type Props = {
   visible: boolean;
   onNavigate: (label: string) => void;
   onOpenDesign: () => void;
+  onOpenShow?: (show: (typeof INSTALLATION_SHOWS)[number]) => void;
 };
 
 /** Hamburger SVG viewBox — match project-narrow chrome. */
@@ -36,6 +41,7 @@ export function InstallationNarrow({
   visible,
   onNavigate,
   onOpenDesign,
+  onOpenShow,
 }: Props) {
   const { u } = useNarrowArtboardMetrics();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -61,15 +67,10 @@ export function InstallationNarrow({
 
   useEffect(() => {
     const read = () => {
-      setViewportH(window.visualViewport?.height ?? window.innerHeight);
+      setViewportH(readStableLayoutSize().height);
     };
     read();
-    window.addEventListener("resize", read);
-    window.visualViewport?.addEventListener("resize", read);
-    return () => {
-      window.removeEventListener("resize", read);
-      window.visualViewport?.removeEventListener("resize", read);
-    };
+    return subscribeStableLayout(read);
   }, []);
 
   useEffect(() => {
@@ -179,44 +180,52 @@ export function InstallationNarrow({
         <div className="installation-narrow__page">
           {INSTALLATION_SHOWS.map((show) => (
             <article key={show.id} className="installation-narrow__show">
-              <div className="installation-narrow__frame">
-                <Image
-                  src={show.src}
-                  alt={show.alt}
-                  width={show.width}
-                  height={show.height}
-                  className="installation-narrow__image"
-                  sizes="(max-width: 700px) calc(100vw - 40px), calc(100vw - 104px)"
-                  unoptimized
-                />
-              </div>
-              <div className="installation-narrow__meta">
-                <p className="installation-narrow__year">{show.year}</p>
-                <p className="installation-narrow__kind">{show.kind}</p>
-                <p
-                  className="installation-narrow__title"
-                  style={{ color: show.titleColor }}
-                >
-                  {show.titleLines.map((line) => (
-                    <span
-                      key={line}
-                      className="installation-narrow__title-line"
-                    >
-                      {line}
-                    </span>
-                  ))}
-                </p>
-                <p className="installation-narrow__venue">
-                  {show.venueLines.map((line) => (
-                    <span
-                      key={line}
-                      className="installation-narrow__venue-line"
-                    >
-                      {line}
-                    </span>
-                  ))}
-                </p>
-              </div>
+              <button
+                type="button"
+                id={`installation-narrow-${show.id}`}
+                className="installation-narrow__open"
+                onClick={() => onOpenShow?.(show)}
+                aria-label={`Open ${show.titleLines.join(" ")}`}
+              >
+                <div className="installation-narrow__frame">
+                  <Image
+                    src={show.src}
+                    alt={show.alt}
+                    width={show.width}
+                    height={show.height}
+                    className="installation-narrow__image"
+                    sizes="(max-width: 700px) calc(100vw - 40px), calc(100vw - 104px)"
+                    unoptimized
+                  />
+                </div>
+                <div className="installation-narrow__meta">
+                  <p className="installation-narrow__year">{show.year}</p>
+                  <p className="installation-narrow__kind">{show.kind}</p>
+                  <p
+                    className="installation-narrow__title"
+                    style={{ color: show.titleColor }}
+                  >
+                    {show.titleLines.map((line) => (
+                      <span
+                        key={line}
+                        className="installation-narrow__title-line"
+                      >
+                        {line}
+                      </span>
+                    ))}
+                  </p>
+                  <p className="installation-narrow__venue">
+                    {show.venueLines.map((line) => (
+                      <span
+                        key={line}
+                        className="installation-narrow__venue-line"
+                      >
+                        {line}
+                      </span>
+                    ))}
+                  </p>
+                </div>
+              </button>
             </article>
           ))}
         </div>
@@ -247,8 +256,8 @@ export function InstallationNarrow({
                   closeMenu();
                   return;
                 }
-                if (label === "design") {
-                  leaveInstallation("design");
+                if (label === "design" || label === "about") {
+                  leaveInstallation(label);
                 }
               }}
             />

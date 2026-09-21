@@ -17,6 +17,10 @@ import {
   getDesktopStageShellStyle,
   NZERIBE_MARK_M_SRC_W,
 } from "@/lib/desktop-stage";
+import {
+  INSTALL_HANDOFF_EASE,
+  INSTALL_HANDOFF_MS,
+} from "@/lib/installation-layout";
 import "./desktop-site-shell.css";
 
 export type DesktopMenuState = "open" | "hidden";
@@ -41,6 +45,18 @@ type Props = {
    * Project toggles to `"hidden"` when the middle pane scrolls.
    */
   menuState?: DesktopMenuState;
+  /**
+   * Optional override for the dial layer only. Use while a case-study layout
+   * must stay `hidden` (stable columns) but the wheel should slide in/out.
+   */
+  navLayerState?: DesktopMenuState;
+  /**
+   * Match installation hero FLIP timing (720ms) so the dial slides with the
+   * card + meta handoff — both open and close.
+   */
+  navHandoff?: boolean;
+  /** Skip transition (hard cut). Prefer `navHandoff` for installation. */
+  navInstant?: boolean;
   /** Opens nav when menuState is hidden (left hamburger). */
   onOpenMenu?: () => void;
   /** Closes nav when menuState is open (right hamburger). */
@@ -74,6 +90,9 @@ export function DesktopSiteShell({
   showPolaroid = true,
   darkBackground = false,
   menuState = "open",
+  navLayerState,
+  navHandoff = false,
+  navInstant = false,
   onOpenMenu,
   onCloseMenu,
   menuVeil = false,
@@ -89,7 +108,18 @@ export function DesktopSiteShell({
     ? getDesktopStageShellStyle(menuState, signatureCompact)
     : getDesktopShellGridStyle(menuState);
   const reduceMotion = useReducedMotionPref();
-  const showOpenHamburger = menuState === "hidden" && Boolean(onOpenMenu);
+  const layerState = navLayerState ?? menuState;
+  /* Match hero FLIP: same ms/ease; slight delay on reveal so it starts with the transform. */
+  const navTransition =
+    reduceMotion || navInstant
+      ? "none"
+      : navHandoff
+        ? layerState === "open"
+          ? `opacity ${INSTALL_HANDOFF_MS}ms ${INSTALL_HANDOFF_EASE} 32ms, transform ${INSTALL_HANDOFF_MS}ms ${INSTALL_HANDOFF_EASE} 32ms`
+          : `opacity ${INSTALL_HANDOFF_MS}ms ${INSTALL_HANDOFF_EASE}, transform ${INSTALL_HANDOFF_MS}ms ${INSTALL_HANDOFF_EASE}`
+        : "opacity 260ms cubic-bezier(0.16, 1, 0.3, 1), transform 260ms cubic-bezier(0.16, 1, 0.3, 1)";
+  const showOpenHamburger =
+    menuState === "hidden" && layerState === "hidden" && Boolean(onOpenMenu);
   /* Close control only after hamburger reopen (menuVeil), not at natural scroll-top open. */
   const showCloseHamburger =
     menuState === "open" && menuVeil && Boolean(onCloseMenu);
@@ -178,12 +208,10 @@ export function DesktopSiteShell({
         )}
         <div
           className="desktop-site-shell__nav-layer"
-          data-menu-state={menuState}
-          style={{
-            transition: reduceMotion
-              ? "none"
-              : "opacity 420ms cubic-bezier(0.22, 1, 0.36, 1)",
-          }}
+          data-menu-state={layerState}
+          data-handoff={navHandoff ? "" : undefined}
+          data-instant={navInstant ? "" : undefined}
+          style={{ transition: navTransition }}
         >
           {nav}
         </div>

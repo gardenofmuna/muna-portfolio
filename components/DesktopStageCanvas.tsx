@@ -23,6 +23,10 @@ import {
   type StageCropAlignX,
   type StageFitMode,
 } from "@/lib/desktop-stage";
+import {
+  readStableLayoutSize,
+  subscribeStableLayout,
+} from "@/lib/stable-viewport";
 
 type Props = {
   children: ReactNode;
@@ -86,7 +90,14 @@ export function DesktopStageCanvas({ children, className }: Props) {
 
   useLayoutEffect(() => {
     const update = () => {
-      const next = readWindowFrame();
+      const stable = readStableLayoutSize();
+      const live = readWindowFrame();
+      /* Size from stable layout; keep live screen origin for crop-drag. */
+      const next = {
+        ...live,
+        width: stable.width,
+        height: stable.height,
+      };
       const mode = desktopStageFitMode(next.width, next.height);
       const prev = frameRef.current;
       let alignX = alignXRef.current;
@@ -117,12 +128,10 @@ export function DesktopStageCanvas({ children, className }: Props) {
       });
     };
     update();
-    window.addEventListener("resize", update);
-    window.visualViewport?.addEventListener("resize", update);
-    return () => {
-      window.removeEventListener("resize", update);
-      window.visualViewport?.removeEventListener("resize", update);
-    };
+    return subscribeStableLayout(() => {
+      /* Orientation already resets the lock inside subscribeStableLayout. */
+      update();
+    });
   }, []);
 
   const offset =

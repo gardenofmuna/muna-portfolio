@@ -17,10 +17,6 @@ const ROMAN_NUMERALS = [
   "IV",
   "V",
   "VI",
-  "VII",
-  "VIII",
-  "IX",
-  "X",
 ] as const;
 
 function IndexLink({

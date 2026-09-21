@@ -9,6 +9,10 @@ import {
   narrowLandingChrome,
   narrowLandingWheelScale,
 } from "@/lib/narrow-stage";
+import {
+  readStableLayoutSize,
+  subscribeStableLayout,
+} from "@/lib/stable-viewport";
 
 type Metrics = {
   u: number;
@@ -46,50 +50,34 @@ const SSR_METRICS = metricsFromSize(SSR_VIEWPORT.vw, SSR_VIEWPORT.vh);
 let cached: Metrics = SSR_METRICS;
 
 /**
- * Size the landing from the laid-out #__next shell — not a stale ~980px
- * Safari innerWidth. Phones also clamp to screen / visualViewport when the
- * layout viewport is inflated (first paint, “Request Desktop Website”).
- *
- * When the shell is wider than the visible phone width, vx/vy shift chrome
- * into the visual viewport so the ring isn’t stranded on the left of a
- * 980-wide canvas (horizontal scroll “sometimes on load”).
+ * Size the landing from a chrome-stable layout size (URL bar / keyboard
+ * must not rescale the artboard). Phones still clamp inflated “Request
+ * Desktop Website” widths into the visible band.
  */
 function readViewport() {
+  const stable = readStableLayoutSize();
+  let vw = stable.width;
+  let vh = stable.height;
   const shell = document.getElementById("__next");
-  let vw = shell?.clientWidth || document.documentElement.clientWidth || 0;
-  let vh = shell?.clientHeight || document.documentElement.clientHeight || 0;
-  if (!vw) vw = window.innerWidth || 0;
-  if (!vh) vh = window.innerHeight || 0;
-  const shellW = vw;
-  const shellH = vh;
+  const shellW = shell?.clientWidth || document.documentElement.clientWidth || 0;
+  if (shellW > 0) vw = Math.min(vw, shellW);
 
   const vv = window.visualViewport;
   const vvW = vv && vv.width >= 200 ? vv.width : 0;
-  const vvH = vv && vv.height >= 200 ? vv.height : 0;
   const screenMin = Math.min(screen.width, screen.height) || 0;
-  const screenMax = Math.max(screen.width, screen.height) || 0;
   const phone = screenMin > 0 && screenMin <= 500;
   let vx = 0;
-  let vy = 0;
+  const vy = 0;
 
   if (phone) {
-    // Inflated layout width (≈980) → prefer the visible CSS width.
     if (vvW && vw > vvW * 1.2) {
       vw = Math.round(vvW);
       vx = Math.round(vv?.offsetLeft ?? 0);
     } else if (vw > screenMin * 1.35) {
       vw = screenMin;
-      // No visualViewport yet — keep content in the left (visible) band.
       vx = 0;
     } else if (vw) {
       vw = Math.min(vw, screenMin);
-    }
-
-    if (vvH && shellH > vvH * 1.35) {
-      vh = Math.round(vvH);
-      vy = Math.round(vv?.offsetTop ?? 0);
-    } else if (screenMax && vh > screenMax * 1.25) {
-      vh = screenMax;
     }
   }
 
@@ -127,13 +115,8 @@ function getServerSnapshot(): Metrics {
 
 function subscribe(onStoreChange: () => void) {
   const onChange = () => onStoreChange();
-  const vv = window.visualViewport;
-  window.addEventListener("resize", onChange);
-  window.addEventListener("orientationchange", onChange);
-  window.addEventListener("pageshow", onChange);
-  vv?.addEventListener("resize", onChange);
-  vv?.addEventListener("scroll", onChange);
-  // Safari often reports the real CSS size one frame after first paint.
+  const unsub = subscribeStableLayout(onChange);
+  /* Safari often reports the real CSS size one frame after first paint. */
   let raf2 = 0;
   const raf1 = window.requestAnimationFrame(() => {
     onChange();
@@ -142,11 +125,7 @@ function subscribe(onStoreChange: () => void) {
   return () => {
     window.cancelAnimationFrame(raf1);
     window.cancelAnimationFrame(raf2);
-    window.removeEventListener("resize", onChange);
-    window.removeEventListener("orientationchange", onChange);
-    window.removeEventListener("pageshow", onChange);
-    vv?.removeEventListener("resize", onChange);
-    vv?.removeEventListener("scroll", onChange);
+    unsub();
   };
 }
 

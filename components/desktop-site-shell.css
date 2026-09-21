@@ -305,23 +305,38 @@
   visibility: visible;
   transform: translate3d(0, 0, 0);
   transition:
-    opacity 420ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 260ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 260ms cubic-bezier(0.16, 1, 0.3, 1),
     visibility 0s linear 0s;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
 }
 
+/* Installation handoff — same 720ms ease as the hero + meta FLIP. */
+.desktop-site-shell__nav-layer[data-handoff] {
+  transition:
+    opacity 720ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 720ms cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 0s;
+}
+
 .desktop-site-shell__nav-layer[data-menu-state="hidden"] {
   opacity: 0;
-  /* Slide out toward the left edge while fading */
-  transform: translate3d(-36px, 0, 0);
+  /* Large left slide so the dial reads as motion, not a soft fade. */
+  transform: translate3d(-120px, 0, 0);
   pointer-events: none;
   visibility: hidden;
   transition:
-    opacity 420ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 420ms cubic-bezier(0.22, 1, 0.36, 1),
-    visibility 0s linear 420ms;
+    opacity 260ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 260ms cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 0s linear 260ms;
+}
+
+.desktop-site-shell__nav-layer[data-handoff][data-menu-state="hidden"] {
+  transition:
+    opacity 720ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 720ms cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 720ms;
 }
 
 .desktop-site-shell__nav-layer[data-menu-state="open"] {
@@ -329,6 +344,15 @@
   visibility: visible;
   pointer-events: auto;
   transform: translate3d(0, 0, 0);
+}
+
+/* Keep the dial above the gallery overlay while it slides in on close. */
+.desktop-site-shell:has(
+  .desktop-site-shell__nav-layer[data-handoff][data-menu-state="open"]
+)
+  .desktop-site-shell__nav {
+  z-index: 60;
+  overflow: visible;
 }
 
 @media (prefers-reduced-motion: reduce) {

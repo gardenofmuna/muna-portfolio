@@ -3,9 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { AboutBio } from "@/components/AboutBio";
+import { AboutNarrow } from "@/components/AboutNarrow";
 import { CircularNavWheel } from "@/components/CircularNavWheel";
 import { DesignCluster } from "@/components/DesignCluster";
 import { InstallationNarrow } from "@/components/InstallationNarrow";
+import { InstallationShowPage } from "@/components/InstallationShowPage";
 import { MobileFooterLinks } from "@/components/MobileFooterLinks";
 import { NarrowWheelFit, useNarrowArtboardMetrics } from "@/components/NarrowArtboard";
 import { PhotosHoverCluster } from "@/components/PhotosHoverCluster";
@@ -15,6 +17,10 @@ import { SelectedWorksHoverGif } from "@/components/SelectedWorksHoverGif";
 import { NarrowCenterPopup } from "@/components/NarrowCenterPopup";
 import { SiteWordmark } from "@/components/SiteWordmark";
 import { ProjectNarrowClient } from "@/components/project/ProjectNarrowClient";
+import {
+  getInstallationShowById,
+  type InstallationShow,
+} from "@/data/installation";
 import {
   EGWU_RECORDS_SLUG,
   getProjectBySlug,
@@ -30,6 +36,8 @@ type NarrowLabel = (typeof NARROW_NAV_LABELS)[number];
 type Props = {
   /** Direct visit to a project URL — same shell, already in project view. */
   initialProject?: ProjectDefinition;
+  /** Deep link `/installation/[id]`. */
+  initialInstallationId?: string;
 };
 
 /**
@@ -38,22 +46,47 @@ type Props = {
  *
  * Project pages own the wordmark in the header so it can hide with the menu.
  */
-export function HomeNarrow({ initialProject }: Props) {
+export function HomeNarrow({
+  initialProject,
+  initialInstallationId,
+}: Props) {
   const { vx } = useNarrowArtboardMetrics();
   const [activeLabel, setActiveLabel] = useState<NarrowLabel>(
-    initialProject ? "design" : "contact",
+    initialProject
+      ? "design"
+      : initialInstallationId
+        ? "installation"
+        : "contact",
   );
   const [hoverNavLabel, setHoverNavLabel] = useState<string | null>(null);
   const [wheelInteracting, setWheelInteracting] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
-  /** Remount landing wheel after leaving installation via hamburger menu. */
+  /** Remount landing wheel after leaving installation / about via hamburger. */
   const [wheelEpoch, setWheelEpoch] = useState(0);
   const [project, setProject] = useState<ProjectDefinition | null>(
     initialProject ?? null,
   );
   const [enteredFromLanding, setEnteredFromLanding] = useState(false);
+  const [installationShow, setInstallationShow] =
+    useState<InstallationShow | null>(() =>
+      initialInstallationId
+        ? (getInstallationShowById(initialInstallationId) ?? null)
+        : null,
+    );
+  const [heroOrigin, setHeroOrigin] = useState<{
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  } | null>(null);
+  const [animateInstallEnter, setAnimateInstallEnter] = useState(false);
+  const [installClosing, setInstallClosing] = useState(false);
   const projectRef = useRef(project);
   projectRef.current = project;
+  const installationShowRef = useRef(installationShow);
+  installationShowRef.current = installationShow;
+  const installClosingRef = useRef(installClosing);
+  installClosingRef.current = installClosing;
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -81,6 +114,10 @@ export function HomeNarrow({ initialProject }: Props) {
 
   const goToLanding = useCallback((label?: string) => {
     setProject(null);
+    setInstallationShow(null);
+    setHeroOrigin(null);
+    setAnimateInstallEnter(false);
+    setInstallClosing(false);
     setEnteredFromLanding(false);
     document.title = "Muna | Portfolio";
     if (label && (NARROW_NAV_LABELS as readonly string[]).includes(label)) {
@@ -92,6 +129,62 @@ export function HomeNarrow({ initialProject }: Props) {
     }
   }, []);
 
+  const openInstallationShow = useCallback((show: InstallationShow) => {
+    if (installClosingRef.current) return;
+    const card = document.getElementById(`installation-narrow-${show.id}`);
+    const rect = card?.getBoundingClientRect();
+    if (rect && rect.width > 1 && rect.height > 1) {
+      setHeroOrigin({
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height,
+      });
+    } else {
+      setHeroOrigin(null);
+    }
+    setInstallClosing(false);
+    setAnimateInstallEnter(true);
+    setInstallationShow(show);
+    setActiveLabel("installation");
+    document.title = `${show.titleLines.join(" ")} | Muna | Portfolio`;
+    const path = `/installation/${show.id}`;
+    if (window.location.pathname !== path) {
+      window.history.pushState({ munaInstallation: show.id }, "", path);
+    }
+  }, []);
+
+  const closeInstallationShow = useCallback(() => {
+    const current = installationShowRef.current;
+    if (!current || installClosingRef.current) return;
+
+    setActiveLabel("installation");
+    document.title = "Muna | Portfolio";
+    if (window.location.pathname.startsWith("/installation/")) {
+      window.history.pushState(null, "", "/");
+    }
+
+    if (reduceMotion) {
+      setInstallationShow(null);
+      setHeroOrigin(null);
+      setAnimateInstallEnter(false);
+      setInstallClosing(false);
+      return;
+    }
+
+    setAnimateInstallEnter(false);
+    setHeroOrigin(null);
+    setInstallClosing(true);
+  }, [reduceMotion]);
+
+  const settleInstallClose = useCallback(() => {
+    setInstallationShow(null);
+    setInstallClosing(false);
+    setHeroOrigin(null);
+    setAnimateInstallEnter(false);
+    setActiveLabel("installation");
+  }, []);
+
   const onProjectChange = useCallback((next: ProjectDefinition) => {
     setEnteredFromLanding(false);
     setProject(next);
@@ -101,12 +194,27 @@ export function HomeNarrow({ initialProject }: Props) {
     const onPop = () => {
       if (window.location.pathname === "/") {
         setProject(null);
+        setInstallationShow(null);
         setEnteredFromLanding(false);
         document.title = "Muna | Portfolio";
         return;
       }
+      const installMatch = /^\/installation\/([^/]+)/.exec(
+        window.location.pathname,
+      );
+      if (installMatch) {
+        const next = getInstallationShowById(installMatch[1] ?? "");
+        setProject(null);
+        setInstallationShow(next ?? null);
+        setActiveLabel("installation");
+        if (next) {
+          document.title = `${next.titleLines.join(" ")} | Muna | Portfolio`;
+        }
+        return;
+      }
       const match = /^\/design\/([^/]+)/.exec(window.location.pathname);
       const next = match ? getProjectBySlug(match[1] ?? "") : undefined;
+      setInstallationShow(null);
       setProject(next ?? null);
       setEnteredFromLanding(false);
       if (next) document.title = `${next.title} | Muna | Portfolio`;
@@ -118,15 +226,25 @@ export function HomeNarrow({ initialProject }: Props) {
   /** While spinning, only the label at 12 o'clock previews — no stacked hovers. */
   const previewLabel =
     wheelInteracting && hoverNavLabel ? hoverNavLabel : activeLabel;
+  /** Full-page about — settle or tap “about”. */
+  const showAboutPage = !project && !installationShow && activeLabel === "about";
   const showAboutBio =
-    !project && (previewLabel === "about" || previewLabel === "contact");
-  const showPhotos = !project && previewLabel === "photos";
-  const showDesign = !project && previewLabel === "design";
-  /** Full-page feed — only after the wheel settles on installation. */
-  const showInstallation = !project && activeLabel === "installation";
-  const showCvPress = !project && previewLabel === "cv + press";
-  const showFilm = !project && previewLabel === "film";
-  const showSelectedWorks = !project && previewLabel === "selected works";
+    !project &&
+    !installationShow &&
+    !showAboutPage &&
+    (previewLabel === "about" || previewLabel === "contact");
+  const showPhotos = !project && !installationShow && previewLabel === "photos";
+  const showDesign = !project && !installationShow && previewLabel === "design";
+  /** Full-page feed — settle on installation, or keep mounted while closing handoff runs. */
+  const showInstallation =
+    !project &&
+    activeLabel === "installation" &&
+    (!installationShow || installClosing);
+  const showCvPress =
+    !project && !installationShow && previewLabel === "cv + press";
+  const showFilm = !project && !installationShow && previewLabel === "film";
+  const showSelectedWorks =
+    !project && !installationShow && previewLabel === "selected works";
   const fadeMs = wheelInteracting ? 120 : reduceMotion ? 80 : 520;
   const bioFadeStyle = {
     opacity: showAboutBio ? 1 : 0,
@@ -139,8 +257,10 @@ export function HomeNarrow({ initialProject }: Props) {
   const projectOpen = project != null;
   const mountLanding = !projectOpen || enteredFromLanding || !initialProject;
   const installationOpen = showInstallation && !projectOpen;
+  const aboutOpen = showAboutPage && !projectOpen;
+  const overlayOpen = installationOpen || aboutOpen;
 
-  const leaveInstallation = useCallback((label: string) => {
+  const leaveOverlay = useCallback((label: string) => {
     if ((NARROW_NAV_LABELS as readonly string[]).includes(label)) {
       setActiveLabel(label as NarrowLabel);
     }
@@ -149,7 +269,7 @@ export function HomeNarrow({ initialProject }: Props) {
 
   return (
     <div className="narrow-app fixed inset-0 overflow-hidden bg-white">
-      {projectOpen || installationOpen ? null : (
+      {projectOpen || overlayOpen ? null : (
       <div
         className="narrow-persist-wordmark"
         style={vx ? { left: `calc(${vx}px + var(--narrow-gutter))` } : undefined}
@@ -160,11 +280,11 @@ export function HomeNarrow({ initialProject }: Props) {
       {mountLanding ? (
       <div
         className="narrow-landing"
-        data-hidden={projectOpen || installationOpen ? "" : undefined}
-        aria-hidden={projectOpen || installationOpen}
-        inert={projectOpen || installationOpen ? true : undefined}
+        data-hidden={projectOpen || overlayOpen ? "" : undefined}
+        aria-hidden={projectOpen || overlayOpen}
+        inert={projectOpen || overlayOpen ? true : undefined}
       >
-        {installationOpen ? null : <MobileFooterLinks />}
+        {overlayOpen ? null : <MobileFooterLinks />}
         <NarrowWheelFit>
           <CircularNavWheel
             key={wheelEpoch}
@@ -182,6 +302,10 @@ export function HomeNarrow({ initialProject }: Props) {
             onLabelActivate={(label) => {
               if (label === "design") {
                 openDesignProject();
+                return;
+              }
+              if (label === "about" || label === "installation") {
+                setActiveLabel(label);
               }
             }}
           />
@@ -202,10 +326,45 @@ export function HomeNarrow({ initialProject }: Props) {
         </NarrowWheelFit>
       </div>
       ) : null}
+      <AboutNarrow
+        visible={aboutOpen}
+        onNavigate={leaveOverlay}
+        onOpenDesign={openDesignProject}
+      />
       <InstallationNarrow
         visible={installationOpen}
-        onNavigate={leaveInstallation}
+        onNavigate={leaveOverlay}
         onOpenDesign={openDesignProject}
+        onOpenShow={openInstallationShow}
+      />
+      <InstallationShowPage
+        show={installationShow}
+        variant="narrow"
+        animateEnter={animateInstallEnter && !reduceMotion}
+        closing={installClosing}
+        heroOrigin={heroOrigin}
+        closeTargetId={
+          installationShow
+            ? `installation-narrow-${installationShow.id}`
+            : null
+        }
+        onEnterSettled={() => {
+          setAnimateInstallEnter(false);
+          setHeroOrigin(null);
+        }}
+        onCloseSettled={settleInstallClose}
+        onClose={closeInstallationShow}
+        onNavigateShow={(next) => {
+          if (installClosing) return;
+          setAnimateInstallEnter(false);
+          setHeroOrigin(null);
+          setInstallationShow(next);
+          document.title = `${next.titleLines.join(" ")} | Muna | Portfolio`;
+          const path = `/installation/${next.id}`;
+          if (window.location.pathname !== path) {
+            window.history.pushState({ munaInstallation: next.id }, "", path);
+          }
+        }}
       />
       {project ? (
         <div

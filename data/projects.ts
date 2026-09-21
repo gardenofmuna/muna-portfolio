@@ -30,7 +30,7 @@ export const MAMA_IN_YOUR_ABSENCE_SLUG = "mama-in-your-absence";
 const EGWU_RECORDS: ProjectDefinition = {
   slug: EGWU_RECORDS_SLUG,
   number: "I",
-  indexTotal: 10,
+  indexTotal: 6,
   title: "EGWÚ RECORDS",
   description:
     "Brand identity and visual system for EGWÚ Records, a Lagos-based record store and cultural platform celebrating music across generations. Inspired by vintage record labels and Nigerian print culture, the identity extends across logos, merchandise, event posters, and a comprehensive brand guidelines system.",
@@ -55,7 +55,7 @@ const EGWU_RECORDS: ProjectDefinition = {
 const DOC_NOW_2025: ProjectDefinition = {
   slug: DOC_NOW_SLUG,
   number: "II",
-  indexTotal: 10,
+  indexTotal: 6,
   title: "DOC NOW 2025",
   description:
     "Visual identity for Toronto Metropolitan University’s 17th annual Documentary Media festival. Inspired by analog film hardware and contact-sheet grids, the system extends across a logo refresh, posters, festival program, social assets, and the festival website.",
@@ -80,7 +80,7 @@ const DOC_NOW_2025: ProjectDefinition = {
 const DEVAULT_PRESENTS: ProjectDefinition = {
   slug: DEVAULT_PRESENTS_SLUG,
   number: "III",
-  indexTotal: 10,
+  indexTotal: 6,
   title: "DEVAULT PRESENTS",
   description:
     "Ongoing graphic design and art direction for Devault Presents, a Nigerian pop culture podcast and its parent brand Devault Magazine. The identity spans bold logos, episode-specific poster art, and the Devault Settings playlist series, pulling from cassette culture, vinyl sleeves, and retro print references for each drop.",
@@ -102,7 +102,7 @@ const DEVAULT_PRESENTS: ProjectDefinition = {
 const STUDIO_ORRY: ProjectDefinition = {
   slug: STUDIO_ORRY_SLUG,
   number: "V",
-  indexTotal: 10,
+  indexTotal: 6,
   title: "STUDIO ORRY",
   description:
     "Exhibition flyer and prop currency design for A wà ńbẹ̀, a solo exhibition by Nigerian artist Orry Shenjobi at the European Cultural Centre, Venice, as part of the 60th Venice Biennale. The show documents the Nigerian Owambe party through collage, photography, and mixed media, including a fictional Central Bank of Fàáji note nodding to the culture of \"spraying\" money at these celebrations.",
@@ -120,7 +120,7 @@ const STUDIO_ORRY: ProjectDefinition = {
 const MAMA_IN_YOUR_ABSENCE: ProjectDefinition = {
   slug: MAMA_IN_YOUR_ABSENCE_SLUG,
   number: "VI",
-  indexTotal: 10,
+  indexTotal: 6,
   title: "MAMA, IN YOUR ABSENCE",
   description:
     "Postcard and poster design for Mama, in Your Absence, an interactive documentary by Muna Nzeribe, screened at ARTSPACE TMU as part of DOC NOW 2025, June 5th–21st. Designed as a keepsake for viewers, the postcard uses a mosaic, woven-photo treatment of archival family imagery paired with a QR code linking viewers to watch the documentary from home on PC or Mac.",
@@ -138,7 +138,7 @@ const MAMA_IN_YOUR_ABSENCE: ProjectDefinition = {
 const BOUNCE_RADIO: ProjectDefinition = {
   slug: BOUNCE_RADIO_SLUG,
   number: "IV",
-  indexTotal: 10,
+  indexTotal: 6,
   title: "BOUNCE RADIO",
   description:
     "Article and playlist cover art for Bounce Networks, a Lagos-based digital media platform covering youth culture through Afrobeats, sports, and cultural events. Pulling from halftone screen-print textures and retro radio and cassette references, the work spans editorial covers for features and event recaps alongside a running series of genre and mood-based playlist art.",

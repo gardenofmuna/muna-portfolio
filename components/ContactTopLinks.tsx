@@ -64,8 +64,8 @@ export function ContactTopLinks({
       aria-hidden={!visible}
       className={
         stageLocked
-          ? "pointer-events-none absolute z-[25] flex flex-row flex-wrap items-start justify-end gap-x-[4em] gap-y-1"
-          : "pointer-events-none fixed z-[25] flex flex-row flex-wrap items-start justify-end gap-x-[4em] gap-y-1"
+          ? "pointer-events-none absolute z-[25] flex flex-row flex-wrap items-start justify-start gap-x-[4em] gap-y-1"
+          : "pointer-events-none fixed z-[25] flex flex-row flex-wrap items-start justify-start gap-x-[4em] gap-y-1"
       }
       style={{
         top,

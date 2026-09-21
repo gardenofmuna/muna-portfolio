@@ -1,58 +1,62 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import Image from "next/image";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 
+import { AboutBio } from "@/components/AboutBio";
 import { CircularNavWheel } from "@/components/CircularNavWheel";
 import { useNarrowArtboardMetrics } from "@/components/NarrowArtboard";
 import { SiteWordmark } from "@/components/SiteWordmark";
-import { DesignProjectNavProvider } from "@/components/project/DesignProjectNav";
-import { ProjectHeader } from "@/components/project/ProjectHeader";
-import { ProjectIndexNav } from "@/components/project/ProjectIndexNav";
-import { ProjectCaseStudy } from "@/components/project/projects/ProjectCaseStudy";
-import { type ProjectDefinition } from "@/data/projects";
 import { DESKTOP_LAYOUT_H, DESKTOP_LAYOUT_W } from "@/lib/desktop-stage";
-import {
-  NARROW_NZERIBE,
-  NARROW_PROJECT_CONTENT_W,
-} from "@/lib/narrow-stage";
+import { NARROW_NZERIBE } from "@/lib/narrow-stage";
 import {
   readStableLayoutSize,
   subscribeStableLayout,
 } from "@/lib/stable-viewport";
 
-import "./project-pane.css";
+import "./about-narrow.css";
 
 type Props = {
-  project: ProjectDefinition;
-  hideWordmark?: boolean;
-  /** Return to landing; optional nav label opens that section (e.g. installation). */
-  onGoHome?: (label?: string) => void;
-  onProjectChange?: (project: ProjectDefinition) => void;
+  visible: boolean;
+  onNavigate: (label: string) => void;
+  onOpenDesign: () => void;
 };
 
-/** Hamburger SVG viewBox — keep aspect when height tracks the wordmark. */
+/** Hamburger SVG viewBox — match project / installation chrome. */
 const MENU_ASPECT = 107 / 74;
-/** Slightly smaller than the nzeribe wordmark height. */
 const MENU_HEIGHT_SCALE = 0.85;
 
-export function ProjectNarrowClient({
-  project,
-  hideWordmark = false,
-  onGoHome,
-  onProjectChange,
-}: Props) {
+/**
+ * Mobile / tablet about page — polaroid + flowing bio under shared chrome.
+ */
+export function AboutNarrow({ visible, onNavigate, onOpenDesign }: Props) {
   const { u } = useNarrowArtboardMetrics();
   const [menuOpen, setMenuOpen] = useState(false);
   const [viewportH, setViewportH] = useState(0);
-  const headerRef = useRef<HTMLElement>(null);
+  const [reduceMotion, setReduceMotion] = useState(false);
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
   const headerScrolledRef = useRef(false);
+
   const scale = u || 1;
   const nzeribeH = NARROW_NZERIBE.h * scale;
   const menuH = nzeribeH * MENU_HEIGHT_SCALE;
   const menuW = menuH * MENU_ASPECT;
-  const navScale =
-    viewportH > 0 ? viewportH / DESKTOP_LAYOUT_H : 0;
+  const navScale = viewportH > 0 ? viewportH / DESKTOP_LAYOUT_H : 0;
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sync = () => setReduceMotion(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
 
   useEffect(() => {
     const read = () => {
@@ -63,9 +67,18 @@ export function ProjectNarrowClient({
   }, []);
 
   useEffect(() => {
+    if (!visible) {
+      setMenuOpen(false);
+      return;
+    }
+    const scroller = scrollerRef.current;
+    if (scroller) scroller.scrollTop = 0;
+  }, [visible]);
+
+  useEffect(() => {
     const scroller = scrollerRef.current;
     const header = headerRef.current;
-    if (!scroller || !header) return;
+    if (!scroller || !header || !visible) return;
 
     const sync = () => {
       const next = scroller.scrollTop > 8;
@@ -77,72 +90,66 @@ export function ProjectNarrowClient({
     sync();
     scroller.addEventListener("scroll", sync, { passive: true });
     return () => scroller.removeEventListener("scroll", sync);
-  }, [project.slug]);
+  }, [visible]);
 
   useEffect(() => {
     if (!menuOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setMenuOpen(false);
     };
     window.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = prev;
-      window.removeEventListener("keydown", onKey);
-    };
+    return () => window.removeEventListener("keydown", onKey);
   }, [menuOpen]);
 
   const closeMenu = useCallback(() => setMenuOpen(false), []);
 
-  const handleProjectChange = useCallback(
-    (next: ProjectDefinition) => {
-      onProjectChange?.(next);
+  const leaveAbout = useCallback(
+    (label: string) => {
+      closeMenu();
+      if (label === "about") return;
+      onNavigate(label);
+      if (label === "design") onOpenDesign();
     },
-    [onProjectChange],
+    [closeMenu, onNavigate, onOpenDesign],
   );
 
-  const goHome = useCallback(
-    (label?: string) => {
-      closeMenu();
-      onGoHome?.(label);
-    },
-    [closeMenu, onGoHome],
-  );
+  const fadeMs = reduceMotion ? 80 : 420;
 
   return (
-    <DesignProjectNavProvider onProjectChange={handleProjectChange}>
     <div
-      className="project-narrow-shell"
+      className="about-narrow"
+      data-visible={visible ? "" : undefined}
       data-menu-state={menuOpen ? "open" : "hidden"}
-      data-hide-wordmark={hideWordmark || menuOpen ? "" : undefined}
+      aria-hidden={!visible}
+      inert={!visible ? true : undefined}
       style={
         {
-          "--pn-content-w": NARROW_PROJECT_CONTENT_W,
-          "--pn-nzeribe-h": `${nzeribeH}px`,
-          "--pn-menu-w": `${menuW}px`,
-          "--pn-menu-h": `${menuH}px`,
+          "--ab-nzeribe-h": `${nzeribeH}px`,
+          "--ab-menu-w": `${menuW}px`,
+          "--ab-menu-h": `${menuH}px`,
+          transition: reduceMotion
+            ? "none"
+            : `opacity ${fadeMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
         } as CSSProperties
       }
     >
-      <header ref={headerRef} className="project-narrow__header">
-        {hideWordmark ? null : (
-          <SiteWordmark href="/" placement="flow" onClick={(event) => {
-            if (!onGoHome) return;
+      <header ref={headerRef} className="about-narrow__header">
+        <SiteWordmark
+          href="/"
+          placement="flow"
+          onClick={(event) => {
             event.preventDefault();
-            goHome();
-          }} />
-        )}
+            leaveAbout("contact");
+          }}
+        />
         <button
           type="button"
-          className="project-narrow__menu-toggle"
+          className="about-narrow__menu-toggle"
           aria-label={
             menuOpen ? "Close navigation menu" : "Open navigation menu"
           }
           aria-expanded={menuOpen}
-          onClick={() => {
-            setMenuOpen((open) => !open);
-          }}
+          onClick={() => setMenuOpen((open) => !open)}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -160,33 +167,33 @@ export function ProjectNarrowClient({
 
       <div
         ref={scrollerRef}
-        className="project-narrow"
-        data-project-scroll=""
+        className="about-narrow__scroll"
         inert={menuOpen ? true : undefined}
       >
-        <div className="project-narrow__page">
-          <ProjectIndexNav
-            activeNumber={project.number}
-            total={project.indexTotal}
-          />
-          <ProjectHeader project={project} menuState="hidden" />
-          <ProjectCaseStudy
-            project={project}
-            menuState="hidden"
-            gallery="strip"
-          />
+        <div className="about-narrow__page">
+          <div className="about-narrow__polaroid">
+            <Image
+              src="/muna-polaroid.webp"
+              alt="Muna"
+              fill
+              className="about-narrow__polaroid-image"
+              sizes="(max-width: 700px) 52vw, 220px"
+              priority
+            />
+          </div>
+          <AboutBio visible={visible} flow />
         </div>
       </div>
 
       {menuOpen && navScale > 0 ? (
         <div
-          className="project-narrow__nav-overlay"
+          className="about-narrow__nav-overlay"
           role="dialog"
           aria-modal="true"
           aria-label="Site navigation"
         >
           <div
-            className="project-narrow__nav-stage"
+            className="about-narrow__nav-stage"
             style={{
               width: DESKTOP_LAYOUT_W,
               height: DESKTOP_LAYOUT_H,
@@ -197,14 +204,14 @@ export function ProjectNarrowClient({
               layout="desktop"
               containment="stage"
               spinFeel="narrow"
-              initialActiveLabel="design"
+              initialActiveLabel="about"
               onLabelActivate={(label) => {
-                if (label === "design") {
+                if (label === "about") {
                   closeMenu();
                   return;
                 }
-                if (label === "installation" || label === "about") {
-                  goHome(label);
+                if (label === "design" || label === "installation") {
+                  leaveAbout(label);
                 }
               }}
             />
@@ -212,6 +219,5 @@ export function ProjectNarrowClient({
         </div>
       ) : null}
     </div>
-    </DesignProjectNavProvider>
   );
 }
