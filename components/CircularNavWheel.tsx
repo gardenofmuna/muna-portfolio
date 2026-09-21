@@ -1080,18 +1080,23 @@ export function CircularNavWheel({
         setHoveredIndex(null);
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
+            const el = rotatorRef.current;
             setFocusedIndex(i);
             rotationRef.current = nextRot;
             setRotation(nextRot);
-            const el = rotatorRef.current;
-            if (el) {
-              el.style.transition = "none";
-              el.style.transform = `rotate(${φ}rad)`;
-              void el.offsetHeight; // force the browser to register the current position
-              el.style.transition = reduceMotion
-                ? "none"
-                : "transform 520ms cubic-bezier(0.22, 1, 0.36, 1)";
-              el.style.transform = `rotate(${nextRot}rad)`;
+
+            if (el && !reduceMotion) {
+              el.animate(
+                [
+                  { transform: `rotate(${φ}rad)` },
+                  { transform: `rotate(${nextRot}rad)` },
+                ],
+                {
+                  duration: 520,
+                  easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+                  fill: "forwards",
+                },
+              );
             }
 
             if (startItemIndex != null && alreadyCentered) {
@@ -1137,18 +1142,23 @@ export function CircularNavWheel({
       );
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
+          const el = rotatorRef.current;
           setFocusedIndex(tileIndex);
           rotationRef.current = nextRot;
           setRotation(nextRot);
-          const el = rotatorRef.current;
-          if (el) {
-            el.style.transition = "none";
-            el.style.transform = `rotate(${φ}rad)`;
-            void el.offsetHeight; // force the browser to register the current position
-            el.style.transition = reduceMotion
-              ? "none"
-              : "transform 520ms cubic-bezier(0.22, 1, 0.36, 1)";
-            el.style.transform = `rotate(${nextRot}rad)`;
+
+          if (el && !reduceMotion) {
+            el.animate(
+              [
+                { transform: `rotate(${φ}rad)` },
+                { transform: `rotate(${nextRot}rad)` },
+              ],
+              {
+                duration: 520,
+                easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+                fill: "forwards",
+              },
+            );
           }
         });
       });
@@ -1157,8 +1167,6 @@ export function CircularNavWheel({
 
     dragRef.current.moved = false;
   };
-
-  const transitionMs = reduceMotion ? 60 : 520;
 
   const ox = layoutRound(originX);
   const oy = layoutRound(originY);
@@ -1374,10 +1382,7 @@ export function CircularNavWheel({
                 : layoutRound(rotation)
             }rad)`,
             transformOrigin: `${ox}px ${oy}px`,
-            transition:
-              isDragging || reduceMotion
-                ? "none"
-                : `transform ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+            transition: "none",
             willChange: spinFeel === "narrow" ? "transform" : undefined,
           }}
           aria-label="Portfolio sections"
