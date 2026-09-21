@@ -1083,6 +1083,16 @@ export function CircularNavWheel({
             setFocusedIndex(i);
             rotationRef.current = nextRot;
             setRotation(nextRot);
+            const el = rotatorRef.current;
+            if (el) {
+              el.style.transition = "none";
+              el.style.transform = `rotate(${φ}rad)`;
+              void el.offsetHeight; // force the browser to register the current position
+              el.style.transition = reduceMotion
+                ? "none"
+                : "transform 520ms cubic-bezier(0.22, 1, 0.36, 1)";
+              el.style.transform = `rotate(${nextRot}rad)`;
+            }
 
             if (startItemIndex != null && alreadyCentered) {
               const label = items[i]?.label;
@@ -1128,7 +1138,18 @@ export function CircularNavWheel({
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           setFocusedIndex(tileIndex);
+          rotationRef.current = nextRot;
           setRotation(nextRot);
+          const el = rotatorRef.current;
+          if (el) {
+            el.style.transition = "none";
+            el.style.transform = `rotate(${φ}rad)`;
+            void el.offsetHeight; // force the browser to register the current position
+            el.style.transition = reduceMotion
+              ? "none"
+              : "transform 520ms cubic-bezier(0.22, 1, 0.36, 1)";
+            el.style.transform = `rotate(${nextRot}rad)`;
+          }
         });
       });
       setWheelInteracting(false);
