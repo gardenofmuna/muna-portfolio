@@ -1078,33 +1078,14 @@ export function CircularNavWheel({
           i === centerNow && Math.abs(nextRot - φ) < 0.04;
 
         setHoveredIndex(null);
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            const el = rotatorRef.current;
-            setFocusedIndex(i);
-            rotationRef.current = nextRot;
-            setRotation(nextRot);
+        setFocusedIndex(i);
+        rotationRef.current = nextRot;
+        setRotation(nextRot);
 
-            if (el && !reduceMotion) {
-              el.animate(
-                [
-                  { transform: `rotate(${φ}rad)` },
-                  { transform: `rotate(${nextRot}rad)` },
-                ],
-                {
-                  duration: 520,
-                  easing: "cubic-bezier(0.22, 1, 0.36, 1)",
-                  fill: "forwards",
-                },
-              );
-            }
-
-            if (startItemIndex != null && alreadyCentered) {
-              const label = items[i]?.label;
-              if (label) onActivateRef.current?.(label);
-            }
-          });
-        });
+        if (startItemIndex != null && alreadyCentered) {
+          const label = items[i]?.label;
+          if (label) onActivateRef.current?.(label);
+        }
         setWheelInteracting(false);
       }
     } else if (isNarrow && wasDragging) {
@@ -1140,33 +1121,15 @@ export function CircularNavWheel({
         N,
         focusedRef.current,
       );
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          const el = rotatorRef.current;
-          setFocusedIndex(tileIndex);
-          rotationRef.current = nextRot;
-          setRotation(nextRot);
-
-          if (el && !reduceMotion) {
-            el.animate(
-              [
-                { transform: `rotate(${φ}rad)` },
-                { transform: `rotate(${nextRot}rad)` },
-              ],
-              {
-                duration: 520,
-                easing: "cubic-bezier(0.22, 1, 0.36, 1)",
-                fill: "forwards",
-              },
-            );
-          }
-        });
-      });
+      setFocusedIndex(tileIndex);
+      setRotation(nextRot);
       setWheelInteracting(false);
     }
 
     dragRef.current.moved = false;
   };
+
+  const transitionMs = reduceMotion ? 60 : 520;
 
   const ox = layoutRound(originX);
   const oy = layoutRound(originY);
@@ -1382,8 +1345,13 @@ export function CircularNavWheel({
                 : layoutRound(rotation)
             }rad)`,
             transformOrigin: `${ox}px ${oy}px`,
-            transition: "none",
-            willChange: spinFeel === "narrow" ? "transform" : undefined,
+            transition:
+              isDragging || reduceMotion
+                ? "none"
+                : `transform ${transitionMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+            /* Desktop too: without a promoted layer Safari re-rasterizes the
+               labels every frame and the snap reads as stiff. */
+            willChange: "transform",
           }}
           aria-label="Portfolio sections"
         >
@@ -1449,13 +1417,9 @@ export function CircularNavWheel({
                     setHoveredIndex(item.index);
                     if (!allowDesktopHoverSnap()) return;
                     setFocusedIndex(item.index);
-                    requestAnimationFrame(() => {
-                      requestAnimationFrame(() => {
-                        setRotation((prev) =>
-                          snapRotationForIndex(item.index, prev),
-                        );
-                      });
-                    });
+                    setRotation((prev) =>
+                      snapRotationForIndex(item.index, prev),
+                    );
                   }}
                   onBlur={() => onItemLeave(item.index)}
                   onClick={() => {
