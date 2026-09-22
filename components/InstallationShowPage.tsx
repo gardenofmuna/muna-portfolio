@@ -401,6 +401,13 @@ export function InstallationShowPage({
       const from = direction === "enter" ? landRect : pageRect;
       const to = direction === "enter" ? pageRect : landRect;
 
+      /* Warm decode in parallel — never delay the FLIP (stale rects = ghosts). */
+      if (direction === "enter") {
+        const warm = new window.Image();
+        warm.src = show.src;
+        void warm.decode().catch(() => {});
+      }
+
       setFly({
         layout,
         start: from,
@@ -428,6 +435,9 @@ export function InstallationShowPage({
       window.setTimeout(() => {
         if (flyGenRef.current !== gen) return;
         handoffLockRef.current = false;
+        /* Tear portal down before revealing the page header — otherwise the
+           real (stage-scaled) pair paints at a different screen point than
+           the portal for one frame and Safari shows a floating fragment. */
         setFly(null);
         if (direction === "enter") setEntering(false);
         if (direction === "leave") setLeaving(false);
@@ -640,7 +650,6 @@ export function InstallationShowPage({
             className="object-contain object-left-top"
             sizes="660px"
             priority
-            unoptimized
           />
         </div>
         <div
@@ -665,7 +674,6 @@ export function InstallationShowPage({
           className="object-contain object-left-top"
           sizes="(max-width: 900px) 92vw, 720px"
           priority
-          unoptimized
         />
       </div>
       <div

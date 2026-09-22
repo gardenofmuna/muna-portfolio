@@ -195,7 +195,6 @@ export function InstallationNarrow({
                     height={show.height}
                     className="installation-narrow__image"
                     sizes="(max-width: 700px) calc(100vw - 40px), calc(100vw - 104px)"
-                    unoptimized
                   />
                 </div>
                 <div className="installation-narrow__meta">

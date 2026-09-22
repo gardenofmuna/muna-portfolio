@@ -111,7 +111,6 @@ function contentColumn() {
 }
 
 type CardPose = {
-  key: string;
   showIndex: number;
   slot: number;
   delta: number;
@@ -151,7 +150,6 @@ function posesAt(progress: number): CardPose[] {
     const delta = deltaOf(slot);
     const showIndex = wrapIndex(base + slot);
     return {
-      key: `${slot}:${showIndex}`,
       showIndex,
       slot,
       delta,
@@ -203,6 +201,18 @@ export function InstallationGallery({
       lastTapRef.current = null;
       progressRef.current = 0;
       setProgress(0);
+    }
+  }, [visible]);
+
+  /* Warm every hero decode once the strip is shown — Safari blanks neighbors
+     that remount mid-scroll if the bitmap isn't already in memory. */
+  useEffect(() => {
+    if (!visible) return;
+    for (const show of INSTALLATION_SHOWS) {
+      const img = new window.Image();
+      img.decoding = "async";
+      img.src = show.src;
+      void img.decode().catch(() => {});
     }
   }, [visible]);
 
@@ -362,7 +372,7 @@ export function InstallationGallery({
             };
             return (
               <button
-                key={pose.key}
+                key={show.id}
                 id={
                   pose.active ? `installation-card-${show.id}` : undefined
                 }
@@ -411,10 +421,11 @@ export function InstallationGallery({
                   width={show.width}
                   height={show.height}
                   className="installation-gallery__image"
-                  sizes="1280px"
-                  priority={pose.active}
+                  sizes={`${CENTER_W}px`}
+                  /* All three slots stay mounted — eager so Safari doesn't
+                     blank a neighbor when the strip repositions under transform. */
+                  priority
                   draggable={false}
-                  unoptimized
                 />
               </button>
             );
