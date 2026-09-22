@@ -112,8 +112,8 @@ export function CvPressHoverAccordion({
       <PaperFoldAccordion
         isOpen={isDesktop ? isPaperHovered : visible}
         layout={layout}
-        frontSrc="/cv-front-page.png"
-        backSrc="/cv-back-page.png"
+        frontSrc="/cv-front-page.webp"
+        backSrc="/cv-back-page.webp"
         width={CV_ACCORDION_WIDTH}
         scale={CV_ACCORDION_SCALE}
         pageHeight={CV_PAGE_HEIGHT}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { NarrowCenterPopup } from "@/components/NarrowCenterPopup";
 import {
@@ -28,7 +28,9 @@ export const NAV_HUB_HOVER_NARROW_SCALE =
   NARROW_INSTALLATION_POPUP_SCALE * 0.5 * 1.2;
 
 /**
- * Straight, centered hub GIF preview — shared layout for nav hover previews.
+ * Straight, centered hub clip preview — shared layout for nav hover previews.
+ * Playback is gated on `visible`: a hidden clip decoding in the background
+ * stalls Safari's main thread and makes the nav dial snap late.
  */
 export function NavHubHoverGif({
   visible,
@@ -38,6 +40,7 @@ export function NavHubHoverGif({
   stageLocked = false,
 }: Props) {
   const [reduceMotion, setReduceMotion] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -46,6 +49,17 @@ export function NavHubHoverGif({
     mq.addEventListener("change", u);
     return () => mq.removeEventListener("change", u);
   }, []);
+
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    if (visible) {
+      /* Autoplay can reject while the tab is backgrounded — not fatal. */
+      void el.play().catch(() => {});
+    } else {
+      el.pause();
+    }
+  }, [visible]);
 
   const fadeMs = reduceMotion ? 80 : 480;
   const fadeStyle = {
@@ -57,10 +71,14 @@ export function NavHubHoverGif({
   } as const;
 
   const gif = (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
+    <video
+      ref={videoRef}
       src={src}
-      alt=""
+      muted
+      loop
+      playsInline
+      preload="auto"
+      aria-hidden
       className="block h-auto w-full object-contain"
       draggable={false}
     />

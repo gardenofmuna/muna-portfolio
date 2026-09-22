@@ -18,7 +18,7 @@ export function SelectedWorksHoverGif({
       visible={visible}
       layout={layout}
       stageLocked={stageLocked}
-      src="/VHS_PII_MUM.gif"
+      src="/VHS_PII_MUM.mp4"
     />
   );
 }

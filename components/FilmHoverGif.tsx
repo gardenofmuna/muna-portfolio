@@ -18,7 +18,7 @@ export function FilmHoverGif({
       visible={visible}
       layout={layout}
       stageLocked={stageLocked}
-      src="/S8GIF.gif"
+      src="/S8GIF.mp4"
       narrowScaleMultiplier={1.08}
     />
   );
