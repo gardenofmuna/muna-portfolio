@@ -8,6 +8,10 @@ import { CircularNavWheel } from "@/components/CircularNavWheel";
 import { DesignCluster } from "@/components/DesignCluster";
 import { InstallationNarrow } from "@/components/InstallationNarrow";
 import { InstallationShowPage } from "@/components/InstallationShowPage";
+import {
+  getInstallationShowById,
+  type InstallationShow,
+} from "@/data/installation";
 import { MobileFooterLinks } from "@/components/MobileFooterLinks";
 import { NarrowWheelFit, useNarrowArtboardMetrics } from "@/components/NarrowArtboard";
 import { PhotosHoverCluster } from "@/components/PhotosHoverCluster";
@@ -17,10 +21,6 @@ import { SelectedWorksHoverGif } from "@/components/SelectedWorksHoverGif";
 import { NarrowCenterPopup } from "@/components/NarrowCenterPopup";
 import { SiteWordmark } from "@/components/SiteWordmark";
 import { ProjectNarrowClient } from "@/components/project/ProjectNarrowClient";
-import {
-  getInstallationShowById,
-  type InstallationShow,
-} from "@/data/installation";
 import {
   EGWU_RECORDS_SLUG,
   getProjectBySlug,
@@ -66,27 +66,15 @@ export function HomeNarrow({
   const [project, setProject] = useState<ProjectDefinition | null>(
     initialProject ?? null,
   );
-  const [enteredFromLanding, setEnteredFromLanding] = useState(false);
   const [installationShow, setInstallationShow] =
     useState<InstallationShow | null>(() =>
       initialInstallationId
         ? (getInstallationShowById(initialInstallationId) ?? null)
         : null,
     );
-  const [heroOrigin, setHeroOrigin] = useState<{
-    left: number;
-    top: number;
-    width: number;
-    height: number;
-  } | null>(null);
-  const [animateInstallEnter, setAnimateInstallEnter] = useState(false);
-  const [installClosing, setInstallClosing] = useState(false);
+  const [enteredFromLanding, setEnteredFromLanding] = useState(false);
   const projectRef = useRef(project);
   projectRef.current = project;
-  const installationShowRef = useRef(installationShow);
-  installationShowRef.current = installationShow;
-  const installClosingRef = useRef(installClosing);
-  installClosingRef.current = installClosing;
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -96,11 +84,22 @@ export function HomeNarrow({
     return () => mq.removeEventListener("change", sync);
   }, []);
 
+  /* Deep link opens the case study immediately — no fly animation on mobile. */
+  useEffect(() => {
+    if (!initialInstallationId) return;
+    const show = getInstallationShowById(initialInstallationId);
+    if (!show) return;
+    setInstallationShow(show);
+    setActiveLabel("installation");
+    document.title = `${show.titleLines.join(" ")} | Muna | Portfolio`;
+  }, [initialInstallationId]);
+
   const openDesignProject = useCallback(() => {
     if (projectRef.current) return;
     const next = getProjectBySlug(EGWU_RECORDS_SLUG);
     if (!next) return;
     setEnteredFromLanding(true);
+    setInstallationShow(null);
     setProject(next);
     document.title = `${next.title} | Muna | Portfolio`;
     if (window.location.pathname !== DESIGN_PROJECT_PATH) {
@@ -112,39 +111,7 @@ export function HomeNarrow({
     }
   }, []);
 
-  const goToLanding = useCallback((label?: string) => {
-    setProject(null);
-    setInstallationShow(null);
-    setHeroOrigin(null);
-    setAnimateInstallEnter(false);
-    setInstallClosing(false);
-    setEnteredFromLanding(false);
-    document.title = "Muna | Portfolio";
-    if (label && (NARROW_NAV_LABELS as readonly string[]).includes(label)) {
-      setActiveLabel(label as NarrowLabel);
-      setWheelEpoch((n) => n + 1);
-    }
-    if (window.location.pathname !== "/") {
-      window.history.pushState(null, "", "/");
-    }
-  }, []);
-
   const openInstallationShow = useCallback((show: InstallationShow) => {
-    if (installClosingRef.current) return;
-    const card = document.getElementById(`installation-narrow-${show.id}`);
-    const rect = card?.getBoundingClientRect();
-    if (rect && rect.width > 1 && rect.height > 1) {
-      setHeroOrigin({
-        left: rect.left,
-        top: rect.top,
-        width: rect.width,
-        height: rect.height,
-      });
-    } else {
-      setHeroOrigin(null);
-    }
-    setInstallClosing(false);
-    setAnimateInstallEnter(true);
     setInstallationShow(show);
     setActiveLabel("installation");
     document.title = `${show.titleLines.join(" ")} | Muna | Portfolio`;
@@ -155,34 +122,26 @@ export function HomeNarrow({
   }, []);
 
   const closeInstallationShow = useCallback(() => {
-    const current = installationShowRef.current;
-    if (!current || installClosingRef.current) return;
-
+    setInstallationShow(null);
     setActiveLabel("installation");
     document.title = "Muna | Portfolio";
     if (window.location.pathname.startsWith("/installation/")) {
       window.history.pushState(null, "", "/");
     }
+  }, []);
 
-    if (reduceMotion) {
-      setInstallationShow(null);
-      setHeroOrigin(null);
-      setAnimateInstallEnter(false);
-      setInstallClosing(false);
-      return;
-    }
-
-    setAnimateInstallEnter(false);
-    setHeroOrigin(null);
-    setInstallClosing(true);
-  }, [reduceMotion]);
-
-  const settleInstallClose = useCallback(() => {
+  const goToLanding = useCallback((label?: string) => {
+    setProject(null);
     setInstallationShow(null);
-    setInstallClosing(false);
-    setHeroOrigin(null);
-    setAnimateInstallEnter(false);
-    setActiveLabel("installation");
+    setEnteredFromLanding(false);
+    document.title = "Muna | Portfolio";
+    if (label && (NARROW_NAV_LABELS as readonly string[]).includes(label)) {
+      setActiveLabel(label as NarrowLabel);
+      setWheelEpoch((n) => n + 1);
+    }
+    if (window.location.pathname !== "/") {
+      window.history.pushState(null, "", "/");
+    }
   }, []);
 
   const onProjectChange = useCallback((next: ProjectDefinition) => {
@@ -203,13 +162,13 @@ export function HomeNarrow({
         window.location.pathname,
       );
       if (installMatch) {
-        const next = getInstallationShowById(installMatch[1] ?? "");
         setProject(null);
-        setInstallationShow(next ?? null);
         setActiveLabel("installation");
-        if (next) {
-          document.title = `${next.titleLines.join(" ")} | Muna | Portfolio`;
-        }
+        const show = getInstallationShowById(installMatch[1] ?? "");
+        setInstallationShow(show ?? null);
+        document.title = show
+          ? `${show.titleLines.join(" ")} | Muna | Portfolio`
+          : "Muna | Portfolio";
         return;
       }
       const match = /^\/design\/([^/]+)/.exec(window.location.pathname);
@@ -227,24 +186,19 @@ export function HomeNarrow({
   const previewLabel =
     wheelInteracting && hoverNavLabel ? hoverNavLabel : activeLabel;
   /** Full-page about — settle or tap “about”. */
-  const showAboutPage = !project && !installationShow && activeLabel === "about";
+  const showAboutPage = !project && activeLabel === "about";
   const showAboutBio =
     !project &&
-    !installationShow &&
     !showAboutPage &&
     (previewLabel === "about" || previewLabel === "contact");
-  const showPhotos = !project && !installationShow && previewLabel === "photos";
-  const showDesign = !project && !installationShow && previewLabel === "design";
-  /** Full-page feed — settle on installation, or keep mounted while closing handoff runs. */
+  const showPhotos = !project && previewLabel === "photos";
+  const showDesign = !project && previewLabel === "design";
+  /** Installation landing feed — hidden while a case study is open. */
   const showInstallation =
-    !project &&
-    activeLabel === "installation" &&
-    (!installationShow || installClosing);
-  const showCvPress =
-    !project && !installationShow && previewLabel === "cv + press";
-  const showFilm = !project && !installationShow && previewLabel === "film";
-  const showSelectedWorks =
-    !project && !installationShow && previewLabel === "selected works";
+    !project && activeLabel === "installation" && !installationShow;
+  const showCvPress = !project && previewLabel === "cv + press";
+  const showFilm = !project && previewLabel === "film";
+  const showSelectedWorks = !project && previewLabel === "selected works";
   const fadeMs = wheelInteracting ? 120 : reduceMotion ? 80 : 520;
   const bioFadeStyle = {
     opacity: showAboutBio ? 1 : 0,
@@ -258,13 +212,19 @@ export function HomeNarrow({
   const mountLanding = !projectOpen || enteredFromLanding || !initialProject;
   const installationOpen = showInstallation && !projectOpen;
   const aboutOpen = showAboutPage && !projectOpen;
-  const overlayOpen = installationOpen || aboutOpen;
+  const caseStudyOpen = installationShow != null && !projectOpen;
+  const overlayOpen = installationOpen || aboutOpen || caseStudyOpen;
 
   const leaveOverlay = useCallback((label: string) => {
+    setInstallationShow(null);
     if ((NARROW_NAV_LABELS as readonly string[]).includes(label)) {
       setActiveLabel(label as NarrowLabel);
     }
     setWheelEpoch((n) => n + 1);
+    document.title = "Muna | Portfolio";
+    if (window.location.pathname !== "/") {
+      window.history.pushState(null, "", "/");
+    }
   }, []);
 
   return (
@@ -337,35 +297,22 @@ export function HomeNarrow({
         onOpenDesign={openDesignProject}
         onOpenShow={openInstallationShow}
       />
-      <InstallationShowPage
-        show={installationShow}
-        variant="narrow"
-        animateEnter={animateInstallEnter && !reduceMotion}
-        closing={installClosing}
-        heroOrigin={heroOrigin}
-        closeTargetId={
-          installationShow
-            ? `installation-narrow-${installationShow.id}`
-            : null
-        }
-        onEnterSettled={() => {
-          setAnimateInstallEnter(false);
-          setHeroOrigin(null);
-        }}
-        onCloseSettled={settleInstallClose}
-        onClose={closeInstallationShow}
-        onNavigateShow={(next) => {
-          if (installClosing) return;
-          setAnimateInstallEnter(false);
-          setHeroOrigin(null);
-          setInstallationShow(next);
-          document.title = `${next.titleLines.join(" ")} | Muna | Portfolio`;
-          const path = `/installation/${next.id}`;
-          if (window.location.pathname !== path) {
-            window.history.pushState({ munaInstallation: next.id }, "", path);
-          }
-        }}
-      />
+      {caseStudyOpen && installationShow ? (
+        <InstallationShowPage
+          show={installationShow}
+          variant="narrow"
+          animateEnter={false}
+          onClose={closeInstallationShow}
+          onNavigateShow={openInstallationShow}
+          onNavigateLanding={(label) => {
+            if (label === "design") {
+              openDesignProject();
+              return;
+            }
+            leaveOverlay(label);
+          }}
+        />
+      ) : null}
       {project ? (
         <div
           className={

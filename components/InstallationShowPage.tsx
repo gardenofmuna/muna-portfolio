@@ -13,6 +13,17 @@ import {
 import { createPortal } from "react-dom";
 
 import { DesktopStageViewContext } from "@/components/DesktopStageCanvas";
+import { CircularNavWheel } from "@/components/CircularNavWheel";
+import { ProjectHorizontalStrip } from "@/components/project/ProjectHorizontalStrip";
+import { ProjectLoopVideo } from "@/components/project/ProjectLoopVideo";
+import { SiteWordmark } from "@/components/SiteWordmark";
+import { useNarrowArtboardMetrics } from "@/components/NarrowArtboard";
+import { DESKTOP_LAYOUT_H, DESKTOP_LAYOUT_W } from "@/lib/desktop-stage";
+import { NARROW_NZERIBE } from "@/lib/narrow-stage";
+import {
+  readStableLayoutSize,
+  subscribeStableLayout,
+} from "@/lib/stable-viewport";
 
 import {
   neighborInstallationShow,
@@ -20,7 +31,6 @@ import {
   type InstallationShow,
 } from "@/data/installation";
 import {
-  INSTALL_HANDOFF_EASE,
   INSTALL_HANDOFF_MS,
   INSTALL_META_GAP,
   INSTALL_META_SIZE,
@@ -32,23 +42,65 @@ import {
 import "./installation-show.css";
 import "@/components/project/project-pane.css";
 
+/** Same triangle as ProjectLoopVideo (design-page play control). */
+function PlayIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <polygon fill="currentColor" points="2.01,0.33 23.01,12 2.01,23.64" />
+    </svg>
+  );
+}
+
+function youtubeEmbedId(url: string): string | null {
+  try {
+    const u = new URL(url);
+    if (u.hostname === "youtu.be") {
+      const id = u.pathname.replace(/^\//, "").split("/")[0];
+      return id || null;
+    }
+    if (u.hostname.includes("youtube.com")) {
+      const v = u.searchParams.get("v");
+      if (v) return v;
+      const parts = u.pathname.split("/").filter(Boolean);
+      const embedIdx = parts.indexOf("embed");
+      if (embedIdx >= 0 && parts[embedIdx + 1]) return parts[embedIdx + 1]!;
+      const shortIdx = parts.indexOf("shorts");
+      if (shortIdx >= 0 && parts[shortIdx + 1]) return parts[shortIdx + 1]!;
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
 function InstallationMedia({
   image,
   className,
   sizes,
   fill,
   priority,
+  /** When false, keep layout space but do not fetch/decode the bitmap. */
+  active = true,
 }: {
   image: InstallationGalleryImage;
   className?: string;
   sizes?: string;
   fill?: boolean;
   priority?: boolean;
+  active?: boolean;
 }) {
-  if (image.placeholder || !image.src) {
+  if (!active || image.placeholder || !image.src) {
+    /* Real photos wait as empty space. Gray stand-ins are only for slots
+       that have no image yet (Mama). */
+    const standIn = image.placeholder || !image.src;
     return (
       <div
-        className={["installation-show__placeholder", className]
+        className={[
+          standIn
+            ? "installation-show__placeholder"
+            : "installation-show__media-slot",
+          className,
+        ]
           .filter(Boolean)
           .join(" ")}
         style={
@@ -58,8 +110,9 @@ function InstallationMedia({
                 aspectRatio: `${image.width} / ${image.height}`,
               }
         }
-        role="img"
-        aria-label={image.alt}
+        role={standIn ? "img" : undefined}
+        aria-label={standIn ? image.alt : undefined}
+        aria-hidden={standIn ? undefined : true}
       />
     );
   }
@@ -73,6 +126,8 @@ function InstallationMedia({
         className={className}
         sizes={sizes}
         priority={priority}
+        /* Already display-sized WebPs — skip Next re-encode so quality
+           isn't crushed a second time (looks pixelated on retina). */
         unoptimized
       />
     );
@@ -141,6 +196,8 @@ type Props = {
   closeTargetId?: string | null;
   onClose: () => void;
   onNavigateShow: (show: InstallationShow) => void;
+  /** Narrow menu: leave the case study for another landing section. */
+  onNavigateLanding?: (label: string) => void;
   /** Fired after the open transition finishes (or immediately if skipped). */
   onEnterSettled?: () => void;
   /** Fired after the close transition finishes. */
@@ -148,11 +205,18 @@ type Props = {
 };
 
 const ENTER_MS = INSTALL_HANDOFF_MS;
-const EASE = INSTALL_HANDOFF_EASE;
+/**
+ * Easy-ease (slow in, slow out). The shared handoff curve is a hard ease-out,
+ * which spends the first frames leaping to nearly full size — reads as a pop.
+ */
+const EASE = "cubic-bezier(0.45, 0.05, 0.55, 0.95)";
 /** Match InstallationGallery landing meta — smart-object source sizes. */
 const LAND_META_W = INSTALL_META_W;
 const LAND_META_GAP = INSTALL_META_GAP;
 const LAND_META_SIZE = INSTALL_META_SIZE;
+
+/** Gap between each block under the hero as it fades in, top to bottom. */
+const REVEAL_GAP_MS = 150;
 
 function rectOf(el: Element): FlyRect {
   const r = el.getBoundingClientRect();
@@ -223,6 +287,7 @@ export function InstallationShowPage({
   closeTargetId = null,
   onClose,
   onNavigateShow,
+  onNavigateLanding,
   onEnterSettled,
   onCloseSettled,
 }: Props) {
@@ -232,12 +297,24 @@ export function InstallationShowPage({
   const [fly, setFly] = useState<FlyHandoff | null>(null);
   const [smart, setSmart] = useState<SmartScale | null>(null);
   const [portalReady, setPortalReady] = useState(false);
+  const [filmPlaying, setFilmPlaying] = useState(false);
+  /** Highest below-hero block index that has started fading in. -1 = none yet. */
+  const [revealStep, setRevealStep] = useState(-1);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [viewportH, setViewportH] = useState(0);
+  const [footerLabelPx, setFooterLabelPx] = useState<number>();
+  const { u: narrowU } = useNarrowArtboardMetrics();
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
+  const headerScrolledRef = useRef(false);
+  const footerThreeRef = useRef<HTMLSpanElement>(null);
+  const footerProbeRef = useRef<HTMLSpanElement>(null);
   const railRef = useRef<HTMLDivElement>(null);
   const pairSlotRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const metaRef = useRef<HTMLDivElement>(null);
   const flyGenRef = useRef(0);
+  const flyPairRef = useRef<HTMLDivElement>(null);
   const smartRef = useRef<SmartScale | null>(null);
   const handoffLockRef = useRef(false);
   const visible = show != null;
@@ -248,6 +325,88 @@ export function InstallationShowPage({
   useEffect(() => {
     setPortalReady(true);
   }, []);
+
+  const paragraphCount = caseStudy?.paragraphs.length ?? 0;
+  const hasGalleryNote = Boolean(caseStudy?.galleryNote);
+  const hasGalleryCaption = Boolean(caseStudy?.galleryCaption);
+  const hasStrip = Boolean(caseStudy?.horizontalStrip?.length);
+  const hasStripCaption = Boolean(caseStudy?.horizontalStripCaption);
+  const hasCollage = Boolean(caseStudy?.largeCollage);
+  const hasFilm = Boolean(caseStudy?.filmStill);
+  const hasWalkthrough = Boolean(caseStudy?.walkthrough);
+  const galleryColumns = caseStudy?.galleryColumns ?? 3;
+  /** Flex fractions (w/h) so a 2-up pair fills the rail as one smart object. */
+  const galleryColTracks =
+    isDesktop && galleryColumns === 2 && caseStudy?.gallery.length
+      ? caseStudy.gallery
+          .map((img) => `${img.width / Math.max(1, img.height)}fr`)
+          .join(" ")
+      : null;
+  const galleryColumnsView = isDesktop ? galleryColumns : 1;
+
+  let nextStep = paragraphCount;
+  const galleryStep = nextStep;
+  nextStep += 1;
+  const galleryCaptionStep = hasGalleryCaption ? nextStep++ : -1;
+  const stripStep = hasStrip ? nextStep++ : -1;
+  const stripCaptionStep = hasStripCaption ? nextStep++ : -1;
+  const collageStep = hasCollage ? nextStep++ : -1;
+  const noteStep = hasGalleryNote ? nextStep++ : -1;
+  const filmStep = hasFilm ? nextStep++ : -1;
+  const captionStep =
+    hasFilm && caseStudy?.filmCaption ? nextStep++ : -1;
+  const walkthroughStep = hasWalkthrough ? nextStep++ : -1;
+  const footerStep = nextStep;
+  const revealCount = footerStep + 1;
+
+  useEffect(() => {
+    setFilmPlaying(false);
+    setRevealStep(-1);
+    setMenuOpen(false);
+    headerScrolledRef.current = false;
+    headerRef.current?.removeAttribute("data-scrolled");
+  }, [show?.id]);
+
+  useEffect(() => {
+    const read = () => setViewportH(readStableLayoutSize().height);
+    read();
+    return subscribeStableLayout(read);
+  }, []);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
+
+  /*
+   * After the hero lands, fade everything under it in reading order.
+   * Images mount on their own step so decode doesn't pile up during the fly.
+   * Narrow / no-animation opens show everything at once.
+   */
+  useEffect(() => {
+    if (!show || closing) return;
+
+    if (!animateEnter || reduceMotion) {
+      setRevealStep(revealCount - 1);
+      return;
+    }
+
+    const start = ENTER_MS + 48;
+    const timers: number[] = [];
+    for (let step = 0; step < revealCount; step += 1) {
+      timers.push(
+        window.setTimeout(
+          () => setRevealStep(step),
+          start + step * REVEAL_GAP_MS,
+        ),
+      );
+    }
+    return () => timers.forEach((id) => window.clearTimeout(id));
+  }, [show?.id, show, closing, animateEnter, reduceMotion, revealCount]);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -421,17 +580,6 @@ export function InstallationShowPage({
         phase: "from",
       });
 
-      requestAnimationFrame(() => {
-        if (flyGenRef.current !== gen) return;
-        void document.body.offsetHeight;
-        requestAnimationFrame(() => {
-          if (flyGenRef.current !== gen) return;
-          setFly((current) =>
-            current ? { ...current, phase: "to" } : null,
-          );
-        });
-      });
-
       window.setTimeout(() => {
         if (flyGenRef.current !== gen) return;
         handoffLockRef.current = false;
@@ -448,6 +596,33 @@ export function InstallationShowPage({
     },
     [applySmartScale, landingPairOrigin, resolveLandPair, show],
   );
+
+  /*
+   * Paint the fly at the landing size with no transition, flush layout, then
+   * ease to the page size. Switching phase in the same turn as mount makes
+   * Safari/Chrome skip the start and pop to the large size first.
+   */
+  useLayoutEffect(() => {
+    if (!fly || fly.phase !== "from") return;
+    const gen = flyGenRef.current;
+    const el = flyPairRef.current;
+    if (el) void el.getBoundingClientRect();
+    let inner = 0;
+    const outer = window.requestAnimationFrame(() => {
+      inner = window.requestAnimationFrame(() => {
+        if (flyGenRef.current !== gen) return;
+        setFly((current) =>
+          current && current.phase === "from"
+            ? { ...current, phase: "to" }
+            : current,
+        );
+      });
+    });
+    return () => {
+      window.cancelAnimationFrame(outer);
+      window.cancelAnimationFrame(inner);
+    };
+  }, [fly]);
 
   /* Size header as smart object before paint / FLIP. */
   useLayoutEffect(() => {
@@ -482,6 +657,9 @@ export function InstallationShowPage({
       return;
     }
 
+    /* Hide the page-size hero before the first paint so it can't flash
+       large, then jump down to the card and scale back up. */
+    setEntering(true);
     setLeaving(false);
 
     let retry = 0;
@@ -558,6 +736,48 @@ export function InstallationShowPage({
     };
   }, [visible, onClose, isDesktop]);
 
+  /* Same header shadow-on-scroll as design project pages. */
+  useEffect(() => {
+    if (!visible || isDesktop) return;
+    const scroller = scrollerRef.current;
+    const header = headerRef.current;
+    if (!scroller || !header) return;
+
+    const sync = () => {
+      const next = scroller.scrollTop > 8;
+      if (next === headerScrolledRef.current) return;
+      headerScrolledRef.current = next;
+      header.toggleAttribute("data-scrolled", next);
+    };
+
+    sync();
+    scroller.addEventListener("scroll", sync, { passive: true });
+    return () => scroller.removeEventListener("scroll", sync);
+  }, [visible, isDesktop, show?.id]);
+
+  /* Same Back / Next label fit as design ProjectFooter. */
+  useLayoutEffect(() => {
+    if (isDesktop) return;
+    const three = footerThreeRef.current;
+    const probe = footerProbeRef.current;
+    if (!three || !probe) return;
+
+    const fit = () => {
+      const targetW = three.offsetWidth;
+      probe.style.fontSize = "40px";
+      const at40 = probe.offsetWidth;
+      if (targetW > 0 && at40 > 0) {
+        setFooterLabelPx((targetW / at40) * 40 * 0.76);
+      }
+    };
+
+    fit();
+    void document.fonts.ready.then(fit);
+    const ro = new ResizeObserver(fit);
+    ro.observe(three);
+    return () => ro.disconnect();
+  }, [isDesktop, show?.id]);
+
   const goNeighbor = useCallback(
     (delta: number) => {
       if (!show) return;
@@ -566,6 +786,24 @@ export function InstallationShowPage({
     },
     [onNavigateShow, show],
   );
+
+  const leaveViaMenu = useCallback(
+    (label: string) => {
+      setMenuOpen(false);
+      if (label === "installation") {
+        onClose();
+        return;
+      }
+      onNavigateLanding?.(label);
+    },
+    [onClose, onNavigateLanding],
+  );
+
+  const narrowScale = narrowU || 1;
+  const nzeribeH = NARROW_NZERIBE.h * narrowScale;
+  const menuH = nzeribeH * 0.85;
+  const menuW = menuH * (107 / 74);
+  const navScale = viewportH > 0 ? viewportH / DESKTOP_LAYOUT_H : 0;
 
   if (!show) {
     if (isDesktop) return <div className="h-full w-full" aria-hidden />;
@@ -650,6 +888,8 @@ export function InstallationShowPage({
             className="object-contain object-left-top"
             sizes="660px"
             priority
+            /* Same display WebP as the carousel — no second encode mid-FLIP. */
+            unoptimized
           />
         </div>
         <div
@@ -674,6 +914,7 @@ export function InstallationShowPage({
           className="object-contain object-left-top"
           sizes="(max-width: 900px) 92vw, 720px"
           priority
+          unoptimized
         />
       </div>
       <div
@@ -686,104 +927,346 @@ export function InstallationShowPage({
   );
 
   const page = (
-    <div
-      className="installation-show__page"
-      style={
-        isDesktop
-          ? undefined
-          : ({
-              ["--is-hero-w" as string]: `${scale.landHeroW * scale.s}px`,
-              ["--is-meta-w" as string]: `${scale.landMetaW * scale.s}px`,
-              ["--is-meta-gap" as string]: `${scale.landGap * scale.s}px`,
-              ["--is-meta-size" as string]: `${scale.landMetaSize * scale.s}px`,
-              ["--is-title-size" as string]: `${scale.landTitle * scale.s}px`,
-            } satisfies CSSProperties)
-      }
-    >
+    <div className="installation-show__page">
       {pairHeader}
 
       {caseStudy ? (
         <>
-          <div className="installation-show__body installation-show__fade">
-            {caseStudy.paragraphs.map((p) => (
-              <p key={p.slice(0, 32)}>{p}</p>
+          <div className="installation-show__body">
+            {caseStudy.paragraphs.map((p, i) => (
+              <p
+                key={p.slice(0, 32)}
+                className="installation-show__reveal"
+                data-revealed={revealStep >= i ? "" : undefined}
+              >
+                {p}
+              </p>
             ))}
           </div>
 
-          <div className="installation-show__gallery installation-show__fade">
+          <div
+            className="installation-show__gallery installation-show__reveal"
+            data-columns={galleryColumnsView}
+            data-revealed={revealStep >= galleryStep ? "" : undefined}
+            style={
+              galleryColTracks
+                ? ({
+                    ["--is-gallery-cols" as string]: galleryColTracks,
+                  } as CSSProperties)
+                : undefined
+            }
+          >
             {caseStudy.gallery.map((img, i) => (
               <div
                 key={img.src ?? `${show.id}-g-${i}`}
                 className="installation-show__gallery-item"
+                style={
+                  {
+                    ["--is-item-ar" as string]: `${img.width} / ${img.height}`,
+                  } as CSSProperties
+                }
               >
                 <InstallationMedia
                   image={img}
                   fill
-                  className="object-cover"
-                  sizes={isDesktop ? "220px" : "(max-width: 900px) 92vw, 300px"}
+                  className={
+                    galleryColumnsView === 2 || !isDesktop
+                      ? "object-contain"
+                      : "object-cover"
+                  }
+                  sizes={
+                    galleryColumnsView === 2
+                      ? "420px"
+                      : isDesktop
+                        ? "220px"
+                        : "92vw"
+                  }
+                  active={revealStep >= galleryStep}
                 />
               </div>
             ))}
           </div>
 
-          <div className="installation-show__collage installation-show__fade">
-            <InstallationMedia
-              image={caseStudy.largeCollage}
-              className="installation-show__fill-img"
-              sizes={isDesktop ? "660px" : "(max-width: 900px) 92vw, 920px"}
-            />
-          </div>
+          {caseStudy.galleryCaption ? (
+            <p
+              className="installation-show__media-caption installation-show__reveal"
+              data-revealed={revealStep >= galleryCaptionStep ? "" : undefined}
+            >
+              {caseStudy.galleryCaption}
+            </p>
+          ) : null}
 
-          <div className="installation-show__film installation-show__fade">
-            <InstallationMedia
-              image={caseStudy.filmStill}
-              className="installation-show__fill-img"
-              sizes={isDesktop ? "660px" : "(max-width: 900px) 92vw, 920px"}
-            />
-          </div>
-          <p className="installation-show__film-caption installation-show__fade">
-            {caseStudy.filmCaption}
-          </p>
+          {caseStudy.horizontalStrip?.length ? (
+            <div
+              className="installation-show__strip installation-show__reveal"
+              data-revealed={revealStep >= stripStep ? "" : undefined}
+            >
+              {revealStep >= stripStep ? (
+                <ProjectHorizontalStrip
+                  items={caseStudy.horizontalStrip.map((img) => ({
+                    src: img.src!,
+                    width: img.width,
+                    height: img.height,
+                    alt: img.alt,
+                  }))}
+                  ariaLabel={`${show.titleLines.join(" ")} — gallery scroll`}
+                  variant="website"
+                  mobileCutAutoplay={!isDesktop}
+                />
+              ) : (
+                <div className="installation-show__strip-slot" aria-hidden />
+              )}
+            </div>
+          ) : null}
+
+          {caseStudy.horizontalStripCaption ? (
+            <p
+              className="installation-show__media-caption installation-show__reveal"
+              data-revealed={revealStep >= stripCaptionStep ? "" : undefined}
+            >
+              {caseStudy.horizontalStripCaption}
+            </p>
+          ) : null}
+
+          {caseStudy.largeCollage ? (
+            <div
+              className="installation-show__collage installation-show__reveal"
+              data-revealed={revealStep >= collageStep ? "" : undefined}
+            >
+              <InstallationMedia
+                image={caseStudy.largeCollage}
+                className="installation-show__fill-img"
+                sizes={isDesktop ? "660px" : "(max-width: 900px) 92vw, 920px"}
+                active={revealStep >= collageStep}
+              />
+            </div>
+          ) : null}
+
+          {caseStudy.galleryNote ? (
+            <p
+              className="installation-show__gallery-note installation-show__reveal"
+              data-revealed={revealStep >= noteStep ? "" : undefined}
+            >
+              {caseStudy.galleryNote}
+            </p>
+          ) : null}
+
+          {caseStudy.filmStill ? (
+            <div
+              className="installation-show__film installation-show__reveal"
+              data-revealed={revealStep >= filmStep ? "" : undefined}
+            >
+              {(() => {
+                const youtubeId = caseStudy.filmYoutubeUrl
+                  ? youtubeEmbedId(caseStudy.filmYoutubeUrl)
+                  : null;
+                if (filmPlaying && youtubeId) {
+                  return (
+                    <div
+                      className="installation-show__film-player"
+                      style={{
+                        aspectRatio: `${caseStudy.filmStill.width} / ${caseStudy.filmStill.height}`,
+                      }}
+                    >
+                      <iframe
+                        className="installation-show__film-embed"
+                        src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0`}
+                        title={caseStudy.filmCaption ?? show.alt}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                      />
+                    </div>
+                  );
+                }
+                return (
+                  <div className="installation-show__film-player">
+                    <InstallationMedia
+                      image={caseStudy.filmStill}
+                      className="installation-show__fill-img"
+                      sizes={
+                        isDesktop ? "660px" : "(max-width: 900px) 92vw, 920px"
+                      }
+                      active={revealStep >= filmStep}
+                    />
+                    {youtubeId ? (
+                      <button
+                        type="button"
+                        className="project-video-toggle"
+                        data-overlay="play"
+                        aria-label={`Play ${caseStudy.filmCaption ?? show.alt}`}
+                        onClick={() => setFilmPlaying(true)}
+                      >
+                        <PlayIcon />
+                      </button>
+                    ) : null}
+                  </div>
+                );
+              })()}
+            </div>
+          ) : null}
+          {caseStudy.filmStill && caseStudy.filmCaption ? (
+            <p
+              className="installation-show__film-caption installation-show__reveal"
+              data-revealed={revealStep >= captionStep ? "" : undefined}
+            >
+              {caseStudy.filmCaption}
+            </p>
+          ) : null}
+
+          {caseStudy.walkthrough ? (
+            <div
+              className="installation-show__walkthrough installation-show__reveal"
+              data-revealed={revealStep >= walkthroughStep ? "" : undefined}
+            >
+              {revealStep >= walkthroughStep ? (
+                <ProjectLoopVideo
+                  className="installation-show__walkthrough-video"
+                  src={caseStudy.walkthrough.src}
+                  alt={caseStudy.walkthrough.caption}
+                  width={caseStudy.walkthrough.width}
+                  height={caseStudy.walkthrough.height}
+                  poster={caseStudy.walkthrough.poster}
+                  active
+                  togglePlayback
+                  scrubber
+                />
+              ) : (
+                <div
+                  className="installation-show__walkthrough-slot"
+                  style={{
+                    aspectRatio: `${caseStudy.walkthrough.width} / ${caseStudy.walkthrough.height}`,
+                  }}
+                  aria-hidden
+                />
+              )}
+              <p className="installation-show__walkthrough-caption">
+                {caseStudy.walkthrough.caption}
+              </p>
+            </div>
+          ) : null}
         </>
       ) : null}
 
-      <footer className="installation-show__footer installation-show__fade">
-        <button
-          type="button"
-          className="installation-show__nav"
-          onClick={() => goNeighbor(-1)}
-        >
-          Back
-        </button>
-        <button
-          type="button"
-          className="installation-show__top-btn"
-          aria-label="Scroll to top"
-          onClick={() =>
-            scrollerRef.current?.scrollTo({ top: 0, behavior: "smooth" })
-          }
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="4 8 24 18"
-            width="28"
-            height="21"
-            aria-hidden
-          >
-            <rect x="4" y="8" width="24" height="2" fill="currentColor" />
-            <polygon
-              points="16,14 6,24 7.4,25.4 16,16.8 24.6,25.4 26,24"
-              fill="currentColor"
-            />
-          </svg>
-        </button>
-        <button
-          type="button"
-          className="installation-show__nav installation-show__nav--next"
-          onClick={() => goNeighbor(1)}
-        >
-          Next
-        </button>
+      <footer
+        className={
+          isDesktop
+            ? "installation-show__footer installation-show__reveal"
+            : "project-footer installation-show__footer installation-show__reveal"
+        }
+        data-revealed={revealStep >= footerStep ? "" : undefined}
+      >
+        {!isDesktop ? (
+          <>
+            <span
+              ref={footerThreeRef}
+              className="project-footer__measure"
+              aria-hidden
+            >
+              STU
+            </span>
+            <span
+              ref={footerProbeRef}
+              className="project-footer__label project-footer__measure"
+              aria-hidden
+            >
+              Back
+            </span>
+            <button
+              type="button"
+              className="project-footer__nav"
+              onClick={() => goNeighbor(-1)}
+            >
+              <span
+                className="project-footer__label"
+                style={
+                  footerLabelPx
+                    ? { fontSize: `${footerLabelPx}px` }
+                    : undefined
+                }
+              >
+                Back
+              </span>
+            </button>
+            <button
+              type="button"
+              className="project-footer__top"
+              aria-label="Scroll to top"
+              onClick={() =>
+                scrollerRef.current?.scrollTo({ top: 0, behavior: "smooth" })
+              }
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="4 8 24 18"
+                width="28"
+                height="21"
+                aria-hidden
+                className="project-footer__top-icon"
+              >
+                <rect x="4" y="8" width="24" height="2" fill="currentColor" />
+                <polygon
+                  points="16,14 6,24 7.4,25.4 16,16.8 24.6,25.4 26,24"
+                  fill="currentColor"
+                />
+              </svg>
+            </button>
+            <button
+              type="button"
+              className="project-footer__nav project-footer__nav--next"
+              onClick={() => goNeighbor(1)}
+            >
+              <span
+                className="project-footer__label"
+                style={
+                  footerLabelPx
+                    ? { fontSize: `${footerLabelPx}px` }
+                    : undefined
+                }
+              >
+                Next
+              </span>
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              className="installation-show__nav"
+              onClick={() => goNeighbor(-1)}
+            >
+              Back
+            </button>
+            <button
+              type="button"
+              className="installation-show__top-btn"
+              aria-label="Scroll to top"
+              onClick={() =>
+                scrollerRef.current?.scrollTo({ top: 0, behavior: "smooth" })
+              }
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="4 8 24 18"
+                width="28"
+                height="21"
+                aria-hidden
+              >
+                <rect x="4" y="8" width="24" height="2" fill="currentColor" />
+                <polygon
+                  points="16,14 6,24 7.4,25.4 16,16.8 24.6,25.4 26,24"
+                  fill="currentColor"
+                />
+              </svg>
+            </button>
+            <button
+              type="button"
+              className="installation-show__nav installation-show__nav--next"
+              onClick={() => goNeighbor(1)}
+            >
+              Next
+            </button>
+          </>
+        )}
       </footer>
     </div>
   );
@@ -795,6 +1278,7 @@ export function InstallationShowPage({
     createPortal(
       <div className="installation-handoff" aria-hidden>
         <div
+          ref={flyPairRef}
           className="installation-handoff__pair"
           style={pairFlyStyle(fly.layout, fly.start, fly.end, fly.phase)}
         >
@@ -890,24 +1374,41 @@ export function InstallationShowPage({
 
   return (
     <>
-      {handoffPortal}
       <div
         className="installation-show installation-show--narrow"
         data-visible={visible ? "" : undefined}
-        data-entering={entering ? "" : undefined}
-        data-leaving={leaving ? "" : undefined}
+        data-instant={!animateEnter ? "" : undefined}
+        data-menu-state={menuOpen ? "open" : "hidden"}
         aria-hidden={!visible}
         role="dialog"
         aria-modal="true"
         aria-label={show.titleLines.join(" ")}
+        style={
+          {
+            "--is-nzeribe-h": `${nzeribeH}px`,
+            "--is-menu-w": `${menuW}px`,
+            "--is-menu-h": `${menuH}px`,
+          } as CSSProperties
+        }
       >
         <div className="installation-show__shell">
-          <header className="installation-show__header installation-show__fade">
+          <header ref={headerRef} className="installation-show__header">
+            <SiteWordmark
+              href="/"
+              placement="flow"
+              onClick={(event) => {
+                event.preventDefault();
+                leaveViaMenu("contact");
+              }}
+            />
             <button
               type="button"
               className="installation-show__menu-toggle"
-              aria-label="Back to installation gallery"
-              onClick={onClose}
+              aria-label={
+                menuOpen ? "Close navigation menu" : "Open navigation menu"
+              }
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen((open) => !open)}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -922,10 +1423,49 @@ export function InstallationShowPage({
               </svg>
             </button>
           </header>
-          <div ref={scrollerRef} className="installation-show__scroll">
+          <div
+            ref={scrollerRef}
+            className="installation-show__scroll"
+            inert={menuOpen ? true : undefined}
+            data-project-scroll=""
+          >
             {page}
           </div>
         </div>
+        {menuOpen && navScale > 0 ? (
+          <div
+            className="installation-show__nav-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Site navigation"
+          >
+            <div
+              className="installation-show__nav-stage"
+              style={{
+                width: DESKTOP_LAYOUT_W,
+                height: DESKTOP_LAYOUT_H,
+                transform: `scale(${navScale})`,
+              }}
+            >
+              <CircularNavWheel
+                layout="desktop"
+                containment="stage"
+                spinFeel="narrow"
+                initialActiveLabel="installation"
+                onLabelActivate={(label) => {
+                  if (
+                    label === "installation" ||
+                    label === "design" ||
+                    label === "about" ||
+                    label === "contact"
+                  ) {
+                    leaveViaMenu(label);
+                  }
+                }}
+              />
+            </div>
+          </div>
+        ) : null}
       </div>
     </>
   );

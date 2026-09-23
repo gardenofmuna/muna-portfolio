@@ -422,9 +422,10 @@ export function InstallationGallery({
                   height={show.height}
                   className="installation-gallery__image"
                   sizes={`${CENTER_W}px`}
-                  /* All three slots stay mounted — eager so Safari doesn't
-                     blank a neighbor when the strip repositions under transform. */
+                  /* Same display WebPs as mobile — skip optimizer so desktop
+                     and narrow never diverge by device size. */
                   priority
+                  unoptimized
                   draggable={false}
                 />
               </button>

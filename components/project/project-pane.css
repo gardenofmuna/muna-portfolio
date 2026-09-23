@@ -1919,6 +1919,98 @@
   outline-offset: -10px;
 }
 
+.project-video-scrub {
+  position: absolute;
+  left: 50%;
+  right: auto;
+  bottom: 14px;
+  z-index: 3;
+  box-sizing: border-box;
+  width: 70%;
+  padding: 0;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background: none;
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.project-video-toggle-wrap:hover .project-video-scrub,
+.project-video-toggle-wrap:focus-within .project-video-scrub,
+.project-video-scrub:focus-within {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Touch: keep scrubber available without hover. */
+@media (hover: none) {
+  .project-video-scrub {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+.project-video-scrub__range {
+  display: block;
+  width: 100%;
+  height: 18px;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  appearance: none;
+  background: transparent;
+  touch-action: none;
+}
+
+.project-video-scrub__range:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.project-video-scrub__range::-webkit-slider-runnable-track {
+  height: 5px;
+  border-radius: 0;
+  background: linear-gradient(
+    to right,
+    #fff 0%,
+    #fff var(--scrub-progress, 0%),
+    rgb(255 255 255 / 0.35) var(--scrub-progress, 0%),
+    rgb(255 255 255 / 0.35) 100%
+  );
+}
+
+.project-video-scrub__range::-webkit-slider-thumb {
+  appearance: none;
+  width: 0;
+  height: 0;
+  margin-top: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.project-video-scrub__range::-moz-range-track {
+  height: 5px;
+  border: 0;
+  border-radius: 0;
+  background: rgb(255 255 255 / 0.35);
+}
+
+.project-video-scrub__range::-moz-range-progress {
+  height: 5px;
+  border: 0;
+  border-radius: 0;
+  background: #fff;
+}
+
+.project-video-scrub__range::-moz-range-thumb {
+  width: 0;
+  height: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
 /* Soft clip — white page “eats into” the strip edges.
  * Same envelope as before; denser stops so the blend reads continuous. */
 .project-pane .project-hscroll-wrap {

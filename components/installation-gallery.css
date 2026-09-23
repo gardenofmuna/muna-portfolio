@@ -34,9 +34,12 @@
 }
 
 .installation-gallery[data-exiting] .installation-gallery__meta {
-  opacity: 0;
+  /* Portal already carries this type — a fade leaves a second title
+     stacked under the fly (Chrome paints both). */
+  opacity: 0 !important;
   pointer-events: none;
-  transition: opacity 360ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: none !important;
+  animation: none !important;
 }
 
 /* Reverse handoff: dial returns, neighbors fade back in under the flying hero.

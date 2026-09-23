@@ -1,7 +1,7 @@
 "use client";
 
 import { useReducedMotion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 
 const PAUSE_FLASH_MS = 2200;
 
@@ -16,6 +16,8 @@ type Props = {
   active?: boolean;
   /** Centered play/pause overlay. Video starts paused. */
   togglePlayback?: boolean;
+  /** Bottom progress bar that can be dragged to seek. */
+  scrubber?: boolean;
 };
 
 /** SVG Repo play-fill: solid triangle, colored white via currentColor. */
@@ -59,13 +61,16 @@ export function ProjectLoopVideo({
   poster,
   active = true,
   togglePlayback = false,
+  scrubber = false,
 }: Props) {
   const reduceMotion = useReducedMotion();
   const ref = useRef<HTMLVideoElement>(null);
   const allowPlay = useRef(false);
+  const scrubbing = useRef(false);
   const [inView, setInView] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [pauseFlash, setPauseFlash] = useState(false);
+  const [progress, setProgress] = useState(0);
   const shouldLoad = active && inView;
 
   useEffect(() => {
@@ -153,6 +158,46 @@ export function ProjectLoopVideo({
     return () => window.clearTimeout(id);
   }, [pauseFlash, reduceMotion]);
 
+  useEffect(() => {
+    if (!scrubber) return;
+    const el = ref.current;
+    if (!el) return;
+
+    const sync = () => {
+      if (scrubbing.current) return;
+      const d = el.duration;
+      if (!Number.isFinite(d) || d <= 0) {
+        setProgress(0);
+        return;
+      }
+      setProgress(el.currentTime / d);
+    };
+
+    el.addEventListener("timeupdate", sync);
+    el.addEventListener("loadedmetadata", sync);
+    el.addEventListener("seeked", sync);
+    sync();
+    return () => {
+      el.removeEventListener("timeupdate", sync);
+      el.removeEventListener("loadedmetadata", sync);
+      el.removeEventListener("seeked", sync);
+    };
+  }, [scrubber, shouldLoad, src]);
+
+  const seekTo = (next: number) => {
+    const el = ref.current;
+    if (!el) return;
+    const d = el.duration;
+    if (!Number.isFinite(d) || d <= 0) return;
+    const t = Math.min(1, Math.max(0, next)) * d;
+    try {
+      el.currentTime = t;
+    } catch {
+      /* ignore */
+    }
+    setProgress(Math.min(1, Math.max(0, next)));
+  };
+
   const overlay = pauseFlash ? "pause" : playing ? "hidden" : "play";
 
   const video = (
@@ -165,11 +210,11 @@ export function ProjectLoopVideo({
       muted
       loop
       playsInline
-      preload={togglePlayback ? "auto" : "none"}
+      preload={togglePlayback || scrubber ? "auto" : "none"}
       poster={togglePlayback ? undefined : poster}
       aria-label={alt}
       onPlay={() => {
-        if (!allowPlay.current) return;
+        if (!allowPlay.current && togglePlayback) return;
         setPlaying(true);
         setPauseFlash(false);
       }}
@@ -177,35 +222,77 @@ export function ProjectLoopVideo({
     />
   );
 
-  if (!togglePlayback) {
+  if (!togglePlayback && !scrubber) {
     return video;
   }
 
   return (
-    <div className="project-video-toggle-wrap">
+    <div
+      className="project-video-toggle-wrap"
+      data-scrubber={scrubber ? "" : undefined}
+    >
       {video}
-      <button
-        type="button"
-        className="project-video-toggle"
-        data-overlay={overlay}
-        aria-label={playing ? "Pause video" : "Play video"}
-        onClick={() => {
-          const el = ref.current;
-          if (!el) return;
-          if (el.paused) {
-            allowPlay.current = true;
-            void el.play().catch(() => {
-              allowPlay.current = false;
-            });
-            return;
-          }
-          allowPlay.current = false;
-          el.pause();
-          if (!reduceMotion) setPauseFlash(true);
-        }}
-      >
-        {overlay === "pause" ? <PauseIcon /> : <PlayIcon />}
-      </button>
+      {togglePlayback ? (
+        <button
+          type="button"
+          className="project-video-toggle"
+          data-overlay={overlay}
+          aria-label={playing ? "Pause video" : "Play video"}
+          onClick={() => {
+            const el = ref.current;
+            if (!el) return;
+            if (el.paused) {
+              allowPlay.current = true;
+              void el.play().catch(() => {
+                allowPlay.current = false;
+              });
+              return;
+            }
+            allowPlay.current = false;
+            el.pause();
+            if (!reduceMotion) setPauseFlash(true);
+          }}
+        >
+          {overlay === "pause" ? <PauseIcon /> : <PlayIcon />}
+        </button>
+      ) : null}
+      {scrubber ? (
+        <div
+          className="project-video-scrub"
+          onClick={(event) => event.stopPropagation()}
+          onPointerDown={(event) => event.stopPropagation()}
+        >
+          <input
+            type="range"
+            className="project-video-scrub__range"
+            min={0}
+            max={1}
+            step="any"
+            value={progress}
+            aria-label="Seek video"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(progress * 100)}
+            style={
+              {
+                ["--scrub-progress" as string]: `${progress * 100}%`,
+              } as CSSProperties
+            }
+            onPointerDown={() => {
+              scrubbing.current = true;
+            }}
+            onPointerUp={() => {
+              scrubbing.current = false;
+            }}
+            onPointerCancel={() => {
+              scrubbing.current = false;
+            }}
+            onChange={(event) => {
+              seekTo(Number(event.currentTarget.value));
+            }}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

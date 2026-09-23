@@ -14,6 +14,11 @@ type Props = {
   items: CoverFlowItem[];
   ariaLabel: string;
   variant: HorizontalStripVariant;
+  /**
+   * Phone / tablet: auto-advance one full-bleed frame at a time (cut),
+   * instead of a horizontal scroll strip.
+   */
+  mobileCutAutoplay?: boolean;
 };
 
 /** Desktop strip heights in project-pane.css */
@@ -87,7 +92,12 @@ function stepWidth(scroller: HTMLElement) {
 }
 
 /** Side-by-side gallery; desktop pane gets band carousels / autoplay. */
-export function ProjectHorizontalStrip({ items, ariaLabel, variant }: Props) {
+export function ProjectHorizontalStrip({
+  items,
+  ariaLabel,
+  variant,
+  mobileCutAutoplay = false,
+}: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const reduceMotion = useReducedMotion();
@@ -98,12 +108,109 @@ export function ProjectHorizontalStrip({ items, ariaLabel, variant }: Props) {
   const [desktopBand, setDesktopBand] = useState(false);
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(true);
+  const [slideIndex, setSlideIndex] = useState(0);
+  const cutSlideshow =
+    mobileCutAutoplay && !desktopBand && items.length > 1;
 
   useLayoutEffect(() => {
     const wrap = wrapRef.current;
     if (!wrap) return;
     setDesktopBand(bandVariant && !!wrap.closest(".project-pane"));
   }, [bandVariant, items]);
+
+  /* Mobile stills: native x-snap (finger swipe) + timed cut autoplay. */
+  useEffect(() => {
+    if (!cutSlideshow) return;
+    const wrap = wrapRef.current;
+    const scroller = scrollerRef.current;
+    if (!wrap || !scroller) return;
+
+    let visible = false;
+    let timer = 0;
+    let settling = false;
+    const n = items.length;
+
+    const syncIndexFromScroll = () => {
+      const w = scroller.clientWidth;
+      if (w <= 0) return;
+      const i = Math.round(scroller.scrollLeft / w);
+      setSlideIndex(Math.max(0, Math.min(n - 1, i)));
+    };
+
+    const goTo = (index: number, behavior: ScrollBehavior) => {
+      const w = scroller.clientWidth;
+      settling = true;
+      scroller.scrollTo({ left: index * w, behavior });
+      setSlideIndex(index);
+      window.setTimeout(() => {
+        settling = false;
+      }, behavior === "smooth" ? 420 : 32);
+    };
+
+    const arm = () => {
+      window.clearInterval(timer);
+      if (reduceMotion) return;
+      timer = window.setInterval(() => {
+        if (!visible || settling) return;
+        const w = scroller.clientWidth;
+        if (w <= 0) return;
+        const cur = Math.round(scroller.scrollLeft / w);
+        const next = (cur + 1) % n;
+        goTo(next, "auto");
+      }, AUTOPLAY_MS);
+    };
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        visible = Boolean(
+          entry?.isIntersecting && entry.intersectionRatio >= 0.2,
+        );
+      },
+      { threshold: [0, 0.2, 0.5] },
+    );
+    io.observe(wrap);
+
+    let touching = false;
+
+    const onScroll = () => {
+      if (settling) return;
+      syncIndexFromScroll();
+      if (!touching) arm();
+    };
+
+    const onTouchStart = () => {
+      touching = true;
+      window.clearInterval(timer);
+    };
+    const onTouchEnd = () => {
+      touching = false;
+      syncIndexFromScroll();
+      arm();
+    };
+
+    scroller.addEventListener("scroll", onScroll, { passive: true });
+    scroller.addEventListener("touchstart", onTouchStart, { passive: true });
+    scroller.addEventListener("touchend", onTouchEnd, { passive: true });
+    scroller.addEventListener("touchcancel", onTouchEnd, { passive: true });
+    window.addEventListener("resize", syncIndexFromScroll);
+    arm();
+
+    return () => {
+      window.clearInterval(timer);
+      io.disconnect();
+      scroller.removeEventListener("scroll", onScroll);
+      scroller.removeEventListener("touchstart", onTouchStart);
+      scroller.removeEventListener("touchend", onTouchEnd);
+      scroller.removeEventListener("touchcancel", onTouchEnd);
+      window.removeEventListener("resize", syncIndexFromScroll);
+    };
+  }, [cutSlideshow, items.length, reduceMotion]);
+
+  useEffect(() => {
+    setSlideIndex(0);
+    const scroller = scrollerRef.current;
+    if (scroller) scroller.scrollLeft = 0;
+  }, [items]);
 
   const syncEdges = useCallback(() => {
     const scroller = scrollerRef.current;
@@ -123,6 +230,7 @@ export function ProjectHorizontalStrip({ items, ariaLabel, variant }: Props) {
   }, [desktopBand]);
 
   useLayoutEffect(() => {
+    if (cutSlideshow) return;
     const scroller = scrollerRef.current;
     const wrap = wrapRef.current;
     if (!scroller || !wrap) return;
@@ -150,7 +258,7 @@ export function ProjectHorizontalStrip({ items, ariaLabel, variant }: Props) {
       ro.disconnect();
       imgs.forEach((img) => img.removeEventListener("load", syncEdges));
     };
-  }, [items, variant, desktopBand, syncEdges]);
+  }, [items, variant, desktopBand, syncEdges, cutSlideshow]);
 
   const scrollByDir = useCallback((dir: -1 | 1) => {
     const scroller = scrollerRef.current;
@@ -221,6 +329,50 @@ export function ProjectHorizontalStrip({ items, ariaLabel, variant }: Props) {
       io.disconnect();
     };
   }, [desktopBand, items.length, reduceMotion]);
+
+  if (cutSlideshow) {
+    const frame = displaySize(items[0]!);
+    return (
+      <div
+        ref={wrapRef}
+        className="project-stills-cut"
+        role="region"
+        aria-label={ariaLabel}
+        aria-roledescription="carousel"
+      >
+        <div
+          ref={scrollerRef}
+          className="project-stills-cut__scroller"
+          style={{ aspectRatio: `${frame.width} / ${frame.height}` }}
+        >
+          {items.map((item, i) => {
+            const s = displaySize(item);
+            return (
+              <div
+                key={item.src}
+                className="project-stills-cut__slide"
+                aria-hidden={i === slideIndex ? undefined : true}
+              >
+                <Image
+                  src={item.src}
+                  alt={item.alt}
+                  width={s.width}
+                  height={s.height}
+                  className="project-stills-cut__image"
+                  sizes="92vw"
+                  draggable={false}
+                  priority={i === 0}
+                  decoding="async"
+                  quality={85}
+                  unoptimized={needsUnoptimized(item.src)}
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

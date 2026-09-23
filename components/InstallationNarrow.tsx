@@ -12,7 +12,10 @@ import {
 import { CircularNavWheel } from "@/components/CircularNavWheel";
 import { useNarrowArtboardMetrics } from "@/components/NarrowArtboard";
 import { SiteWordmark } from "@/components/SiteWordmark";
-import { INSTALLATION_SHOWS } from "@/data/installation";
+import {
+  INSTALLATION_SHOWS,
+  type InstallationShow,
+} from "@/data/installation";
 import { DESKTOP_LAYOUT_H, DESKTOP_LAYOUT_W } from "@/lib/desktop-stage";
 import { NARROW_NZERIBE } from "@/lib/narrow-stage";
 import {
@@ -26,7 +29,7 @@ type Props = {
   visible: boolean;
   onNavigate: (label: string) => void;
   onOpenDesign: () => void;
-  onOpenShow?: (show: (typeof INSTALLATION_SHOWS)[number]) => void;
+  onOpenShow?: (show: InstallationShow) => void;
 };
 
 /** Hamburger SVG viewBox — match project-narrow chrome. */
@@ -35,7 +38,7 @@ const MENU_HEIGHT_SCALE = 0.85;
 
 /**
  * Mobile / tablet installation landing — vertical scroll of every show
- * (image + right-aligned caption), padded to the wordmark / menu gutter.
+ * (image + right-aligned caption). Tap title to open the case study.
  */
 export function InstallationNarrow({
   visible,
@@ -180,12 +183,9 @@ export function InstallationNarrow({
         <div className="installation-narrow__page">
           {INSTALLATION_SHOWS.map((show) => (
             <article key={show.id} className="installation-narrow__show">
-              <button
-                type="button"
+              <div
                 id={`installation-narrow-${show.id}`}
-                className="installation-narrow__open"
-                onClick={() => onOpenShow?.(show)}
-                aria-label={`Open ${show.titleLines.join(" ")}`}
+                className="installation-narrow__entry"
               >
                 <div className="installation-narrow__frame">
                   <Image
@@ -195,14 +195,19 @@ export function InstallationNarrow({
                     height={show.height}
                     className="installation-narrow__image"
                     sizes="(max-width: 700px) calc(100vw - 40px), calc(100vw - 104px)"
+                    /* Same files as the desktop carousel (`INSTALLATION_SHOWS`). */
+                    unoptimized
                   />
                 </div>
                 <div className="installation-narrow__meta">
                   <p className="installation-narrow__year">{show.year}</p>
                   <p className="installation-narrow__kind">{show.kind}</p>
-                  <p
+                  <button
+                    type="button"
                     className="installation-narrow__title"
                     style={{ color: show.titleColor }}
+                    onClick={() => onOpenShow?.(show)}
+                    aria-label={`Open ${show.titleLines.join(" ")}`}
                   >
                     {show.titleLines.map((line) => (
                       <span
@@ -212,7 +217,7 @@ export function InstallationNarrow({
                         {line}
                       </span>
                     ))}
-                  </p>
+                  </button>
                   <p className="installation-narrow__venue">
                     {show.venueLines.map((line) => (
                       <span
@@ -224,7 +229,7 @@ export function InstallationNarrow({
                     ))}
                   </p>
                 </div>
-              </button>
+              </div>
             </article>
           ))}
         </div>

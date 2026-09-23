@@ -13,9 +13,29 @@ export type InstallationGalleryImage = {
 export type InstallationCaseStudy = {
   paragraphs: readonly string[];
   gallery: readonly InstallationGalleryImage[];
-  largeCollage: InstallationGalleryImage;
-  filmStill: InstallationGalleryImage;
-  filmCaption: string;
+  /** Number of columns for the top gallery. Defaults to 3. */
+  galleryColumns?: 2 | 3;
+  /** Short label directly under the gallery (e.g. venue / year). */
+  galleryCaption?: string;
+  /** Optional note under the gallery (e.g. earlier-iteration credit). */
+  galleryNote?: string;
+  /** Design-page style horizontal scroll after the gallery. */
+  horizontalStrip?: readonly InstallationGalleryImage[];
+  /** Short label under the horizontal strip. */
+  horizontalStripCaption?: string;
+  largeCollage?: InstallationGalleryImage;
+  filmStill?: InstallationGalleryImage;
+  filmCaption?: string;
+  /** When set, the film still shows a play control that opens this YouTube URL. */
+  filmYoutubeUrl?: string;
+  /** Inline walkthrough / documentation clip under the strip. */
+  walkthrough?: {
+    src: string;
+    width: number;
+    height: number;
+    caption: string;
+    poster?: string;
+  };
 };
 
 export type InstallationShow = {
@@ -33,57 +53,10 @@ export type InstallationShow = {
   caseStudy: InstallationCaseStudy;
 };
 
-/** Same section stack as Akuabata — copy/shapes until real assets land. */
-function placeholderCaseStudy(
-  title: string,
-  opts?: { filmCaption?: string },
-): InstallationCaseStudy {
-  return {
-    paragraphs: [
-      `Placeholder body for ${title}. This paragraph mirrors the Akuabata detail layout — replace with the exhibition context, venue framing, and how the work sits in the show.`,
-      `Second placeholder paragraph for ${title}. Swap this for the personal / archival through-line, materials, and what the work is asking. Keep two blocks so spacing matches the finished pages.`,
-    ],
-    gallery: [
-      {
-        placeholder: true,
-        width: 900,
-        height: 1200,
-        alt: `${title} — gallery placeholder 1`,
-      },
-      {
-        placeholder: true,
-        width: 900,
-        height: 1200,
-        alt: `${title} — gallery placeholder 2`,
-      },
-      {
-        placeholder: true,
-        width: 900,
-        height: 1200,
-        alt: `${title} — gallery placeholder 3`,
-      },
-    ],
-    largeCollage: {
-      placeholder: true,
-      width: 1600,
-      height: 1160,
-      alt: `${title} — large collage placeholder`,
-    },
-    filmStill: {
-      placeholder: true,
-      width: 1920,
-      height: 1080,
-      alt: `${title} — film still placeholder`,
-    },
-    filmCaption: opts?.filmCaption ?? `${title} — film caption placeholder`,
-  };
-}
-
 /**
  * Installation shows — newest first.
- * Desktop: carousel slots. Narrow: vertical scroll feed.
- * Title colors cycle the design-list underline inks.
- * Titles are always exactly two lines.
+ * Desktop carousel and mobile feed both render `src` from this list so the
+ * image choices stay identical across layouts.
  */
 export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
   {
@@ -93,13 +66,108 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
     titleLines: ["Mama,", "in Your Absence"],
     venueLines: ["DOC NOW 2025 at", "Artspace TMU"],
     src: "/MAMAINYOURABSENCE.webp",
-    width: 1280,
-    height: 722,
+    width: 1440,
+    height: 813,
     alt: "Mama, in Your Absence installation view",
     titleColor: ABOUT_BIO_INK.interdisciplinary,
-    caseStudy: placeholderCaseStudy("Mama, in Your Absence", {
-      filmCaption: "Mama, in Your Absence — film caption placeholder",
-    }),
+    caseStudy: {
+      paragraphs: [
+        "My interactive web documentary Mama, In Your Absence was presented as part of the 17th annual DOC NOW Festival, showcasing student-made film, photography, and installation work from Toronto Metropolitan University's Documentary Media MFA graduates.",
+        "The project traces the literary legacy of my grandmother, Flora Nwapa, the first African woman to publish a novel in English, through archival materials, narrative letters, and mixed-media diaristic footage. It sets her legacy against the creative careers that followed it, mine, my mother's, and my sister's, turning intergenerational dialogue into a reflection on how Igbo women's stories are preserved, erased, or reimagined. Woven from personal and collective narrative, the piece challenges static archival portrayals of African women's legacies and asks how digital media can bridge past and present to keep that dialogue on legacy and identity evolving.",
+      ],
+      galleryColumns: 2,
+      galleryCaption: "Artspace TMU, DOC NOW 2025",
+      gallery: [
+        {
+          src: "/installation/mama/miya-1.webp",
+          width: 1920,
+          height: 1440,
+          alt: "Mama, in Your Absence — installation view with interactive screens",
+        },
+        {
+          src: "/installation/mama/miya-2.webp",
+          width: 1600,
+          height: 1956,
+          alt: "Mama, in Your Absence — Polaroid of the DOC NOW installation",
+        },
+      ],
+      horizontalStrip: [
+        {
+          src: "/installation/mama/miya-3.webp",
+          width: 1600,
+          height: 903,
+          alt: "Mama, in Your Absence — interface frame 1",
+        },
+        {
+          src: "/installation/mama/miya-4.webp",
+          width: 1600,
+          height: 903,
+          alt: "Mama, in Your Absence — interface frame 2",
+        },
+        {
+          src: "/installation/mama/miya-5.webp",
+          width: 1600,
+          height: 903,
+          alt: "Mama, in Your Absence — interface frame 3",
+        },
+        {
+          src: "/installation/mama/miya-6.webp",
+          width: 1600,
+          height: 902,
+          alt: "Mama, in Your Absence — interface frame 4",
+        },
+        {
+          src: "/installation/mama/miya-7.webp",
+          width: 1600,
+          height: 904,
+          alt: "Mama, in Your Absence — interface frame 5",
+        },
+        {
+          src: "/installation/mama/miya-8.webp",
+          width: 1600,
+          height: 901,
+          alt: "Mama, in Your Absence — interface frame 6",
+        },
+        {
+          src: "/installation/mama/miya-9.webp",
+          width: 1600,
+          height: 901,
+          alt: "Mama, in Your Absence — interface frame 7",
+        },
+        {
+          src: "/installation/mama/miya-10.webp",
+          width: 1600,
+          height: 902,
+          alt: "Mama, in Your Absence — interface frame 8",
+        },
+        {
+          src: "/installation/mama/miya-11.webp",
+          width: 1600,
+          height: 901,
+          alt: "Mama, in Your Absence — interface frame 9",
+        },
+        {
+          src: "/installation/mama/miya-12.webp",
+          width: 1600,
+          height: 900,
+          alt: "Mama, in Your Absence — interface frame 10",
+        },
+        {
+          src: "/installation/mama/miya-13.webp",
+          width: 1600,
+          height: 906,
+          alt: "Mama, in Your Absence — interface frame 11",
+        },
+      ],
+      horizontalStripCaption: "Web stills",
+      walkthrough: {
+        src: "/installation/mama/miya-walkthrough.mp4",
+        width: 1280,
+        height: 720,
+        caption: "Web walkthrough",
+        poster: "/installation/mama/miya-3.webp",
+      },
+    },
   },
   {
     id: "oguta-2025",
@@ -111,13 +179,52 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
       "Artspace TMU",
     ],
     src: "/OGUTA-LAGOS-TORONTO-2025.webp",
-    width: 1280,
-    height: 722,
+    width: 1440,
+    height: 813,
     alt: "OGUTA - LAGOS - TORONTO at Artspace TMU",
     titleColor: ABOUT_BIO_INK.blue,
-    caseStudy: placeholderCaseStudy("OGUTA - LAGOS - TORONTO", {
-      filmCaption: "OGUTA - LAGOS - TORONTO — film caption placeholder",
-    }),
+    caseStudy: {
+      paragraphs: [
+        "My installation Oguta-Lagos-Toronto was exhibited in Woven Together: Fabrics of Belonging, a group show alongside Mina Keykhaei and Azadeh Monzavi examining textiles' relationship to the spaces we inhabit, both public and personal, through a lens of feminism and social justice.",
+        "The piece centers on my parents' wedding, a home video split between two ceremonies, the traditional Igbo wedding and the Catholic white wedding, projected through three oval frames set into a length of wax print fabric reminiscent of the textiles used by Catholic organizations in Nigeria. The Oguta and Lagos ovals hold the archival footage of the traditional wedding and white wedding respectively, while the Toronto oval carries a live camera feed of the room, imposing the spectator into the video as it oscillates between the traditional and white wedding footage playing behind them. That double ceremony, one rooted in indigenous custom and one inherited through colonization, is an allegory for globalization's pull on people existing within neo-colonial dynamics. Cultural hybridity becomes something the viewer is implicated in rather than simply observing.",
+      ],
+      gallery: [
+        {
+          src: "/installation/oguta/gallery-1.webp",
+          width: 1200,
+          height: 1600,
+          alt: "Visitors seated at Oguta-Lagos-Toronto with live camera feed in the Toronto frame",
+        },
+        {
+          src: "/installation/oguta/gallery-3.webp",
+          width: 1200,
+          height: 1600,
+          alt: "Oguta-Lagos-Toronto installation view at Artspace TMU",
+        },
+        {
+          src: "/installation/oguta/gallery-2.webp",
+          width: 1200,
+          height: 1600,
+          alt: "Table setting and VHS camera in front of the three oval frames",
+        },
+      ],
+      galleryNote:
+        "An earlier iteration of Oguta-Lagos-Toronto was first shown as a prototype in Activating the Space (2024) a group exhibition at Toronto Metropolitan University's Image Factory.",
+      largeCollage: {
+        src: "/installation/oguta/collage-large.webp",
+        width: 1920,
+        height: 1280,
+        alt: "Oguta-Lagos-Toronto prototype at Activating the Space, Image Factory, 2024",
+      },
+      filmStill: {
+        src: "/installation/oguta/frames-detail.webp",
+        width: 1500,
+        height: 762,
+        alt: "Close view of the Oguta, Toronto, and Lagos oval frames on wax print fabric",
+      },
+      filmCaption: "Oguta-Lagos-Toronto — oval frames with projected home video",
+      filmYoutubeUrl: "https://youtu.be/LGSzYliUQ2I",
+    },
   },
   {
     id: "akuabata-2024",
@@ -126,8 +233,8 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
     titleLines: ["Akuabata.", "Nkiruka."],
     venueLines: ["+234 Art Fair at", "Ecobank Pan-African Centre"],
     src: "/Akuabata-Nkiruka.webp",
-    width: 1280,
-    height: 720,
+    width: 1440,
+    height: 810,
     alt: "Akuabata. Nkiruka. at +234 Art Fair",
     titleColor: ABOUT_BIO_INK.medium,
     caseStudy: {
@@ -137,37 +244,38 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
       ],
       gallery: [
         {
-          src: "/installation/akuabata/gallery-corner.jpg",
+          src: "/installation/akuabata/gallery-corner.webp",
           width: 1126,
           height: 1500,
           alt: "Ilé Lawà installation — OLED screening beside framed collages",
         },
         {
-          src: "/installation/akuabata/gallery-person.jpg",
+          src: "/installation/akuabata/gallery-person.webp",
           width: 511,
           height: 683,
           alt: "Framed Akuabata. Nkiruka. collages on the gallery wall",
         },
         {
-          src: "/installation/akuabata/gallery-frames.jpg",
-          width: 1269,
-          height: 1693,
+          src: "/installation/akuabata/gallery-frames.webp",
+          width: 1199,
+          height: 1600,
           alt: "Visitors viewing Onyemaechi at Ilé Lawà",
         },
       ],
       largeCollage: {
         src: "/installation/akuabata/collage-large.webp",
-        width: 6970,
-        height: 5063,
+        width: 1920,
+        height: 1395,
         alt: "Akuabata. Nkiruka. collage with family archive and letter",
       },
       filmStill: {
-        src: "/installation/akuabata/onyemaechi-still.jpg",
+        src: "/installation/akuabata/onyemaechi-still.webp",
         width: 1920,
         height: 1080,
         alt: "Onyemaechi film still with subtitle",
       },
       filmCaption: "Onyemaechi - Who Knows Tomorrow? (2020)",
+      filmYoutubeUrl: "https://youtu.be/_nrYfiS2UCY",
     },
   },
 ] as const;

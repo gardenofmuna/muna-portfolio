@@ -34,11 +34,12 @@
   padding: var(--in-chrome-pad) var(--in-gutter);
   pointer-events: none;
   background: #fff;
-  transition: box-shadow 180ms ease;
+  box-shadow: none;
+  transition: box-shadow 200ms ease;
 }
 
 .installation-narrow__header[data-scrolled] {
-  box-shadow: 0 1px 0 rgb(0 0 0 / 6%);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
 }
 
 .installation-narrow[data-menu-state="open"] .installation-narrow__header {
@@ -98,16 +99,11 @@
   margin: 0;
 }
 
-.installation-narrow__open {
+.installation-narrow__entry {
   display: block;
   width: 100%;
   margin: 0;
   padding: 0;
-  border: 0;
-  background: transparent;
-  text-align: inherit;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
   color: inherit;
 }
 
@@ -158,13 +154,26 @@
 }
 
 .installation-narrow__title {
+  display: block;
+  width: 100%;
   margin: 0.4em 0 0.45em;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: inherit;
   font-family: Arial, Helvetica, sans-serif;
   font-size: clamp(22px, 6vw, 36px);
   font-weight: 400;
   line-height: 1.05;
   letter-spacing: -0.04em;
   text-transform: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.installation-narrow__title:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
 }
 
 .installation-narrow__title-line {

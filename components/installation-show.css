@@ -51,7 +51,8 @@
   animation: none !important;
 }
 
-.installation-show--desktop[data-leaving] .installation-show__fade {
+.installation-show--desktop[data-leaving] .installation-show__fade,
+.installation-show--desktop[data-leaving] .installation-show__reveal[data-revealed] {
   animation: is-fade-out 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -205,7 +206,108 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
-  margin: 48px 0;
+  margin: 48px 0 0;
+}
+
+.installation-show__gallery[data-columns="2"] {
+  /* Smart-object pair: column fr tracks = each image's w/h so the group
+     fills the quadrant width at one shared height. */
+  grid-template-columns: var(--is-gallery-cols, 1fr 1fr);
+  gap: 6px;
+  align-items: start;
+  width: 100%;
+}
+
+.installation-show__gallery[data-columns="2"] .installation-show__gallery-item {
+  aspect-ratio: var(--is-item-ar, 4 / 3);
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  background: transparent;
+  line-height: 0;
+}
+
+.installation-show__gallery[data-columns="2"] .installation-show__gallery-item img {
+  object-fit: contain;
+  object-position: top center;
+  background: transparent;
+}
+
+.installation-show__strip {
+  width: 100%;
+  margin: 36px 0 0;
+}
+
+.installation-show__strip-slot {
+  width: 100%;
+  min-height: 220px;
+}
+
+.installation-show__media-caption {
+  margin: 8px 0 0;
+  width: 100%;
+  font-family: "LTC Garamont Display OT", "Times New Roman", serif;
+  font-size: 22.38px;
+  line-height: 1.35;
+  letter-spacing: -0.04em;
+  color: #000;
+}
+
+/* Same tight gap as film still → caption. */
+.installation-show__gallery + .installation-show__media-caption {
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
+.installation-show__strip + .installation-show__media-caption {
+  margin-top: 8px;
+  margin-bottom: 36px;
+}
+
+.installation-show__media-caption + .installation-show__strip {
+  margin-top: 36px;
+}
+
+/* 3-up galleries with no caption still need bottom air. */
+.installation-show__gallery:not(:has(+ .installation-show__media-caption)) {
+  margin-bottom: 48px;
+}
+
+/* Reuse design-page horizontal strip chrome inside the installation rail. */
+.installation-show__strip .project-hscroll-wrap {
+  width: 100%;
+  margin: 0;
+}
+
+.installation-show__walkthrough {
+  width: 100%;
+  margin: 0 0 40px;
+}
+
+.installation-show__walkthrough .project-video-toggle-wrap {
+  width: 100%;
+  max-width: 100%;
+}
+
+.installation-show__walkthrough-slot {
+  width: 100%;
+  background: transparent;
+}
+
+.installation-show__walkthrough-video {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.installation-show__walkthrough-caption {
+  margin: 8px 0 0;
+  width: 100%;
+  font-family: "LTC Garamont Display OT", "Times New Roman", serif;
+  font-size: 22.38px;
+  line-height: 1.35;
+  letter-spacing: -0.04em;
+  color: #000;
 }
 
 .installation-show__gallery-item {
@@ -213,11 +315,38 @@
   width: 100%;
   aspect-ratio: 3 / 4;
   overflow: hidden;
-  background: #f0f0f0;
+  background: transparent;
 }
 
 .installation-show__gallery-item img {
   object-fit: cover;
+}
+
+/* Everything under the hero stays hidden, then fades in reading order. */
+.installation-show__reveal {
+  opacity: 0;
+}
+
+.installation-show__reveal[data-revealed] {
+  animation: is-media-reveal 520ms cubic-bezier(0.45, 0.05, 0.55, 0.95) both;
+}
+
+.installation-show__film:not([data-revealed]) .project-video-toggle {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.installation-show__gallery-note {
+  margin: 12px 0 36px;
+  width: 100%;
+  max-width: 42em;
+  margin-left: auto;
+  text-align: right;
+  font-family: "LTC Garamont Display OT", "Times New Roman", serif;
+  font-size: 22.38px;
+  line-height: 1.35;
+  letter-spacing: -0.04em;
+  color: #000;
 }
 
 .installation-show__placeholder {
@@ -229,12 +358,23 @@
   border: 1px solid #d0d0d0;
 }
 
-.installation-show__gallery-item .installation-show__placeholder {
+.installation-show__gallery-item .installation-show__placeholder,
+.installation-show__gallery-item .installation-show__media-slot {
   position: absolute;
   inset: 0;
 }
 
-.installation-show__fill-img.installation-show__placeholder {
+.installation-show__media-slot {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: 0;
+}
+
+.installation-show__fill-img.installation-show__placeholder,
+.installation-show__fill-img.installation-show__media-slot {
   height: auto;
   min-height: 0;
 }
@@ -242,7 +382,12 @@
 .installation-show__collage {
   position: relative;
   width: 100%;
-  margin: 0 0 36px;
+  margin: 0;
+}
+
+/* When there is no note under the wide image, keep the old gap to the film. */
+.installation-show__collage + .installation-show__film {
+  margin-top: 36px;
 }
 
 .installation-show__film {
@@ -250,6 +395,29 @@
   width: 100%;
   /* Tight gap to the caption under the still. */
   margin: 0 0 8px;
+}
+
+.installation-show__film-player {
+  position: relative;
+  display: block;
+  width: 100%;
+  line-height: 0;
+  isolation: isolate;
+  background: #111;
+}
+
+.installation-show__film-embed {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.installation-show--narrow .installation-show__film-player .project-video-toggle svg {
+  width: 32px;
+  height: 32px;
 }
 
 .installation-show__fill-img {
@@ -270,6 +438,7 @@
 }
 
 .installation-show__footer {
+  position: relative;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
@@ -355,6 +524,15 @@
   }
 }
 
+@keyframes is-media-reveal {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 @keyframes is-menu-slide {
   from {
     transform: translate3d(0, 0, 0);
@@ -369,14 +547,17 @@
 /* ── Narrow overlay ── */
 
 .installation-show--narrow {
-  --is-gutter: clamp(20px, 4vw, 52px);
-  --is-chrome: 24px;
-  --is-meta-w: min(42vw, 220px);
-  --is-meta-gap: 16px;
-  --is-meta-size: clamp(16px, 4.2vw, 22px);
-  --is-title-size: clamp(22px, 6vw, 32px);
-  --is-body-size: clamp(18px, 5.2vw, 28px);
-  --is-body-leading: 1.28;
+  --is-gutter: var(--narrow-gutter, 20px);
+  --is-chrome: var(--narrow-chrome-pad, 24px);
+  /* Same content-column unit as design project pages (704 artboard px). */
+  --is-u: calc((100vw - 2 * var(--is-gutter)) / 704);
+  /* Akuabata gallery rhythm — even gaps between stacked media. */
+  --is-media-gap: 14px;
+  /* Match installation feed caption type (InstallationNarrow). */
+  --is-meta-size: clamp(15px, 3.6vw, 20px);
+  --is-title-size: clamp(22px, 6vw, 36px);
+  --is-body-size: clamp(20px, 5.4vw, 28px);
+  --is-body-leading: 1.3;
   --is-body-track: -0.02em;
   position: fixed;
   inset: 0;
@@ -394,48 +575,10 @@
   pointer-events: auto;
 }
 
-.installation-show--narrow[data-entering]::before {
-  content: "";
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: min(28vw, 320px);
-  z-index: 6;
-  pointer-events: none;
-  background: linear-gradient(
-    to right,
-    #fff 0%,
-    #fff 55%,
-    rgb(255 255 255 / 0)
-  );
-  animation: is-menu-slide 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.installation-show--narrow[data-entering] .installation-show__hero-media[data-css-rise] {
-  animation: is-hero-rise 680ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.installation-show--narrow[data-entering] .installation-show__fade {
-  animation: is-fade-in 480ms 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.installation-show--narrow[data-entering] .installation-show__hero-media,
-.installation-show--narrow[data-entering] .installation-show__meta {
-  opacity: 0 !important;
-  animation: none !important;
-}
-
-.installation-show--narrow[data-leaving] .installation-show__fade {
-  animation: is-fade-out 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.installation-show--narrow[data-leaving] {
-  pointer-events: none;
-  background: transparent;
-}
-
-.installation-show--narrow[data-leaving] .installation-show__hero-media,
-.installation-show--narrow[data-leaving] .installation-show__meta {
-  opacity: 0 !important;
+/* Instant open — no enter/leave motion, no staggered fades. */
+.installation-show--narrow[data-instant] .installation-show__reveal,
+.installation-show--narrow[data-instant] .installation-show__reveal[data-revealed] {
+  opacity: 1;
   animation: none !important;
 }
 
@@ -474,6 +617,8 @@
   display: block;
   width: 100%;
   height: 100%;
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
   object-position: left top;
 }
@@ -509,21 +654,42 @@
   z-index: 5;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   box-sizing: border-box;
   padding: var(--is-chrome) var(--is-gutter);
   pointer-events: none;
+  background: #fff;
+  box-shadow: none;
+  transition: box-shadow 200ms ease;
+}
+
+.installation-show--narrow .installation-show__header[data-scrolled] {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.installation-show--narrow[data-menu-state="open"] .installation-show__header {
+  background: transparent;
+  box-shadow: none;
+}
+
+.installation-show--narrow .installation-show__header .project-narrow__wordmark,
+.installation-show--narrow .installation-show__menu-toggle {
+  pointer-events: auto;
+}
+
+.installation-show--narrow[data-menu-state="open"] .project-narrow__wordmark {
+  visibility: hidden;
 }
 
 .installation-show--narrow .installation-show__menu-toggle {
-  pointer-events: auto;
   display: block;
   margin: 0;
   padding: 0;
   border: 0;
   background: transparent;
   cursor: pointer;
-  width: 36px;
-  height: 25px;
+  width: var(--is-menu-w);
+  height: var(--is-menu-h, var(--is-nzeribe-h));
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -536,31 +702,38 @@
 .installation-show--narrow .installation-show__scroll {
   flex: 1;
   min-height: 0;
-  overflow-x: hidden;
+  overflow-x: clip;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
-  touch-action: pan-y;
+  /* Allow nested stills strip to take horizontal pans. */
+  touch-action: pan-x pan-y;
+  background: #fff;
 }
 
 .installation-show--narrow .installation-show__page {
   box-sizing: border-box;
   width: 100%;
   margin: 0;
-  padding: calc(var(--is-chrome) + 48px) var(--is-gutter)
-    calc(var(--is-chrome) + 64px);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) var(--is-meta-w);
-  column-gap: var(--is-meta-gap);
-  align-items: start;
+  /* Bottom pad matches design pages (24 × unit). */
+  padding: calc(var(--is-chrome) + var(--is-nzeribe-h, 40px) + 28px)
+    var(--is-gutter) calc(24 * var(--is-u));
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
 }
 
 .installation-show--narrow .installation-show__top {
-  display: contents;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  /* Same air under the hero as the feed caption pad. */
+  gap: 1.75rem;
+  width: 100%;
 }
 
 .installation-show--narrow .installation-show__hero-media {
-  grid-column: 1;
   position: relative;
   width: 100%;
   aspect-ratio: var(--is-hero-ar, 16 / 9);
@@ -570,60 +743,297 @@
 }
 
 .installation-show--narrow .installation-show__meta {
-  grid-column: 2;
   text-align: right;
-  align-self: center;
+  width: 100%;
+}
+
+.installation-show--narrow .installation-show__year,
+.installation-show--narrow .installation-show__kind {
+  font-size: var(--is-meta-size);
+  -webkit-text-stroke: 0.55px currentColor;
+}
+
+.installation-show--narrow .installation-show__title {
+  font-size: var(--is-title-size);
+  margin: 0.4em 0 0.45em;
+}
+
+.installation-show--narrow .installation-show__venue {
+  font-size: var(--is-meta-size);
+}
+
+.installation-show--narrow .installation-show__title-line {
+  white-space: nowrap;
+}
+
+.installation-show--narrow .installation-show__venue-line {
+  white-space: normal;
 }
 
 .installation-show--narrow .installation-show__body {
-  grid-column: 1;
   margin: 28px 0 0;
+  width: 100%;
 }
 
 .installation-show--narrow .installation-show__gallery,
+.installation-show--narrow .installation-show__gallery-note,
+.installation-show--narrow .installation-show__media-caption,
+.installation-show--narrow .installation-show__strip,
 .installation-show--narrow .installation-show__collage,
 .installation-show--narrow .installation-show__film,
 .installation-show--narrow .installation-show__film-caption,
+.installation-show--narrow .installation-show__walkthrough,
 .installation-show--narrow .installation-show__footer {
-  grid-column: 1 / -1;
+  width: 100%;
 }
 
-@media (max-width: 900px) {
-  .installation-show--narrow .installation-show__page {
-    grid-template-columns: 1fr;
-    gap: 16px;
+/* Stack every gallery column on phone — one image per row. */
+.installation-show--narrow .installation-show__gallery {
+  display: flex;
+  flex-direction: column;
+  gap: var(--is-media-gap);
+  margin: 36px 0 0;
+}
+
+.installation-show--narrow
+  .installation-show__gallery:not(:has(+ .installation-show__media-caption)) {
+  margin-bottom: 0;
+}
+
+.installation-show--narrow .installation-show__gallery-item {
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--is-item-ar, 4 / 3);
+  overflow: hidden;
+  background: transparent;
+  line-height: 0;
+}
+
+.installation-show--narrow .installation-show__gallery-item img {
+  object-fit: contain;
+  object-position: center top;
+}
+
+/* Captions sit tight under their media; no leftover bottom air. */
+.installation-show--narrow .installation-show__media-caption,
+.installation-show--narrow .installation-show__film-caption,
+.installation-show--narrow .installation-show__walkthrough-caption {
+  font-size: var(--is-meta-size);
+  margin: 8px 0 0;
+}
+
+.installation-show--narrow .installation-show__gallery + .installation-show__media-caption,
+.installation-show--narrow .installation-show__strip + .installation-show__media-caption {
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
+/* Even gap between every media block (gallery → strip → collage → film → video). */
+.installation-show--narrow .installation-show__strip,
+.installation-show--narrow .installation-show__collage,
+.installation-show--narrow .installation-show__film,
+.installation-show--narrow .installation-show__walkthrough,
+.installation-show--narrow .installation-show__gallery-note,
+.installation-show--narrow .installation-show__media-caption + .installation-show__strip,
+.installation-show--narrow .installation-show__media-caption + .installation-show__walkthrough,
+.installation-show--narrow .installation-show__collage + .installation-show__film {
+  margin-top: var(--is-media-gap);
+  margin-bottom: 0;
+}
+
+.installation-show--narrow .installation-show__strip-slot {
+  min-height: 160px;
+}
+
+/* Web stills on phone — snap strip (finger swipe) + timed cut autoplay. */
+.project-stills-cut {
+  width: 100%;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.project-stills-cut__scroller {
+  display: flex;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x pan-y;
+  scrollbar-width: none;
+  line-height: 0;
+}
+
+.project-stills-cut__scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.project-stills-cut__slide {
+  position: relative;
+  flex: 0 0 100%;
+  width: 100%;
+  height: 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.project-stills-cut__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center top;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
+.installation-show--narrow .installation-show__gallery-note {
+  max-width: none;
+  text-align: left;
+  font-size: var(--is-meta-size);
+}
+
+.installation-show--narrow .installation-show__film {
+  margin-bottom: 0;
+}
+
+.installation-show--narrow .installation-show__walkthrough {
+  margin-bottom: 0;
+}
+
+/* Match design-page footer air above / below Back · Next. */
+.installation-show--narrow .installation-show__footer:not(.project-footer) {
+  margin-top: calc(58 * var(--is-u));
+  margin-bottom: calc(20 * var(--is-u));
+  padding-top: 0;
+}
+
+/* Same footer chrome as design ProjectFooter on mobile. */
+.installation-show--narrow .project-footer {
+  width: 100%;
+  max-width: none;
+  margin-top: calc(58 * var(--is-u));
+  margin-bottom: calc(20 * var(--is-u));
+  align-items: center;
+  column-gap: 0;
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
+}
+
+.installation-show--narrow .project-footer__nav {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  gap: 0;
+  color: inherit;
+  font: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.installation-show--narrow .project-footer__nav--next {
+  justify-self: end;
+}
+
+.installation-show--narrow .project-footer__label {
+  font-size: calc(28 * var(--is-u));
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  -webkit-text-stroke: 0.75px currentColor;
+  paint-order: stroke fill;
+}
+
+.installation-show--narrow .project-footer__top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+  height: calc(28 * var(--is-u));
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: #000;
+  line-height: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.installation-show--narrow .project-footer__top-icon {
+  display: block;
+  height: 100%;
+  width: auto;
+}
+
+@media (min-width: 700px) {
+  .installation-show--narrow .project-footer__measure {
+    font-size: 34px;
   }
 
-  .installation-show--narrow .installation-show__meta {
-    grid-column: 1;
-    text-align: left;
-    order: -1;
-    align-self: start;
+  .installation-show--narrow .project-footer__label {
+    font-size: calc(34 * var(--is-u));
   }
 
-  .installation-show--narrow .installation-show__hero-media,
-  .installation-show--narrow .installation-show__body {
-    grid-column: 1;
+  .installation-show--narrow .project-footer__top {
+    height: calc(34 * var(--is-u));
   }
+}
 
-  .installation-show--narrow .installation-show__gallery {
-    grid-template-columns: 1fr;
-  }
+.installation-show--narrow .installation-show__nav-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  overflow: hidden;
+  background: #fff;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
 
-  .installation-show--narrow .installation-show__gallery-item {
-    aspect-ratio: 4 / 3;
-  }
+.installation-show--narrow .installation-show__nav-stage {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: left top;
+  touch-action: none;
+}
 
-  .installation-show--narrow .installation-show__title-line {
-    white-space: normal;
-  }
+.installation-show--narrow
+  .installation-show__nav-stage
+  .overlay-nav-rotator
+  [id^="circular-nav-item-"] {
+  color: #a3a3a3;
+  display: inline-block;
+  width: max-content;
+  max-width: none;
+  line-height: 1;
+  height: 1em;
+  padding: 0;
+  margin: 0;
+  pointer-events: auto;
+}
+
+.installation-show--narrow
+  .installation-show__nav-stage
+  .overlay-nav-rotator
+  [id^="circular-nav-item-"][data-active] {
+  color: #000000;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .installation-show[data-entering]::before,
   .installation-show[data-entering] .installation-show__hero-media,
   .installation-show[data-entering] .installation-show__fade,
-  .installation-show[data-leaving] .installation-show__fade {
+  .installation-show[data-leaving] .installation-show__fade,
+  .installation-show[data-leaving] .installation-show__reveal,
+  .installation-show__reveal[data-revealed] {
     animation: none !important;
+  }
+
+  .installation-show__reveal[data-revealed] {
+    opacity: 1;
   }
 }
