@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import {
+  Fragment,
   useCallback,
   useContext,
   useEffect,
@@ -48,6 +49,29 @@ function PlayIcon() {
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <polygon fill="currentColor" points="2.01,0.33 23.01,12 2.01,23.64" />
     </svg>
+  );
+}
+
+/** Inline `[label](url)` links in case-study body copy. */
+function LinkedBodyText({ text }: { text: string }) {
+  const parts = text.split(/(\[[^\]]+\]\([^)]+\))/g);
+  return (
+    <>
+      {parts.map((part, i) => {
+        const m = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(part);
+        if (!m) return <Fragment key={i}>{part}</Fragment>;
+        return (
+          <a
+            key={i}
+            href={m[2]}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {m[1]}
+          </a>
+        );
+      })}
+    </>
   );
 }
 
@@ -939,7 +963,7 @@ export function InstallationShowPage({
                 className="installation-show__reveal"
                 data-revealed={revealStep >= i ? "" : undefined}
               >
-                {p}
+                <LinkedBodyText text={p} />
               </p>
             ))}
           </div>

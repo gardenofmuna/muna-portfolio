@@ -72,7 +72,7 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
     titleColor: ABOUT_BIO_INK.interdisciplinary,
     caseStudy: {
       paragraphs: [
-        "My interactive web documentary Mama, In Your Absence was presented as part of the 17th annual DOC NOW Festival, showcasing student-made film, photography, and installation work from Toronto Metropolitan University's Documentary Media MFA graduates.",
+        "My interactive web documentary Mama, In Your Absence ([mamainyourabsence.com](https://mamainyourabsence.com)) was presented as part of the 17th annual DOC NOW Festival, showcasing student-made film, photography, and installation work from Toronto Metropolitan University's Documentary Media MFA graduates.",
         "The project traces the literary legacy of my grandmother, Flora Nwapa, the first African woman to publish a novel in English, through archival materials, narrative letters, and mixed-media diaristic footage. It sets her legacy against the creative careers that followed it, mine, my mother's, and my sister's, turning intergenerational dialogue into a reflection on how Igbo women's stories are preserved, erased, or reimagined. Woven from personal and collective narrative, the piece challenges static archival portrayals of African women's legacies and asks how digital media can bridge past and present to keep that dialogue on legacy and identity evolving.",
       ],
       galleryColumns: 2,

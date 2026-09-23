@@ -197,6 +197,13 @@
   color: #000;
 }
 
+.installation-show__body a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+  text-decoration-thickness: 1px;
+}
+
 .installation-show__body p:last-child {
   margin-bottom: 0;
 }
