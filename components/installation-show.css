@@ -286,37 +286,6 @@
   margin: 0;
 }
 
-.installation-show__walkthrough {
-  width: 100%;
-  margin: 0 0 40px;
-}
-
-.installation-show__walkthrough .project-video-toggle-wrap {
-  width: 100%;
-  max-width: 100%;
-}
-
-.installation-show__walkthrough-slot {
-  width: 100%;
-  background: transparent;
-}
-
-.installation-show__walkthrough-video {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-.installation-show__walkthrough-caption {
-  margin: 8px 0 0;
-  width: 100%;
-  font-family: "LTC Garamont Display OT", "Times New Roman", serif;
-  font-size: 22.38px;
-  line-height: 1.35;
-  letter-spacing: -0.04em;
-  color: #000;
-}
-
 .installation-show__gallery-item {
   position: relative;
   width: 100%;
@@ -677,6 +646,8 @@
 .installation-show--narrow[data-menu-state="open"] .installation-show__header {
   background: transparent;
   box-shadow: none;
+  /* Above nav overlay so the hamburger stays tappable (same as design). */
+  z-index: 60;
 }
 
 .installation-show--narrow .installation-show__header .project-narrow__wordmark,
@@ -789,7 +760,6 @@
 .installation-show--narrow .installation-show__collage,
 .installation-show--narrow .installation-show__film,
 .installation-show--narrow .installation-show__film-caption,
-.installation-show--narrow .installation-show__walkthrough,
 .installation-show--narrow .installation-show__footer {
   width: 100%;
 }
@@ -823,8 +793,7 @@
 
 /* Captions sit tight under their media; no leftover bottom air. */
 .installation-show--narrow .installation-show__media-caption,
-.installation-show--narrow .installation-show__film-caption,
-.installation-show--narrow .installation-show__walkthrough-caption {
+.installation-show--narrow .installation-show__film-caption {
   font-size: var(--is-meta-size);
   margin: 8px 0 0;
 }
@@ -835,14 +804,12 @@
   margin-bottom: 0;
 }
 
-/* Even gap between every media block (gallery → strip → collage → film → video). */
+/* Even gap between every media block (gallery → strip → collage → film). */
 .installation-show--narrow .installation-show__strip,
 .installation-show--narrow .installation-show__collage,
 .installation-show--narrow .installation-show__film,
-.installation-show--narrow .installation-show__walkthrough,
 .installation-show--narrow .installation-show__gallery-note,
 .installation-show--narrow .installation-show__media-caption + .installation-show__strip,
-.installation-show--narrow .installation-show__media-caption + .installation-show__walkthrough,
 .installation-show--narrow .installation-show__collage + .installation-show__film {
   margin-top: var(--is-media-gap);
   margin-bottom: 0;
@@ -903,10 +870,6 @@
 }
 
 .installation-show--narrow .installation-show__film {
-  margin-bottom: 0;
-}
-
-.installation-show--narrow .installation-show__walkthrough {
   margin-bottom: 0;
 }
 
@@ -992,7 +955,7 @@
 .installation-show--narrow .installation-show__nav-overlay {
   position: fixed;
   inset: 0;
-  z-index: 60;
+  z-index: 55;
   overflow: hidden;
   background: #fff;
   touch-action: none;

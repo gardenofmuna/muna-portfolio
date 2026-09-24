@@ -18,6 +18,13 @@ type Props = {
   togglePlayback?: boolean;
   /** Bottom progress bar that can be dragged to seek. */
   scrubber?: boolean;
+  /** Corner control that expands into native / browser fullscreen. */
+  fullscreen?: boolean;
+};
+
+type VideoWithIOSFullscreen = HTMLVideoElement & {
+  webkitEnterFullscreen?: () => void;
+  webkitSupportsFullscreen?: boolean;
 };
 
 /** SVG Repo play-fill: solid triangle, colored white via currentColor. */
@@ -37,6 +44,17 @@ function PauseIcon() {
   );
 }
 
+function ExpandIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M3 3h7v2H5v5H3V3zm11 0h7v7h-2V5h-5V3zM3 14h2v5h5v2H3v-7zm16 0h2v7h-7v-2h5v-5z"
+      />
+    </svg>
+  );
+}
+
 function onScreen(el: HTMLElement) {
   const r = el.getBoundingClientRect();
   return (
@@ -47,6 +65,33 @@ function onScreen(el: HTMLElement) {
     r.top < innerHeight &&
     r.left < innerWidth
   );
+}
+
+async function enterNativeFullscreen(el: HTMLVideoElement) {
+  const ios = el as VideoWithIOSFullscreen;
+  try {
+    if (
+      typeof ios.webkitEnterFullscreen === "function" &&
+      ios.webkitSupportsFullscreen !== false
+    ) {
+      /* iOS needs playback underway before native fullscreen accepts. */
+      if (el.paused) {
+        await el.play().catch(() => undefined);
+      }
+      ios.webkitEnterFullscreen();
+      return;
+    }
+    if (typeof el.requestFullscreen === "function") {
+      await el.requestFullscreen();
+      return;
+    }
+    const wrap = el.closest(".project-video-toggle-wrap");
+    if (wrap instanceof HTMLElement && wrap.requestFullscreen) {
+      await wrap.requestFullscreen();
+    }
+  } catch {
+    /* User gesture / policy can reject; leave inline playback alone. */
+  }
 }
 
 /**
@@ -62,6 +107,7 @@ export function ProjectLoopVideo({
   active = true,
   togglePlayback = false,
   scrubber = false,
+  fullscreen = false,
 }: Props) {
   const reduceMotion = useReducedMotion();
   const ref = useRef<HTMLVideoElement>(null);
@@ -72,6 +118,7 @@ export function ProjectLoopVideo({
   const [pauseFlash, setPauseFlash] = useState(false);
   const [progress, setProgress] = useState(0);
   const shouldLoad = active && inView;
+  const showChrome = togglePlayback || scrubber || fullscreen;
 
   useEffect(() => {
     const el = ref.current;
@@ -210,7 +257,7 @@ export function ProjectLoopVideo({
       muted
       loop
       playsInline
-      preload={togglePlayback || scrubber ? "auto" : "none"}
+      preload={togglePlayback || scrubber || fullscreen ? "auto" : "none"}
       poster={togglePlayback ? undefined : poster}
       aria-label={alt}
       onPlay={() => {
@@ -222,7 +269,7 @@ export function ProjectLoopVideo({
     />
   );
 
-  if (!togglePlayback && !scrubber) {
+  if (!showChrome) {
     return video;
   }
 
@@ -230,6 +277,7 @@ export function ProjectLoopVideo({
     <div
       className="project-video-toggle-wrap"
       data-scrubber={scrubber ? "" : undefined}
+      data-fullscreen={fullscreen ? "" : undefined}
     >
       {video}
       {togglePlayback ? (
@@ -254,6 +302,23 @@ export function ProjectLoopVideo({
           }}
         >
           {overlay === "pause" ? <PauseIcon /> : <PlayIcon />}
+        </button>
+      ) : null}
+      {fullscreen ? (
+        <button
+          type="button"
+          className="project-video-fullscreen"
+          aria-label="Expand video to full screen"
+          onClick={(event) => {
+            event.stopPropagation();
+            const el = ref.current;
+            if (!el) return;
+            allowPlay.current = true;
+            void enterNativeFullscreen(el);
+          }}
+          onPointerDown={(event) => event.stopPropagation()}
+        >
+          <ExpandIcon />
         </button>
       ) : null}
       {scrubber ? (

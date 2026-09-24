@@ -44,6 +44,8 @@
 .about-narrow[data-menu-state="open"] .about-narrow__header {
   background: transparent;
   box-shadow: none;
+  /* Above nav overlay so the hamburger stays tappable (same as design). */
+  z-index: 60;
 }
 
 .about-narrow__header .project-narrow__wordmark,
@@ -114,7 +116,7 @@
 .about-narrow__nav-overlay {
   position: fixed;
   inset: 0;
-  z-index: 60;
+  z-index: 55;
   overflow: hidden;
   background: #fff;
   touch-action: none;

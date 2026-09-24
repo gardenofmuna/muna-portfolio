@@ -562,10 +562,7 @@ export function HomeDesktop({
             aria-hidden={!(showLandingPreviews || galleryHandoff)}
           >
             <DesignLandingIndex
-              visible={
-                showLandingPreviews &&
-                (activeLabel === "design" || previewLabel === "design")
-              }
+              visible={showLandingPreviews && previewLabel === "design"}
             />
             <InstallationGallery
               visible={showInstallGallery}

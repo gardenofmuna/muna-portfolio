@@ -16,7 +16,6 @@ import { createPortal } from "react-dom";
 import { DesktopStageViewContext } from "@/components/DesktopStageCanvas";
 import { CircularNavWheel } from "@/components/CircularNavWheel";
 import { ProjectHorizontalStrip } from "@/components/project/ProjectHorizontalStrip";
-import { ProjectLoopVideo } from "@/components/project/ProjectLoopVideo";
 import { SiteWordmark } from "@/components/SiteWordmark";
 import { useNarrowArtboardMetrics } from "@/components/NarrowArtboard";
 import { DESKTOP_LAYOUT_H, DESKTOP_LAYOUT_W } from "@/lib/desktop-stage";
@@ -357,7 +356,6 @@ export function InstallationShowPage({
   const hasStripCaption = Boolean(caseStudy?.horizontalStripCaption);
   const hasCollage = Boolean(caseStudy?.largeCollage);
   const hasFilm = Boolean(caseStudy?.filmStill);
-  const hasWalkthrough = Boolean(caseStudy?.walkthrough);
   const galleryColumns = caseStudy?.galleryColumns ?? 3;
   /** Flex fractions (w/h) so a 2-up pair fills the rail as one smart object. */
   const galleryColTracks =
@@ -379,7 +377,6 @@ export function InstallationShowPage({
   const filmStep = hasFilm ? nextStep++ : -1;
   const captionStep =
     hasFilm && caseStudy?.filmCaption ? nextStep++ : -1;
-  const walkthroughStep = hasWalkthrough ? nextStep++ : -1;
   const footerStep = nextStep;
   const revealCount = footerStep + 1;
 
@@ -1135,38 +1132,6 @@ export function InstallationShowPage({
             >
               {caseStudy.filmCaption}
             </p>
-          ) : null}
-
-          {caseStudy.walkthrough ? (
-            <div
-              className="installation-show__walkthrough installation-show__reveal"
-              data-revealed={revealStep >= walkthroughStep ? "" : undefined}
-            >
-              {revealStep >= walkthroughStep ? (
-                <ProjectLoopVideo
-                  className="installation-show__walkthrough-video"
-                  src={caseStudy.walkthrough.src}
-                  alt={caseStudy.walkthrough.caption}
-                  width={caseStudy.walkthrough.width}
-                  height={caseStudy.walkthrough.height}
-                  poster={caseStudy.walkthrough.poster}
-                  active
-                  togglePlayback
-                  scrubber
-                />
-              ) : (
-                <div
-                  className="installation-show__walkthrough-slot"
-                  style={{
-                    aspectRatio: `${caseStudy.walkthrough.width} / ${caseStudy.walkthrough.height}`,
-                  }}
-                  aria-hidden
-                />
-              )}
-              <p className="installation-show__walkthrough-caption">
-                {caseStudy.walkthrough.caption}
-              </p>
-            </div>
           ) : null}
         </>
       ) : null}

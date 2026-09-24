@@ -1892,7 +1892,9 @@
   background: transparent;
   cursor: pointer;
   pointer-events: auto;
-  touch-action: pan-x;
+  /* Allow vertical page scroll when the finger starts on the video;
+     scrubbing stays on the range control (touch-action: none there). */
+  touch-action: pan-y;
   transform: translateZ(0);
 }
 
@@ -1917,6 +1919,57 @@
 .project-video-toggle:focus-visible {
   outline: 2px solid #fff;
   outline-offset: -10px;
+}
+
+.project-video-fullscreen {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  color: #fff;
+  background: rgb(0 0 0 / 42%);
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.project-video-fullscreen svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+}
+
+.project-video-toggle-wrap[data-scrubber] .project-video-fullscreen {
+  /* Sit above the scrubber track. */
+  bottom: 36px;
+}
+
+.project-video-fullscreen:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  .project-video-fullscreen {
+    opacity: 0;
+    transition: opacity 180ms ease;
+  }
+
+  .project-video-toggle-wrap:hover .project-video-fullscreen,
+  .project-video-toggle-wrap:focus-within .project-video-fullscreen {
+    opacity: 1;
+  }
 }
 
 .project-video-scrub {

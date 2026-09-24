@@ -48,17 +48,24 @@ export const ABOUT_BIO_INK = {
 const COL = ABOUT_BIO_INK;
 
 /**
- * Faux bold without triple ghosts: ±1px `text-shadow` draws fill + 2 offsets (3 stacked impressions).
- * A thin same-color stroke thickens once around the glyph.
+ * Faux bold without triple ghosts: a thin same-color stroke thickens the glyph.
+ * Desktop artboard lines use 1px; mobile flow uses a lighter stroke so colour
+ * words don’t look over-inked at body size.
  */
-function fauxBold(fill: string): CSSProperties {
+function fauxBold(
+  fill: string,
+  stroke: string = "1px",
+): CSSProperties {
   return {
     color: fill,
     WebkitTextFillColor: fill,
-    WebkitTextStroke: `1px ${fill}`,
+    WebkitTextStroke: `${stroke} ${fill}`,
     paintOrder: "stroke fill",
   };
 }
+
+/** Mobile about paragraph — subtler weight than the desktop nine-line bio. */
+const FLOW_FAUX = "0.4px";
 
 type Layout = {
   left: number;
@@ -262,19 +269,19 @@ export function AboutBio({
   const bioCopy = (
     <>
       Muna Nzeribe (b. 2001) is a designer and artist born in{" "}
-      <span style={fauxBold(COL.lagos)}>Lagos,</span> Nigeria and currently
+      <span style={fauxBold(COL.lagos, FLOW_FAUX)}>Lagos,</span> Nigeria and currently
       living and working in{" "}
-      <span style={fauxBold(COL.toronto)}>Toronto,</span> Canada. With a Bsc. in
+      <span style={fauxBold(COL.toronto, FLOW_FAUX)}>Toronto,</span> Canada. With a Bsc. in
       Mass Communication (2022) and an MFA in Documentary Media (2025), she sees
       her practice as an embodiment of Marshall McLuhan&rsquo;s theory that{" "}
-      <span style={fauxBold(COL.medium)}>
+      <span style={fauxBold(COL.medium, FLOW_FAUX)}>
         &lsquo;the medium is the message.&rsquo;
       </span>{" "}
       Utilizing an inherently{" "}
-      <span style={fauxBold(COL.interdisciplinary)}>interdisciplinary</span>{" "}
-      approach and <span style={fauxBold(COL.afro)}>Afro-modernist</span> lens,
+      <span style={fauxBold(COL.interdisciplinary, FLOW_FAUX)}>interdisciplinary</span>{" "}
+      approach and <span style={fauxBold(COL.afro, FLOW_FAUX)}>Afro-modernist</span> lens,
       she waves her creative wand excited to reveal the{" "}
-      <span style={fauxBold(COL.blue)}>
+      <span style={fauxBold(COL.blue, FLOW_FAUX)}>
         hidden correspondence embedded in emerging technology.
       </span>
     </>

@@ -45,6 +45,8 @@
 .installation-narrow[data-menu-state="open"] .installation-narrow__header {
   background: transparent;
   box-shadow: none;
+  /* Above nav overlay so the hamburger stays tappable (same as design). */
+  z-index: 60;
 }
 
 .installation-narrow__header .project-narrow__wordmark,
@@ -201,7 +203,7 @@
 .installation-narrow__nav-overlay {
   position: fixed;
   inset: 0;
-  z-index: 60;
+  z-index: 55;
   overflow: hidden;
   background: #fff;
   touch-action: none;

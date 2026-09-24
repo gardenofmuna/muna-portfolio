@@ -28,14 +28,6 @@ export type InstallationCaseStudy = {
   filmCaption?: string;
   /** When set, the film still shows a play control that opens this YouTube URL. */
   filmYoutubeUrl?: string;
-  /** Inline walkthrough / documentation clip under the strip. */
-  walkthrough?: {
-    src: string;
-    width: number;
-    height: number;
-    caption: string;
-    poster?: string;
-  };
 };
 
 export type InstallationShow = {
@@ -160,13 +152,14 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
         },
       ],
       horizontalStripCaption: "Web stills",
-      walkthrough: {
-        src: "/installation/mama/miya-walkthrough.mp4",
-        width: 1280,
-        height: 720,
-        caption: "Web walkthrough",
-        poster: "/installation/mama/miya-3.webp",
+      filmStill: {
+        src: "/installation/mama/miya-walkthrough-thumb.webp",
+        width: 1600,
+        height: 901,
+        alt: "Mama, in Your Absence — web walkthrough",
       },
+      filmCaption: "Web walkthrough",
+      filmYoutubeUrl: "https://youtu.be/aCJyZ4OwX00",
     },
   },
   {
