@@ -28,3 +28,111 @@
 .photos-cluster__wing--front {
   transform: translateX(-50%);
 }
+
+/* ── Desktop Studio Motion vertical reel ──────────────────────────── */
+
+.photos-reel__stage {
+  position: absolute;
+  inset: 0;
+  outline: none;
+  pointer-events: none;
+}
+
+.photos-reel__viewport {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  z-index: 2;
+  width: min(520px, 42%);
+  transform: translateX(-50%);
+  cursor: ns-resize;
+  touch-action: pan-y;
+}
+
+.photos-reel__track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  will-change: transform;
+}
+
+.photos-reel__frame {
+  position: absolute;
+  left: 50%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  transform: translateX(-50%);
+  line-height: 0;
+}
+
+.photos-reel__scale {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: center center;
+}
+
+.photos-reel__frame[data-active] {
+  cursor: default;
+}
+
+.photos-reel__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
+.photos-reel__finder {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 5;
+}
+
+.photos-reel__corner {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-color: #111;
+  border-style: solid;
+  border-width: 0;
+}
+
+.photos-reel__corner--tl {
+  top: 0;
+  left: 0;
+  border-top-width: 1.5px;
+  border-left-width: 1.5px;
+}
+
+.photos-reel__corner--tr {
+  top: 0;
+  right: 0;
+  border-top-width: 1.5px;
+  border-right-width: 1.5px;
+}
+
+.photos-reel__corner--bl {
+  bottom: 0;
+  left: 0;
+  border-bottom-width: 1.5px;
+  border-left-width: 1.5px;
+}
+
+.photos-reel__corner--br {
+  bottom: 0;
+  right: 0;
+  border-bottom-width: 1.5px;
+  border-right-width: 1.5px;
+}
