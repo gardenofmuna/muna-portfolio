@@ -210,7 +210,11 @@ export function AboutNarrow({ visible, onNavigate, onOpenDesign }: Props) {
                   closeMenu();
                   return;
                 }
-                if (label === "design" || label === "installation") {
+                if (
+                  label === "design" ||
+                  label === "installation" ||
+                  label === "photos"
+                ) {
                   leaveAbout(label);
                 }
               }}

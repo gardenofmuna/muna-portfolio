@@ -1446,7 +1446,8 @@ export function InstallationShowPage({
                     label === "installation" ||
                     label === "design" ||
                     label === "about" ||
-                    label === "contact"
+                    label === "contact" ||
+                    label === "photos"
                   ) {
                     leaveViaMenu(label);
                   }

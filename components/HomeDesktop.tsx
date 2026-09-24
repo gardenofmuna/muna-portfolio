@@ -76,6 +76,10 @@ export function HomeDesktop({
   const [wheelInteracting, setWheelInteracting] = useState(false);
   /** Remount dial so signature “m” / exits can hard-reset angle + focus. */
   const [wheelEpoch, setWheelEpoch] = useState(0);
+  const [wheelSpinRequest, setWheelSpinRequest] = useState<{
+    label: string;
+    id: number;
+  } | null>(null);
   const [installationShow, setInstallationShow] =
     useState<InstallationShow | null>(() =>
       initialInstallationId
@@ -443,9 +447,25 @@ export function HomeDesktop({
             : undefined
         }
         onSignatureClick={
-          projectOpen || installOpen
-            ? () => goToLanding("contact")
-            : undefined
+          projectOpen
+            ? goToDesignLanding
+            : installOpen
+              ? closeInstallationShow
+              : () => {
+                  setHoverNavLabel(null);
+                  setWheelInteracting(false);
+                  setWheelSpinRequest((prev) => ({
+                    label: "contact",
+                    id: (prev?.id ?? 0) + 1,
+                  }));
+                }
+        }
+        signatureLabel={
+          projectOpen
+            ? "Back to design"
+            : installOpen
+              ? "Back to installations"
+              : "Back to contact"
         }
         signatureCompact={
           projectOpen ||
@@ -465,6 +485,7 @@ export function HomeDesktop({
             onLabelActivate={onNavLabelActivate}
             onHoverLabelChange={setHoverNavLabel}
             onWheelInteractingChange={setWheelInteracting}
+            spinRequest={wheelSpinRequest}
           />
         }
         center={

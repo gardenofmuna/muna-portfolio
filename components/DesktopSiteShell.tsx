@@ -72,6 +72,8 @@ type Props = {
   signatureCompact?: boolean;
   /** When set, bottom-right nzeribe signature navigates home (e.g. exit project). */
   onSignatureClick?: () => void;
+  /** Accessible name for the signature button; defaults to "Back to home". */
+  signatureLabel?: string;
   /**
    * `"fluid"`: viewport-scaled CSS vars (legacy / unused by landing).
    * `"stage"`: locked layout coords inside the 2875×1623 DesktopStageCanvas.
@@ -98,6 +100,7 @@ export function DesktopSiteShell({
   menuVeil = false,
   signatureCompact = false,
   onSignatureClick,
+  signatureLabel = "Back to home",
   layout = "fluid",
 }: Props) {
   const isStage = layout === "stage";
@@ -176,6 +179,7 @@ export function DesktopSiteShell({
     <SignatureMark
       compact={signatureCompact}
       onSignatureClick={onSignatureClick}
+      label={signatureLabel}
       className="desktop-site-shell__signature-mark--chrome"
       style={stageMarkStyle}
     />
@@ -265,6 +269,7 @@ export function DesktopSiteShell({
             <SignatureMark
               compact={signatureCompact}
               onSignatureClick={onSignatureClick}
+              label={signatureLabel}
               style={fluidMarkStyle}
             />
           )}
@@ -275,11 +280,13 @@ export function DesktopSiteShell({
 function SignatureMark({
   compact,
   onSignatureClick,
+  label,
   className,
   style,
 }: {
   compact: boolean;
   onSignatureClick?: () => void;
+  label: string;
   className?: string;
   style: CSSProperties;
 }) {
@@ -310,7 +317,7 @@ function SignatureMark({
         type="button"
         className="desktop-site-shell__signature-button"
         data-active={onSignatureClick ? "" : undefined}
-        aria-label={onSignatureClick ? "Back to home" : undefined}
+        aria-label={onSignatureClick ? label : undefined}
         aria-hidden={onSignatureClick ? undefined : true}
         tabIndex={onSignatureClick ? 0 : -1}
         onClick={onSignatureClick}

@@ -89,6 +89,7 @@ export function PhotosHoverCluster({
     startY: number;
     origin: number;
     stepped: boolean;
+    captured: boolean;
   } | null>(null);
   const uStage = stageLocked
     ? Math.min(DESKTOP_LAYOUT_W / REF_STAGE_W, DESKTOP_LAYOUT_H / REF_STAGE_H)
@@ -181,14 +182,20 @@ export function PhotosHoverCluster({
       startY: event.clientY,
       origin: loopIndex,
       stepped: false,
+      captured: false,
     };
-    event.currentTarget.setPointerCapture(event.pointerId);
   };
 
   const onReelPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     const drag = dragRef.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
     const dy = event.clientY - drag.startY;
+    /* Capture only once it's a drag, so a plain click still reaches the
+       neighbouring frame's button. */
+    if (!drag.captured && Math.abs(dy) > 6) {
+      drag.captured = true;
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
     if (Math.abs(dy) < DRAG_THRESHOLD) return;
     drag.startY = event.clientY;
     drag.stepped = true;
@@ -430,8 +437,7 @@ export function PhotosHoverCluster({
                         aria-current={item.active ? "true" : undefined}
                         onClick={() => {
                           if (item.active) return;
-                          setMotionOn(true);
-                          setLoopIndex(i);
+                          step(i < loopIndex ? -1 : 1);
                         }}
                         style={{
                           width: box.w,
@@ -473,6 +479,13 @@ export function PhotosHoverCluster({
                   <span className="photos-reel__corner photos-reel__corner--tr" />
                   <span className="photos-reel__corner photos-reel__corner--bl" />
                   <span className="photos-reel__corner photos-reel__corner--br" />
+                  <p
+                    key={`${activeStill.place}-${activeStill.taken}`}
+                    className="photos-reel__caption"
+                  >
+                    <span>{activeStill.place}</span>
+                    <span>{activeStill.taken}</span>
+                  </p>
                 </div>
               </>
             );

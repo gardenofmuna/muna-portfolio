@@ -43,14 +43,14 @@ const NARROW_FIT_SCALE = Math.min(
 /** Slight counter-clockwise tilt — paper resting angled to the left. */
 const CV_PAPER_TILT_DEG = -4;
 
-/** Desktop hub scale — 80% larger than other nav hover previews. */
-const CV_DESKTOP_SCALE = NAV_HUB_HOVER_DESKTOP_SCALE * 1.8;
+/** Desktop hub scale — 80% larger than other nav hover previews, then +30%. */
+const CV_DESKTOP_SCALE = NAV_HUB_HOVER_DESKTOP_SCALE * 1.8 * 1.3;
 
 /** Shift desktop preview slightly left of hub centre. */
 const CV_DESKTOP_NUDGE_LEFT_PX = 28;
 
 /**
- * Hub preview for “cv + press” — appears on nav hover; desktop unfolds on paper hover.
+ * Hub preview for “cv + press” — appears on nav hover; desktop starts unfolded and folds on paper hover.
  * Touch / iPad: no sticky hover — hide as soon as the wheel leaves this section.
  */
 export function CvPressHoverAccordion({
@@ -110,7 +110,7 @@ export function CvPressHoverAccordion({
       }}
     >
       <PaperFoldAccordion
-        isOpen={isDesktop ? isPaperHovered : visible}
+        isOpen={isDesktop ? !isPaperHovered : visible}
         layout={layout}
         frontSrc="/cv-front-page.webp"
         backSrc="/cv-back-page.webp"

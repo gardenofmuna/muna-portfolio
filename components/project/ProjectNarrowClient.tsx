@@ -203,7 +203,11 @@ export function ProjectNarrowClient({
                   closeMenu();
                   return;
                 }
-                if (label === "installation" || label === "about") {
+                if (
+                  label === "installation" ||
+                  label === "about" ||
+                  label === "photos"
+                ) {
                   goHome(label);
                 }
               }}

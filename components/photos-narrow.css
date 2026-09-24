@@ -1,0 +1,259 @@
+/*
+ * Narrow / tablet photos page — vertical film reel under shared chrome.
+ * Side padding matches --narrow-gutter (wordmark + hamburger).
+ */
+
+.photos-narrow {
+  --ph-gutter: var(--narrow-gutter, 20px);
+  --ph-chrome-pad: var(--narrow-chrome-pad, 24px);
+  --ph-header-h: calc(var(--ph-chrome-pad) * 2 + var(--ph-nzeribe-h, 40px));
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: #fff;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.photos-narrow[data-visible] {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.photos-narrow__header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  padding: var(--ph-chrome-pad) var(--ph-gutter);
+  pointer-events: none;
+  background: #fff;
+}
+
+.photos-narrow[data-menu-state="open"] .photos-narrow__header {
+  background: transparent;
+  /* Above nav overlay so the hamburger stays tappable (same as design). */
+  z-index: 60;
+}
+
+.photos-narrow__header .project-narrow__wordmark,
+.photos-narrow__menu-toggle {
+  pointer-events: auto;
+}
+
+.photos-narrow[data-menu-state="open"] .project-narrow__wordmark {
+  visibility: hidden;
+}
+
+.photos-narrow__menu-toggle {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  width: var(--ph-menu-w);
+  height: var(--ph-menu-h, var(--ph-nzeribe-h));
+  -webkit-tap-highlight-color: transparent;
+}
+
+.photos-narrow__menu-toggle svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Frames slide under the header band, so the reel starts below it. */
+.photos-narrow__reel {
+  position: absolute;
+  top: var(--ph-header-h);
+  right: 0;
+  bottom: 0;
+  left: 0;
+  overflow: hidden;
+  outline: none;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.photos-narrow__track {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  will-change: transform;
+}
+
+.photos-narrow__frame {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  line-height: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.photos-narrow__frame[data-active] {
+  cursor: default;
+}
+
+.photos-narrow__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
+.photos-narrow__finder {
+  position: absolute;
+  top: 50%;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.photos-narrow__corner {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-color: #111;
+  border-style: solid;
+  border-width: 0;
+}
+
+.photos-narrow__corner--tl {
+  top: 0;
+  left: 0;
+  border-top-width: 1.5px;
+  border-left-width: 1.5px;
+}
+
+.photos-narrow__corner--tr {
+  top: 0;
+  right: 0;
+  border-top-width: 1.5px;
+  border-right-width: 1.5px;
+}
+
+.photos-narrow__corner--bl {
+  bottom: 0;
+  left: 0;
+  border-bottom-width: 1.5px;
+  border-left-width: 1.5px;
+}
+
+.photos-narrow__corner--br {
+  bottom: 0;
+  right: 0;
+  border-bottom-width: 1.5px;
+  border-right-width: 1.5px;
+}
+
+.photos-narrow__caption,
+.photos-narrow__caption-measure {
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: #111;
+  white-space: nowrap;
+}
+
+.photos-narrow__caption {
+  position: absolute;
+  top: 50%;
+  right: var(--ph-gutter);
+  z-index: 5;
+  margin: 0;
+  padding-top: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  pointer-events: none;
+  animation: photos-narrow-caption-in 320ms ease-out both;
+}
+
+.photos-narrow__caption-measure {
+  position: absolute;
+  top: 0;
+  left: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.photos-narrow__caption-measure span {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+@keyframes photos-narrow-caption-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.photos-narrow__nav-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  overflow: hidden;
+  background: #fff;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Match project hamburger overlay active label paint. */
+.photos-narrow__nav-stage .overlay-nav-rotator [id^="circular-nav-item-"] {
+  color: #a3a3a3;
+  display: inline-block;
+  width: max-content;
+  max-width: none;
+  line-height: 1;
+  height: 1em;
+  padding: 0;
+  margin: 0;
+  pointer-events: auto;
+}
+
+.photos-narrow__nav-stage
+  .overlay-nav-rotator
+  [id^="circular-nav-item-"][data-active] {
+  color: #000000;
+}
+
+.photos-narrow__nav-stage {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: left top;
+  touch-action: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .photos-narrow {
+    transition: none;
+  }
+
+  .photos-narrow__caption {
+    animation: none;
+  }
+}

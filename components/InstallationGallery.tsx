@@ -9,12 +9,10 @@ import {
   useRef,
   useState,
   type CSSProperties,
-  type PointerEvent as ReactPointerEvent,
 } from "react";
 
 import { INSTALLATION_SHOWS } from "@/data/installation";
 import {
-  INSTALL_CENTER_H,
   INSTALL_CENTER_W,
   INSTALL_META_GAP,
   INSTALL_META_W,
@@ -48,21 +46,18 @@ type Props = {
  * infinite scroll / click-to-jump still wraps the full show list.
  */
 const CENTER_W = INSTALL_CENTER_W;
-const CENTER_H = INSTALL_CENTER_H;
 const NEAR_SCALE = 763.026 / 1163.095;
 /** Used while mid-scroll when a neighbor briefly sits past ±1. */
 const FAR_SCALE = 361.148 / 1163.095;
 /** Mockup gutter between adjacent tiles (measured on grey placeholder art). */
 const SLOT_GAP = 14;
-const NEAR_H = CENTER_H * NEAR_SCALE;
-/** Wheel / drag sensitivity — approximate one-slot travel. */
-const NEAR_Y = CENTER_H / 2 + SLOT_GAP + NEAR_H / 2;
 const N = INSTALLATION_SHOWS.length;
 const SLOTS = [-1, 0, 1] as const;
-const WHEEL_SETTLE_MS = 140;
+const WHEEL_THRESHOLD = 24;
+const WHEEL_QUIET_MS = 120;
+const WHEEL_MIN_GAP_MS = 300;
+const DOUBLE_CLICK_MS = 450;
 const SNAP_MS = 520;
-/** Ignore jitter so a click on a neighbor still centers it. */
-const DRAG_THRESHOLD_PX = 10;
 const META_W = INSTALL_META_W;
 const META_GAP = INSTALL_META_GAP;
 
@@ -170,17 +165,17 @@ export function InstallationGallery({
 }: Props) {
   const stripRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef(0);
-  const settleTimerRef = useRef(0);
   const animRef = useRef(0);
-  const dragRef = useRef<{
-    y: number;
-    progress: number;
-    pointerId: number;
-    dragging: boolean;
-  } | null>(null);
-  /** After a real drag, suppress the synthetic click on the card underneath. */
-  const suppressClickRef = useRef(false);
   const lastTapRef = useRef<{ index: number; at: number } | null>(null);
+  /** Where the current animation is headed, so rapid steps stack cleanly. */
+  const targetRef = useRef<number | null>(null);
+  const wheelGestureRef = useRef({
+    sum: 0,
+    locked: false,
+    lastEvent: 0,
+    lastStep: 0,
+    lastAbs: 0,
+  });
   const [progress, setProgress] = useState(0);
   const [reduceMotion, setReduceMotion] = useState(false);
 
@@ -195,10 +190,8 @@ export function InstallationGallery({
   useEffect(() => {
     if (!visible) {
       window.cancelAnimationFrame(animRef.current);
-      window.clearTimeout(settleTimerRef.current);
-      dragRef.current = null;
-      suppressClickRef.current = false;
       lastTapRef.current = null;
+      targetRef.current = null;
       progressRef.current = 0;
       setProgress(0);
     }
@@ -226,6 +219,7 @@ export function InstallationGallery({
       window.cancelAnimationFrame(animRef.current);
       if (reduceMotion) {
         paint(target);
+        targetRef.current = null;
         return;
       }
       const from = progressRef.current;
@@ -234,6 +228,7 @@ export function InstallationGallery({
         const t = Math.min(1, (now - start) / SNAP_MS);
         paint(from + (target - from) * easeOutCubic(t));
         if (t < 1) animRef.current = window.requestAnimationFrame(tick);
+        else targetRef.current = null;
       };
       animRef.current = window.requestAnimationFrame(tick);
     },
@@ -247,24 +242,52 @@ export function InstallationGallery({
     /* Handoff needs the active card already in the center slot. */
     if (closing || exiting) {
       window.cancelAnimationFrame(animRef.current);
+      targetRef.current = null;
       paint(i);
       return;
     }
     animateTo(i);
   }, [animateTo, closing, exiting, focusShowId, visible]);
 
-  const snapNearest = useCallback(() => {
-    animateTo(Math.round(progressRef.current));
-  }, [animateTo]);
+  /** One show per step, landing on a whole index even mid-animation. */
+  const stepBy = useCallback(
+    (dir: 1 | -1) => {
+      targetRef.current = Math.round(targetRef.current ?? progressRef.current) + dir;
+      animateTo(targetRef.current);
+    },
+    [animateTo],
+  );
 
   const onWheel = useEffectEvent((event: WheelEvent) => {
     if (!visible) return;
     event.preventDefault();
-    window.cancelAnimationFrame(animRef.current);
-    const next = progressRef.current + event.deltaY / NEAR_Y;
-    paint(next);
-    window.clearTimeout(settleTimerRef.current);
-    settleTimerRef.current = window.setTimeout(snapNearest, WHEEL_SETTLE_MS);
+    const dominant =
+      Math.abs(event.deltaX) > Math.abs(event.deltaY)
+        ? event.deltaX
+        : event.deltaY;
+    const g = wheelGestureRef.current;
+    const now = performance.now();
+    const abs = Math.abs(dominant);
+    const quiet = now - g.lastEvent > WHEEL_QUIET_MS;
+    /* Momentum decays; a delta that jumps back up is a fresh swipe. */
+    const surge = abs > g.lastAbs * 1.4 + 2;
+    g.lastEvent = now;
+    g.lastAbs = abs;
+    /* One show per gesture: ignore the tail of trackpad momentum. */
+    if (g.locked) {
+      if (now - g.lastStep < WHEEL_MIN_GAP_MS) return;
+      if (!quiet && !surge) return;
+      g.locked = false;
+      g.sum = 0;
+    }
+    if (quiet) g.sum = 0;
+    g.sum += dominant;
+    if (Math.abs(g.sum) < WHEEL_THRESHOLD) return;
+    const dir = g.sum > 0 ? 1 : -1;
+    g.sum = 0;
+    g.locked = true;
+    g.lastStep = now;
+    stepBy(dir);
   });
 
   useEffect(() => {
@@ -274,53 +297,10 @@ export function InstallationGallery({
     return () => el.removeEventListener("wheel", onWheel);
   }, [visible]);
 
-  const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (!visible || event.button !== 0) return;
-    window.cancelAnimationFrame(animRef.current);
-    window.clearTimeout(settleTimerRef.current);
-    dragRef.current = {
-      y: event.clientY,
-      progress: progressRef.current,
-      pointerId: event.pointerId,
-      dragging: false,
-    };
-  };
-
-  const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
-    const drag = dragRef.current;
-    if (!drag || drag.pointerId !== event.pointerId) return;
-    const dy = event.clientY - drag.y;
-    if (!drag.dragging) {
-      if (Math.abs(dy) < DRAG_THRESHOLD_PX) return;
-      drag.dragging = true;
-      try {
-        event.currentTarget.setPointerCapture(event.pointerId);
-      } catch {
-        /* capture unsupported */
-      }
-    }
-    paint(drag.progress - dy / NEAR_Y);
-  };
-
-  const onPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
-    const drag = dragRef.current;
-    if (!drag || drag.pointerId !== event.pointerId) return;
-    dragRef.current = null;
-    if (drag.dragging) {
-      suppressClickRef.current = true;
-      try {
-        event.currentTarget.releasePointerCapture(event.pointerId);
-      } catch {
-        /* already released */
-      }
-      snapNearest();
-    }
-  };
-
   const jumpTo = (index: number) => {
-    const current = progressRef.current;
-    const currentIndex = wrapIndex(Math.round(current));
-    animateTo(current + wrapDelta(index - currentIndex));
+    const current = Math.round(targetRef.current ?? progressRef.current);
+    targetRef.current = current + wrapDelta(index - wrapIndex(current));
+    animateTo(targetRef.current);
   };
 
   const active = INSTALLATION_SHOWS[wrapIndex(Math.round(progress))]!;
@@ -355,10 +335,6 @@ export function InstallationGallery({
         aria-label="Installation works"
         aria-activedescendant={`installation-card-${active.id}`}
         style={{ left: blockLeft, width: activeCard.w }}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
       >
         <div className="installation-gallery__stage">
           {poses.map((pose) => {
@@ -386,33 +362,26 @@ export function InstallationGallery({
                 style={style}
                 onClick={(event) => {
                   event.stopPropagation();
-                  if (suppressClickRef.current) {
-                    suppressClickRef.current = false;
-                    return;
-                  }
-                  if (!pose.active) {
-                    jumpTo(pose.showIndex);
-                    return;
-                  }
-                  /* Double-press / double-click on the centered image opens the page. */
+                  /* First click centers a neighbor; clicking the centered
+                     card opens it — including a quick second click that
+                     lands while the card is still sliding in. */
                   const now = performance.now();
                   const last = lastTapRef.current;
-                  if (
-                    last &&
+                  const repeat =
+                    last !== null &&
                     last.index === pose.showIndex &&
-                    now - last.at < 420
-                  ) {
+                    now - last.at < DOUBLE_CLICK_MS;
+                  if (pose.active || repeat) {
                     lastTapRef.current = null;
+                    if (!pose.active) {
+                      window.cancelAnimationFrame(animRef.current);
+                      jumpTo(pose.showIndex);
+                    }
                     onOpenShow?.(show);
                     return;
                   }
                   lastTapRef.current = { index: pose.showIndex, at: now };
-                }}
-                onDoubleClick={(event) => {
-                  event.stopPropagation();
-                  if (!pose.active) return;
-                  lastTapRef.current = null;
-                  onOpenShow?.(show);
+                  jumpTo(pose.showIndex);
                 }}
               >
                 <Image

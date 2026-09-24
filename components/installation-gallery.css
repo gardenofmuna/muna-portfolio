@@ -84,13 +84,7 @@
   top: 0;
   height: 100%;
   overflow: visible;
-  touch-action: none;
-  cursor: grab;
   outline: none;
-}
-
-.installation-gallery__strip:active {
-  cursor: grabbing;
 }
 
 .installation-gallery__stage {
@@ -120,8 +114,6 @@
 }
 
 .installation-gallery__card[data-active] {
-  cursor: default;
-  pointer-events: none;
   box-shadow:
     0 12px 28px rgba(0, 0, 0, 0.12),
     0 4px 10px rgba(0, 0, 0, 0.07);

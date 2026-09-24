@@ -15,6 +15,7 @@ import {
 import { MobileFooterLinks } from "@/components/MobileFooterLinks";
 import { NarrowWheelFit, useNarrowArtboardMetrics } from "@/components/NarrowArtboard";
 import { PhotosHoverCluster } from "@/components/PhotosHoverCluster";
+import { PhotosNarrow } from "@/components/PhotosNarrow";
 import { CvPressHoverAccordion } from "@/components/CvPressHoverAccordion";
 import { FilmHoverGif } from "@/components/FilmHoverGif";
 import { SelectedWorksHoverGif } from "@/components/SelectedWorksHoverGif";
@@ -73,6 +74,8 @@ export function HomeNarrow({
         : null,
     );
   const [enteredFromLanding, setEnteredFromLanding] = useState(false);
+  /** Full-page photos reel — opens on tapping the centred “photos” label. */
+  const [photosOpen, setPhotosOpen] = useState(false);
   const projectRef = useRef(project);
   projectRef.current = project;
 
@@ -100,6 +103,7 @@ export function HomeNarrow({
     if (!next) return;
     setEnteredFromLanding(true);
     setInstallationShow(null);
+    setPhotosOpen(false);
     setProject(next);
     document.title = `${next.title} | Muna | Portfolio`;
     if (window.location.pathname !== DESIGN_PROJECT_PATH) {
@@ -133,6 +137,7 @@ export function HomeNarrow({
   const goToLanding = useCallback((label?: string) => {
     setProject(null);
     setInstallationShow(null);
+    setPhotosOpen(label === "photos");
     setEnteredFromLanding(false);
     document.title = "Muna | Portfolio";
     if (label && (NARROW_NAV_LABELS as readonly string[]).includes(label)) {
@@ -151,6 +156,7 @@ export function HomeNarrow({
 
   useEffect(() => {
     const onPop = () => {
+      setPhotosOpen(false);
       if (window.location.pathname === "/") {
         setProject(null);
         setInstallationShow(null);
@@ -213,10 +219,13 @@ export function HomeNarrow({
   const installationOpen = showInstallation && !projectOpen;
   const aboutOpen = showAboutPage && !projectOpen;
   const caseStudyOpen = installationShow != null && !projectOpen;
-  const overlayOpen = installationOpen || aboutOpen || caseStudyOpen;
+  const photosPageOpen = photosOpen && !projectOpen;
+  const overlayOpen =
+    installationOpen || aboutOpen || caseStudyOpen || photosPageOpen;
 
   const leaveOverlay = useCallback((label: string) => {
     setInstallationShow(null);
+    setPhotosOpen(label === "photos");
     if ((NARROW_NAV_LABELS as readonly string[]).includes(label)) {
       setActiveLabel(label as NarrowLabel);
     }
@@ -266,6 +275,11 @@ export function HomeNarrow({
               }
               if (label === "about" || label === "installation") {
                 setActiveLabel(label);
+                return;
+              }
+              if (label === "photos") {
+                setActiveLabel(label);
+                setPhotosOpen(true);
               }
             }}
           />
@@ -288,6 +302,11 @@ export function HomeNarrow({
       ) : null}
       <AboutNarrow
         visible={aboutOpen}
+        onNavigate={leaveOverlay}
+        onOpenDesign={openDesignProject}
+      />
+      <PhotosNarrow
+        visible={photosPageOpen}
         onNavigate={leaveOverlay}
         onOpenDesign={openDesignProject}
       />

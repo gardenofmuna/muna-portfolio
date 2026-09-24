@@ -202,6 +202,10 @@
   text-decoration: underline;
   text-underline-offset: 0.12em;
   text-decoration-thickness: 1px;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+  -webkit-text-stroke: 0.75px currentColor;
+  paint-order: stroke fill;
 }
 
 .installation-show__body p:last-child {

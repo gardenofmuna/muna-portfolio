@@ -300,6 +300,11 @@ export type CircularNavWheelProps = {
    * (easier finger travel, live highlight, no snap-back hysteresis).
    */
   spinFeel?: "desktop" | "narrow";
+  /**
+   * Desktop: animate to the nearest tile of `label` whenever `id` changes
+   * (e.g. signature click returns the dial to “contact” without a remount).
+   */
+  spinRequest?: { label: string; id: number } | null;
 };
 
 export function CircularNavWheel({
@@ -311,6 +316,7 @@ export function CircularNavWheel({
   layout = "desktop",
   containment = "viewport",
   spinFeel = "desktop",
+  spinRequest = null,
 }: CircularNavWheelProps = {}) {
   const isNarrow = layout === "narrow";
   const coarsePointer = useCoarsePointer();
@@ -755,6 +761,47 @@ export function CircularNavWheel({
       snapRotationForIndex(focusedRef.current, prev),
     );
   }, [isNarrow, w, h, snapRotationForIndex, labelAngles, ringLayout.radius]);
+
+  const spinRequestId = spinRequest?.id;
+  const spinRequestLabel = spinRequest?.label;
+  /** A remounted dial must not replay the request that predates it. */
+  const handledSpinIdRef = useRef(spinRequestId);
+  useEffect(() => {
+    if (handledSpinIdRef.current === spinRequestId) return;
+    handledSpinIdRef.current = spinRequestId;
+    if (isNarrow || spinRequestId == null || !spinRequestLabel) return;
+    if (isDraggingRef.current) return;
+    const φ = rotationRef.current;
+    let tile = -1;
+    let nextRot = φ;
+    let bestCost = Infinity;
+    for (let i = 0; i < N; i++) {
+      if (items[i]?.label !== spinRequestLabel) continue;
+      const rot = snapRotationForIndex(i, φ);
+      const cost = Math.abs(rot - φ);
+      if (cost < bestCost) {
+        bestCost = cost;
+        tile = i;
+        nextRot = rot;
+      }
+    }
+    if (tile < 0) return;
+    setHoveredIndex(null);
+    if (spinFeel === "narrow") paintOverlayHot(tile);
+    setFocusedIndex(tile);
+    rotationRef.current = nextRot;
+    setRotation(nextRot);
+    const rotEl = rotatorRef.current;
+    if (rotEl && spinFeel === "narrow") {
+      rotEl.style.transition = reduceMotion
+        ? "none"
+        : "transform 520ms cubic-bezier(0.22, 1, 0.36, 1)";
+      rotEl.style.transform = `rotate(${nextRot}rad)`;
+    }
+    setWheelInteracting(false);
+    // Only a new request id should spin — not layout/label churn.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [spinRequestId]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

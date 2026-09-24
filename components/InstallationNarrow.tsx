@@ -260,7 +260,11 @@ export function InstallationNarrow({
                   closeMenu();
                   return;
                 }
-                if (label === "design" || label === "about") {
+                if (
+                  label === "design" ||
+                  label === "about" ||
+                  label === "photos"
+                ) {
                   leaveInstallation(label);
                 }
               }}
