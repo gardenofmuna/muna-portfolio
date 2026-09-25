@@ -8,16 +8,8 @@ export type ShotOnFilmStill = {
   taken: string;
 }
 
-/** Every still in SHOT ON FILM. Orientation is baked in; the Photoshop duplicate of 000026 is omitted. */
+/** Every still in SHOT ON FILM. Orientation is baked in. */
 export const SHOT_ON_FILM_STILLS: readonly ShotOnFilmStill[] = [
-  {
-    src: "/photos/film/000026.webp",
-    width: 938,
-    height: 1400,
-    alt: "Shot on film — 000026",
-    place: "Lagos",
-    taken: "July ‘23",
-  },
   {
     src: "/photos/film/000022.webp",
     width: 938,
