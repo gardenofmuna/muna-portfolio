@@ -11,6 +11,7 @@ import {
 
 import { AboutBio } from "@/components/AboutBio";
 import { CircularNavWheel } from "@/components/CircularNavWheel";
+import { MobileFooterLinks } from "@/components/MobileFooterLinks";
 import { useNarrowArtboardMetrics } from "@/components/NarrowArtboard";
 import { SiteWordmark } from "@/components/SiteWordmark";
 import { DESKTOP_LAYOUT_H, DESKTOP_LAYOUT_W } from "@/lib/desktop-stage";
@@ -182,6 +183,9 @@ export function AboutNarrow({ visible, onNavigate, onOpenDesign }: Props) {
             />
           </div>
           <AboutBio visible={visible} flow />
+          <footer className="about-narrow__footer">
+            <MobileFooterLinks placement="flow" />
+          </footer>
         </div>
       </div>
 
@@ -206,7 +210,7 @@ export function AboutNarrow({ visible, onNavigate, onOpenDesign }: Props) {
               spinFeel="narrow"
               initialActiveLabel="about"
               onLabelActivate={(label) => {
-                if (label === "about") {
+                if (label === "about" || label === "contact") {
                   closeMenu();
                   return;
                 }

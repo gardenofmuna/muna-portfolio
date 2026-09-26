@@ -1442,11 +1442,14 @@ export function InstallationShowPage({
                 spinFeel="narrow"
                 initialActiveLabel="installation"
                 onLabelActivate={(label) => {
+                  if (label === "contact") {
+                    leaveViaMenu("about");
+                    return;
+                  }
                   if (
                     label === "installation" ||
                     label === "design" ||
                     label === "about" ||
-                    label === "contact" ||
                     label === "photos"
                   ) {
                     leaveViaMenu(label);

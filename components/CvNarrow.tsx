@@ -243,12 +243,15 @@ export function CvNarrow({ visible, onNavigate, onOpenDesign }: Props) {
                   closeMenu();
                   return;
                 }
+                if (label === "contact") {
+                  leaveCv("about");
+                  return;
+                }
                 if (
                   label === "design" ||
                   label === "about" ||
                   label === "installation" ||
-                  label === "photos" ||
-                  label === "contact"
+                  label === "photos"
                 ) {
                   leaveCv(label);
                 }

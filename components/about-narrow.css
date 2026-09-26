@@ -86,13 +86,23 @@
   background: #fff;
 }
 
+/* Column fills the screen so a short bio still drops the footer to the
+   bottom, the landing footer's 24px above the edge. */
 .about-narrow__page {
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
   width: 100%;
+  min-height: 100%;
   margin: 0;
   padding: calc(var(--ab-chrome-pad) + var(--ab-nzeribe-h, 40px) + 28px)
     var(--ab-gutter)
-    calc(var(--ab-chrome-pad) + 48px);
+    var(--ab-chrome-pad);
+}
+
+.about-narrow__footer {
+  margin: auto calc(-1 * var(--ab-gutter)) 0;
+  padding-top: 48px;
 }
 
 .about-narrow__polaroid {

@@ -478,11 +478,14 @@ export function PhotosNarrow({ visible, onNavigate, onOpenDesign }: Props) {
                   closeMenu();
                   return;
                 }
+                if (label === "contact") {
+                  leavePhotos("about");
+                  return;
+                }
                 if (
                   label === "design" ||
                   label === "about" ||
                   label === "installation" ||
-                  label === "contact" ||
                   label === "cv + press"
                 ) {
                   leavePhotos(label);

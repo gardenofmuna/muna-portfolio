@@ -14,12 +14,17 @@ const TRACKING_EM = -0.05;
 type Props = {
   /** Contact view: white links on black (no white band). */
   inverted?: boolean;
+  /** `flow`: sits in a scrolling page; the parent owns the bottom pad. */
+  placement?: "overlay" | "flow";
 };
 
 /**
  * Quadrant 3 — linkedin / insta / email, a fixed 24px from the viewport bottom.
  */
-export function MobileFooterLinks({ inverted = false }: Props) {
+export function MobileFooterLinks({
+  inverted = false,
+  placement = "overlay",
+}: Props) {
   const { u, vw, vx } = useNarrowArtboardMetrics();
   const scale = vw > 0 && u > 0 ? u : 1;
   const ink = inverted ? "#fff" : "#000";
@@ -41,13 +46,19 @@ export function MobileFooterLinks({ inverted = false }: Props) {
   return (
     <nav
       aria-label="Contact links"
-      className="pointer-events-auto absolute z-[46] flex flex-row items-center justify-center"
-      style={{
-        left: vx,
-        width: vw > 0 ? vw : "100%",
-        bottom: NARROW_CHROME_SCREEN_PAD,
-        gap: NARROW_FOOTER_LINK_GAP_PX * scale,
-      }}
+      className={`pointer-events-auto flex flex-row items-center justify-center ${
+        placement === "flow" ? "relative w-full" : "absolute z-[46]"
+      }`}
+      style={
+        placement === "flow"
+          ? { gap: NARROW_FOOTER_LINK_GAP_PX * scale }
+          : {
+              left: vx,
+              width: vw > 0 ? vw : "100%",
+              bottom: NARROW_CHROME_SCREEN_PAD,
+              gap: NARROW_FOOTER_LINK_GAP_PX * scale,
+            }
+      }
     >
       {CONTACT_LINKS.map(({ label, href, external }) => (
         <button

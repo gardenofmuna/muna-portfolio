@@ -260,6 +260,10 @@ export function InstallationNarrow({
                   closeMenu();
                   return;
                 }
+                if (label === "contact") {
+                  leaveInstallation("about");
+                  return;
+                }
                 if (
                   label === "design" ||
                   label === "about" ||

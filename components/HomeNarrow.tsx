@@ -79,6 +79,8 @@ export function HomeNarrow({
   const [photosOpen, setPhotosOpen] = useState(false);
   /** Full-page CV — opens on tapping the centred “cv + press” label. */
   const [cvOpen, setCvOpen] = useState(false);
+  /** Tapping “contact” opens the about page; the wheel still rests on contact. */
+  const [contactOpen, setContactOpen] = useState(false);
   const projectRef = useRef(project);
   projectRef.current = project;
 
@@ -108,6 +110,7 @@ export function HomeNarrow({
     setInstallationShow(null);
     setPhotosOpen(false);
     setCvOpen(false);
+    setContactOpen(false);
     setProject(next);
     document.title = `${next.title} | Muna | Portfolio`;
     if (window.location.pathname !== DESIGN_PROJECT_PATH) {
@@ -143,6 +146,7 @@ export function HomeNarrow({
     setInstallationShow(null);
     setPhotosOpen(label === "photos");
     setCvOpen(label === "cv + press");
+    setContactOpen(false);
     setEnteredFromLanding(false);
     document.title = "Muna | Portfolio";
     if (label && (NARROW_NAV_LABELS as readonly string[]).includes(label)) {
@@ -163,6 +167,7 @@ export function HomeNarrow({
     const onPop = () => {
       setPhotosOpen(false);
       setCvOpen(false);
+      setContactOpen(false);
       if (window.location.pathname === "/") {
         setProject(null);
         setInstallationShow(null);
@@ -198,7 +203,7 @@ export function HomeNarrow({
   const previewLabel =
     wheelInteracting && hoverNavLabel ? hoverNavLabel : activeLabel;
   /** Full-page about — settle or tap “about”. */
-  const showAboutPage = !project && activeLabel === "about";
+  const showAboutPage = !project && (activeLabel === "about" || contactOpen);
   const showAboutBio =
     !project &&
     !showAboutPage &&
@@ -238,6 +243,7 @@ export function HomeNarrow({
     setInstallationShow(null);
     setPhotosOpen(label === "photos");
     setCvOpen(label === "cv + press");
+    setContactOpen(false);
     if ((NARROW_NAV_LABELS as readonly string[]).includes(label)) {
       setActiveLabel(label as NarrowLabel);
     }
@@ -287,6 +293,10 @@ export function HomeNarrow({
               }
               if (label === "about" || label === "installation") {
                 setActiveLabel(label);
+                return;
+              }
+              if (label === "contact") {
+                setContactOpen(true);
                 return;
               }
               if (label === "photos") {
