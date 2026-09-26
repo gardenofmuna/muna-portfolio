@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import {
   useCallback,
   useEffect,
@@ -9,10 +8,17 @@ import {
   type CSSProperties,
 } from "react";
 
-import { AboutBio } from "@/components/AboutBio";
 import { CircularNavWheel } from "@/components/CircularNavWheel";
 import { useNarrowArtboardMetrics } from "@/components/NarrowArtboard";
 import { SiteWordmark } from "@/components/SiteWordmark";
+import {
+  CV_EMAIL,
+  CV_PDF,
+  CV_SECTIONS,
+  CV_SITE,
+  type CvEntry,
+  type CvSection,
+} from "@/data/cv";
 import { DESKTOP_LAYOUT_H, DESKTOP_LAYOUT_W } from "@/lib/desktop-stage";
 import { NARROW_NZERIBE } from "@/lib/narrow-stage";
 import {
@@ -20,7 +26,7 @@ import {
   subscribeStableLayout,
 } from "@/lib/stable-viewport";
 
-import "./about-narrow.css";
+import "./cv-narrow.css";
 
 type Props = {
   visible: boolean;
@@ -33,9 +39,11 @@ const MENU_ASPECT = 107 / 74;
 const MENU_HEIGHT_SCALE = 0.85;
 
 /**
- * Mobile / tablet about page — polaroid + flowing bio under shared chrome.
+ * Mobile / tablet CV — every section in one column on a white page under
+ * the shared chrome (wordmark + hamburger). No name heading; the wordmark
+ * already says whose it is.
  */
-export function AboutNarrow({ visible, onNavigate, onOpenDesign }: Props) {
+export function CvNarrow({ visible, onNavigate, onOpenDesign }: Props) {
   const { u } = useNarrowArtboardMetrics();
   const [menuOpen, setMenuOpen] = useState(false);
   const [viewportH, setViewportH] = useState(0);
@@ -59,18 +67,19 @@ export function AboutNarrow({ visible, onNavigate, onOpenDesign }: Props) {
   }, []);
 
   useEffect(() => {
-    const read = () => {
-      setViewportH(readStableLayoutSize().height);
-    };
+    const read = () => setViewportH(readStableLayoutSize().height);
     read();
     return subscribeStableLayout(read);
   }, []);
 
+  const [wasVisible, setWasVisible] = useState(visible);
+  if (wasVisible !== visible) {
+    setWasVisible(visible);
+    if (!visible) setMenuOpen(false);
+  }
+
   useEffect(() => {
-    if (!visible) {
-      setMenuOpen(false);
-      return;
-    }
+    if (!visible) return;
     const scroller = scrollerRef.current;
     if (scroller) scroller.scrollTop = 0;
   }, [visible]);
@@ -103,10 +112,10 @@ export function AboutNarrow({ visible, onNavigate, onOpenDesign }: Props) {
 
   const closeMenu = useCallback(() => setMenuOpen(false), []);
 
-  const leaveAbout = useCallback(
+  const leaveCv = useCallback(
     (label: string) => {
       closeMenu();
-      if (label === "about") return;
+      if (label === "cv + press") return;
       onNavigate(label);
       if (label === "design") onOpenDesign();
     },
@@ -117,45 +126,39 @@ export function AboutNarrow({ visible, onNavigate, onOpenDesign }: Props) {
 
   return (
     <div
-      className="about-narrow"
+      className="cv-narrow"
       data-visible={visible ? "" : undefined}
       data-menu-state={menuOpen ? "open" : "hidden"}
       aria-hidden={!visible}
       inert={!visible ? true : undefined}
       style={
         {
-          "--ab-nzeribe-h": `${nzeribeH}px`,
-          "--ab-menu-w": `${menuW}px`,
-          "--ab-menu-h": `${menuH}px`,
+          "--cvn-nzeribe-h": `${nzeribeH}px`,
+          "--cvn-menu-w": `${menuW}px`,
+          "--cvn-menu-h": `${menuH}px`,
           transition: reduceMotion
             ? "none"
             : `opacity ${fadeMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
         } as CSSProperties
       }
     >
-      <header ref={headerRef} className="about-narrow__header">
+      <header ref={headerRef} className="cv-narrow__header">
         <SiteWordmark
           href="/"
           placement="flow"
           onClick={(event) => {
             event.preventDefault();
-            leaveAbout("contact");
+            leaveCv("contact");
           }}
         />
         <button
           type="button"
-          className="about-narrow__menu-toggle"
-          aria-label={
-            menuOpen ? "Close navigation menu" : "Open navigation menu"
-          }
+          className="cv-narrow__menu-toggle"
+          aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((open) => !open)}
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 107 74"
-            aria-hidden
-          >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 107 74" aria-hidden>
             <path
               fillRule="evenodd"
               fill="#000"
@@ -167,33 +170,63 @@ export function AboutNarrow({ visible, onNavigate, onOpenDesign }: Props) {
 
       <div
         ref={scrollerRef}
-        className="about-narrow__scroll"
+        className="cv-narrow__scroll"
         inert={menuOpen ? true : undefined}
       >
-        <div className="about-narrow__page">
-          <div className="about-narrow__polaroid">
-            <Image
-              src="/muna-polaroid.webp"
-              alt="Muna"
-              fill
-              className="about-narrow__polaroid-image"
-              sizes="(max-width: 700px) 52vw, 220px"
-              priority
-            />
-          </div>
-          <AboutBio visible={visible} flow />
-        </div>
+        <article className="cv-narrow__page" aria-label="CV">
+          <p className="cv-narrow__contact">
+            <a href={`mailto:${CV_EMAIL}`}>{CV_EMAIL}</a>
+            <span aria-hidden> | </span>
+            <a href={CV_SITE.href} target="_blank" rel="noreferrer">
+              {CV_SITE.label}
+            </a>
+          </p>
+          <a
+            className="cv-narrow__download"
+            href={CV_PDF.href}
+            download={CV_PDF.filename}
+          >
+            download cv
+          </a>
+          {CV_SECTIONS.map((section) => (
+            <CvNarrowSection key={section.id} section={section} />
+          ))}
+        </article>
+        <footer className="cv-narrow__footer">
+          <button
+            type="button"
+            className="cv-narrow__top"
+            aria-label="Scroll to top"
+            onClick={() =>
+              scrollerRef.current?.scrollTo({ top: 0, behavior: "smooth" })
+            }
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="4 8 24 18"
+              width="28"
+              height="21"
+              aria-hidden
+            >
+              <rect x="4" y="8" width="24" height="2" fill="currentColor" />
+              <polygon
+                points="16,14 6,24 7.4,25.4 16,16.8 24.6,25.4 26,24"
+                fill="currentColor"
+              />
+            </svg>
+          </button>
+        </footer>
       </div>
 
       {menuOpen && navScale > 0 ? (
         <div
-          className="about-narrow__nav-overlay"
+          className="cv-narrow__nav-overlay"
           role="dialog"
           aria-modal="true"
           aria-label="Site navigation"
         >
           <div
-            className="about-narrow__nav-stage"
+            className="cv-narrow__nav-stage"
             style={{
               width: DESKTOP_LAYOUT_W,
               height: DESKTOP_LAYOUT_H,
@@ -204,19 +237,20 @@ export function AboutNarrow({ visible, onNavigate, onOpenDesign }: Props) {
               layout="desktop"
               containment="stage"
               spinFeel="narrow"
-              initialActiveLabel="about"
+              initialActiveLabel="cv + press"
               onLabelActivate={(label) => {
-                if (label === "about") {
+                if (label === "cv + press") {
                   closeMenu();
                   return;
                 }
                 if (
                   label === "design" ||
+                  label === "about" ||
                   label === "installation" ||
                   label === "photos" ||
-                  label === "cv + press"
+                  label === "contact"
                 ) {
-                  leaveAbout(label);
+                  leaveCv(label);
                 }
               }}
             />
@@ -224,5 +258,55 @@ export function AboutNarrow({ visible, onNavigate, onOpenDesign }: Props) {
         </div>
       ) : null}
     </div>
+  );
+}
+
+function CvNarrowSection({ section }: { section: CvSection }) {
+  return (
+    <section className="cv-narrow__section">
+      <h2 className="cv-narrow__heading">{section.heading}</h2>
+      {section.entries ? (
+        <ul className="cv-narrow__entries">
+          {section.entries.map((entry) => (
+            <CvNarrowRow key={`${entry.dates}-${entry.title}`} entry={entry} />
+          ))}
+        </ul>
+      ) : null}
+      {section.list ? (
+        <ul className="cv-narrow__list">
+          {section.list.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      ) : null}
+    </section>
+  );
+}
+
+function CvNarrowRow({ entry }: { entry: CvEntry }) {
+  return (
+    <li className="cv-narrow__entry">
+      <p className="cv-narrow__dates">
+        {entry.dates}
+        {entry.dates && entry.datesItalic ? " " : null}
+        {entry.datesItalic ? <em>{entry.datesItalic}</em> : null}
+      </p>
+      <div>
+        <p className="cv-narrow__title">
+          {entry.href ? (
+            <a href={entry.href} target="_blank" rel="noreferrer">
+              {entry.title}
+            </a>
+          ) : (
+            entry.title
+          )}
+        </p>
+        {entry.lines.map((line) => (
+          <p key={line} className="cv-narrow__line">
+            {line}
+          </p>
+        ))}
+      </div>
+    </li>
   );
 }

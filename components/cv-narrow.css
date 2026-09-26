@@ -1,0 +1,291 @@
+/*
+ * Narrow / tablet CV — the desktop CV's sections in one column on white.
+ * Chrome matches about / installation / project (wordmark + hamburger);
+ * type matches the desktop sheet (Arial Bold heads, Garamont body).
+ */
+
+.cv-narrow {
+  --cvn-gutter: var(--narrow-gutter, 20px);
+  --cvn-chrome-pad: var(--narrow-chrome-pad, 24px);
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: #fff;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.cv-narrow[data-visible] {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.cv-narrow__header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  padding: var(--cvn-chrome-pad) var(--cvn-gutter);
+  pointer-events: none;
+  background: #fff;
+  transition: box-shadow 180ms ease;
+}
+
+.cv-narrow__header[data-scrolled] {
+  box-shadow: 0 1px 0 rgb(0 0 0 / 6%);
+}
+
+.cv-narrow[data-menu-state="open"] .cv-narrow__header {
+  background: transparent;
+  box-shadow: none;
+  /* Above nav overlay so the hamburger stays tappable (same as design). */
+  z-index: 60;
+}
+
+.cv-narrow__header .project-narrow__wordmark,
+.cv-narrow__menu-toggle {
+  pointer-events: auto;
+}
+
+.cv-narrow[data-menu-state="open"] .project-narrow__wordmark {
+  visibility: hidden;
+}
+
+.cv-narrow__menu-toggle {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  width: var(--cvn-menu-w);
+  height: var(--cvn-menu-h, var(--cvn-nzeribe-h));
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cv-narrow__menu-toggle svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.cv-narrow__scroll {
+  position: absolute;
+  inset: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
+  background: #fff;
+}
+
+.cv-narrow__page {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 640px;
+  margin: 0;
+  padding: calc(var(--cvn-chrome-pad) + var(--cvn-nzeribe-h, 40px) + 28px)
+    var(--cvn-gutter)
+    0;
+  color: #000;
+}
+
+/* Back-to-top — same glyph and scale as the narrow design page footer. */
+.cv-narrow__footer {
+  --cvn-u: calc((100vw - 2 * var(--cvn-gutter)) / 704);
+  display: flex;
+  justify-content: center;
+  padding: 36px var(--cvn-gutter)
+    calc(var(--cvn-chrome-pad) + env(safe-area-inset-bottom, 0px));
+}
+
+.cv-narrow__top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Invisible padding widens the tap target; negative margin keeps layout. */
+  margin: -14px 0;
+  padding: 14px 18px;
+  border: 0;
+  background: transparent;
+  color: #000;
+  line-height: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cv-narrow__top svg {
+  display: block;
+  height: calc(28 * var(--cvn-u));
+  width: auto;
+}
+
+.cv-narrow__top:active {
+  opacity: 0.65;
+}
+
+@media (min-width: 700px) {
+  .cv-narrow__top svg {
+    height: calc(34 * var(--cvn-u));
+  }
+}
+
+.cv-narrow__page a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.cv-narrow__contact,
+.cv-narrow__dates,
+.cv-narrow__line,
+.cv-narrow__list {
+  margin: 0;
+  font-family: "LTC Garamont Display OT", "Times New Roman", serif;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+  -webkit-text-stroke: 0.5px currentColor;
+  paint-order: stroke fill;
+}
+
+.cv-narrow__contact {
+  margin-bottom: 16px;
+  font-size: clamp(16px, 4.3vw, 19px);
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+/* Same pill as the desktop CV's hover "download cv" label. */
+.cv-narrow__page a.cv-narrow__download {
+  display: inline-block;
+  margin: 0 0 40px;
+  padding: 9px 16px 10px;
+  border-radius: 999px;
+  background: #000;
+  color: #fff;
+  font-family: "Arial", Helvetica, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 120ms ease;
+}
+
+.cv-narrow__page a.cv-narrow__download:active {
+  opacity: 0.7;
+}
+
+.cv-narrow__section + .cv-narrow__section {
+  margin-top: 40px;
+}
+
+.cv-narrow__heading,
+.cv-narrow__title {
+  font-family: "Arial", Helvetica, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+}
+
+.cv-narrow__heading {
+  margin: 0 0 18px;
+  font-size: clamp(22px, 6vw, 27px);
+  line-height: 1;
+}
+
+.cv-narrow__entries,
+.cv-narrow__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cv-narrow__entries {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.cv-narrow__entry {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  column-gap: 14px;
+  align-items: baseline;
+}
+
+.cv-narrow__dates {
+  font-size: clamp(14px, 3.8vw, 16px);
+  line-height: 1.15;
+}
+
+.cv-narrow__title {
+  margin: 0 0 4px;
+  font-size: clamp(15px, 4vw, 17px);
+  line-height: 1.15;
+}
+
+.cv-narrow__line {
+  font-size: clamp(16px, 4.3vw, 18px);
+  line-height: 1.15;
+}
+
+.cv-narrow__list {
+  font-size: clamp(16px, 4.3vw, 18px);
+  line-height: 1.35;
+}
+
+/* Hamburger nav overlay — same stage scale as project / installation. */
+.cv-narrow__nav-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  overflow: hidden;
+  background: #fff;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.cv-narrow__nav-stage .overlay-nav-rotator [id^="circular-nav-item-"] {
+  color: #a3a3a3;
+  display: inline-block;
+  width: max-content;
+  max-width: none;
+  line-height: 1;
+  height: 1em;
+  padding: 0;
+  margin: 0;
+  pointer-events: auto;
+}
+
+.cv-narrow__nav-stage .overlay-nav-rotator [id^="circular-nav-item-"][data-active] {
+  color: #000000;
+}
+
+.cv-narrow__nav-stage {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: left top;
+  touch-action: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cv-narrow,
+  .cv-narrow__header {
+    transition: none !important;
+  }
+}

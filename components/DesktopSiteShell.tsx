@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import type { CSSProperties, ReactNode } from "react";
-import { useContext, useEffect, useState } from "react";
+import type { CSSProperties, ReactNode, RefObject } from "react";
+import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { DesktopStageViewContext } from "@/components/DesktopStageCanvas";
@@ -21,6 +21,7 @@ import {
   INSTALL_HANDOFF_EASE,
   INSTALL_HANDOFF_MS,
 } from "@/lib/installation-layout";
+import { useSafari } from "@/lib/safari";
 import "./desktop-site-shell.css";
 
 export type DesktopMenuState = "open" | "hidden";
@@ -112,15 +113,27 @@ export function DesktopSiteShell({
     : getDesktopShellGridStyle(menuState);
   const reduceMotion = useReducedMotionPref();
   const layerState = navLayerState ?? menuState;
-  /* Match hero FLIP: same ms/ease; slight delay on reveal so it starts with the transform. */
+  const navLayerRef = useRef<HTMLDivElement>(null);
+  const safari = useSafari();
+  useNavLayerMotion(navLayerRef, layerState, {
+    safari,
+    reduceMotion,
+    navHandoff,
+    navInstant,
+  });
+  /* Match hero FLIP: same ms/ease; slight delay on reveal so it starts with the transform.
+     Safari drops that transition when the grid changes in the same frame, so the
+     dial is eased on the compositor instead. */
   const navTransition =
-    reduceMotion || navInstant
+    reduceMotion || navInstant || (safari && !navHandoff)
       ? "none"
       : navHandoff
         ? layerState === "open"
           ? `opacity ${INSTALL_HANDOFF_MS}ms ${INSTALL_HANDOFF_EASE} 32ms, transform ${INSTALL_HANDOFF_MS}ms ${INSTALL_HANDOFF_EASE} 32ms`
           : `opacity ${INSTALL_HANDOFF_MS}ms ${INSTALL_HANDOFF_EASE}, transform ${INSTALL_HANDOFF_MS}ms ${INSTALL_HANDOFF_EASE}`
-        : "opacity 260ms cubic-bezier(0.16, 1, 0.3, 1), transform 260ms cubic-bezier(0.16, 1, 0.3, 1)";
+        : layerState === "hidden"
+          ? "opacity 280ms cubic-bezier(0.22, 1, 0.36, 1), transform 280ms cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 280ms"
+          : "opacity 280ms cubic-bezier(0.22, 1, 0.36, 1), transform 280ms cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 0s";
   const showOpenHamburger =
     menuState === "hidden" && layerState === "hidden" && Boolean(onOpenMenu);
   /* Close control only after hamburger reopen (menuVeil), not at natural scroll-top open. */
@@ -211,6 +224,7 @@ export function DesktopSiteShell({
           </button>
         )}
         <div
+          ref={navLayerRef}
           className="desktop-site-shell__nav-layer"
           data-menu-state={layerState}
           data-handoff={navHandoff ? "" : undefined}
@@ -342,6 +356,62 @@ function MenuToggleIcon() {
       />
     </svg>
   );
+}
+
+const NAV_EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
+
+/** CSS transitions on this layer are dropped when the shell grid changes.
+    Hardcoded keyframes: reading computed style after the class commit is
+    already the target, so it cannot be the animation's start. */
+function useNavLayerMotion(
+  ref: RefObject<HTMLDivElement | null>,
+  layerState: DesktopMenuState,
+  opts: {
+    safari: boolean;
+    reduceMotion: boolean;
+    navHandoff: boolean;
+    navInstant: boolean;
+  },
+) {
+  const prevLayer = useRef(layerState);
+  const animRef = useRef<Animation | null>(null);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    const prev = prevLayer.current;
+    prevLayer.current = layerState;
+    if (!el || !opts.safari || prev === layerState) return;
+    if (opts.reduceMotion || opts.navHandoff || opts.navInstant) return;
+    animRef.current?.cancel();
+    const open = layerState === "open";
+    el.style.visibility = "visible";
+    const shown = {
+      transform: "translate3d(0px, 0px, 0px)",
+      opacity: "1",
+    };
+    const hidden = {
+      transform: "translate3d(-120px, 0px, 0px)",
+      opacity: "0",
+    };
+    const anim = el.animate(open ? [hidden, shown] : [shown, hidden], {
+      duration: 280,
+      easing: NAV_EASE,
+      fill: "forwards",
+    });
+    animRef.current = anim;
+    const finish = () => {
+      if (animRef.current !== anim) return;
+      anim.cancel();
+      animRef.current = null;
+      el.style.removeProperty("visibility");
+    };
+    anim.onfinish = finish;
+    return () => {
+      anim.cancel();
+      if (animRef.current === anim) animRef.current = null;
+      el.style.removeProperty("visibility");
+    };
+  }, [layerState, opts.safari, opts.reduceMotion, opts.navHandoff, opts.navInstant, ref]);
 }
 
 function useReducedMotionPref() {

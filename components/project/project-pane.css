@@ -102,6 +102,13 @@
   width: 100%;
 }
 
+/* Bleed box stays transparent while the scale eases, so it never paints
+   a white slab over the dial. will-change only for that short transform. */
+.project-pane__inner[data-scaling] {
+  background: transparent;
+  will-change: transform;
+}
+
 .project-pane__inner {
   /*
    * Artboard 9 open composition — a smart object.

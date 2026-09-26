@@ -263,7 +263,8 @@ export function InstallationNarrow({
                 if (
                   label === "design" ||
                   label === "about" ||
-                  label === "photos"
+                  label === "photos" ||
+                  label === "cv + press"
                 ) {
                   leaveInstallation(label);
                 }

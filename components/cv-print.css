@@ -1,0 +1,67 @@
+/* The CV on plain white paper (`/cv-print`), printed to the downloadable PDF.
+   Same content and type as the sheet on the site; no colour, grain or fold. */
+
+/* The site pins every page to the viewport; this one scrolls and prints. */
+html:has(.cv-print),
+html:has(.cv-print) body,
+html:has(.cv-print) #__next {
+  position: static;
+  height: auto;
+  overflow: visible;
+  background: #fff;
+}
+
+html:has(.cv-print) body {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.cv-print {
+  display: flex;
+  justify-content: center;
+  padding: 48px 24px;
+}
+
+/* Same measure as the sheet on the site, so the lines break the same way. */
+.cv-pane.cv-pane--print {
+  flex: none;
+  width: 892px;
+  padding: 64px 72px 88px;
+  background: #fff;
+  clip-path: none;
+  isolation: auto;
+  backface-visibility: visible;
+}
+
+.cv-pane.cv-pane--print::before {
+  display: none;
+}
+
+.cv-pane--print .cv-pane__entry,
+.cv-pane--print .cv-pane__list li {
+  break-inside: avoid;
+}
+
+.cv-pane--print .cv-pane__heading {
+  break-after: avoid;
+}
+
+@page {
+  size: letter;
+  margin: 0.55in 0.6in;
+}
+
+/* Letter width minus margins is ~701px; the 748px text measure is zoomed
+   to fit, keeping the on-screen line breaks. */
+@media print {
+  .cv-print {
+    display: block;
+    padding: 0;
+  }
+
+  .cv-pane.cv-pane--print {
+    width: 748px;
+    padding: 0;
+    zoom: 0.93;
+  }
+}

@@ -587,3 +587,9 @@ export const SHOT_ON_FILM_STILLS: readonly ShotOnFilmStill[] = [
     taken: "July ‘23",
   },
 ];
+
+/** Every opening of the photos reel lands on this still. */
+export const SHOT_ON_FILM_START = Math.max(
+  0,
+  SHOT_ON_FILM_STILLS.findIndex((s) => s.src === "/photos/film/000035.webp"),
+);

@@ -12,6 +12,7 @@ import {
 } from "react";
 
 import { DesktopStageViewContext } from "@/components/DesktopStageCanvas";
+import { readSafari, useSafari } from "@/lib/safari";
 import { scrollSectionToMenuAlign } from "@/components/project/scrollSectionToMenuAlign";
 import { DESKTOP_LAYOUT_W, getDesktopSignatureZoneWidth, getDesktopStageMetrics } from "@/lib/desktop-stage";
 import { useCoarsePointer } from "@/hooks/useCoarsePointer";
@@ -39,7 +40,12 @@ type Props = {
 };
 
 const SCROLL_HIDE_THRESHOLD = 48;
-const SMART_EASE = "420ms cubic-bezier(0.22, 1, 0.36, 1)";
+/**
+ * Same duration and curve as the nav-wheel slide. Transform only — a height
+ * transition under the stage's scale() makes Safari relayout every frame.
+ */
+const SMART_MS = 280;
+const SMART_EASE = `${SMART_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`;
 /** Extra inner width so scaled overflow (poster fan + shadow) stays inside the transform box. */
 const INNER_BLEED = 200;
 
@@ -69,9 +75,14 @@ export function ProjectContentPane({
     innerH: 0,
   });
   const [reduceMotion, setReduceMotion] = useState(false);
-  const [easeScale, setEaseScale] = useState(false);
+  const safari = useSafari();
+  /** True while the smart-object scale is easing. Keeps bleed/origin stable. */
+  const [scaling, setScaling] = useState(false);
+  const [holdBleed, setHoldBleed] = useState(menuState === "hidden");
   const coarsePointer = useCoarsePointer();
-  const menuStateRef = useRef(menuState);
+  const appliedScaleRef = useRef(smart.scale || 1);
+  const scaleGenRef = useRef(0);
+  const [trackedScale, setTrackedScale] = useState(smart.scale);
   const stageView = useContext(DesktopStageViewContext);
   const layoutW = stageView.layoutW || DESKTOP_LAYOUT_W;
   const stageScale = stageView.scale;
@@ -84,13 +95,31 @@ export function ProjectContentPane({
     return () => mq.removeEventListener("change", sync);
   }, []);
 
-  useEffect(() => {
-    if (menuStateRef.current === menuState) return undefined;
-    menuStateRef.current = menuState;
-    setEaseScale(true);
-    const t = window.setTimeout(() => setEaseScale(false), 450);
-    return () => window.clearTimeout(t);
-  }, [menuState]);
+  if (
+    (menuState === "hidden" || (smart.scale || 1) > 1.0005) &&
+    !holdBleed
+  ) {
+    setHoldBleed(true);
+  }
+  let beginScale = false;
+  if (trackedScale !== smart.scale) {
+    const from = trackedScale || 1;
+    const to = smart.scale || 1;
+    setTrackedScale(smart.scale);
+    if (!reduceMotion && !safari && Math.abs(from - to) > 0.0005) {
+      beginScale = true;
+      setScaling(true);
+    }
+  }
+  if (
+    holdBleed &&
+    !scaling &&
+    !beginScale &&
+    menuState === "open" &&
+    Math.abs((smart.scale || 1) - 1) < 0.0005
+  ) {
+    setHoldBleed(false);
+  }
 
   const updateSmart = useCallback(() => {
     const inner = innerRef.current;
@@ -193,7 +222,64 @@ export function ProjectContentPane({
       el.scrollTop = el.scrollTop * (nextScale / prevScale);
     }
     scaleRef.current = nextScale;
+    /* Chrome follows the CSS scale from this frame. Safari snaps the
+       invisible page below and eases the visible sheet itself — a layout
+       read here would start that ease before the scale has been applied. */
+    if (!readSafari()) el?.dispatchEvent(new CustomEvent("panegeometry"));
   }, [menuState, smart.scale]);
+
+  /* Explicit scale(from) → scale(to). A CSS transition that starts from
+     `none` snaps in Safari, which is the jump when the dial comes back. */
+  useLayoutEffect(() => {
+    const inner = innerRef.current;
+    if (!inner) return undefined;
+    const target = smart.scale || 1;
+    const from = appliedScaleRef.current || 1;
+    if (reduceMotion || Math.abs(from - target) < 0.0005) {
+      appliedScaleRef.current = target;
+      return undefined;
+    }
+    appliedScaleRef.current = target;
+    /* A forced reflow under the stage's scale() makes Safari drop the
+       transition and pop the dial and the sheet in one frame. Snap the
+       invisible page; CvPane eases the visible sheet on the compositor. */
+    if (readSafari()) {
+      inner.style.transition = "none";
+      if (Math.abs(target - 1) < 0.0005) inner.style.removeProperty("transform");
+      else inner.style.transform = `scale(${target})`;
+      inner
+        .closest("[data-project-scroll]")
+        ?.dispatchEvent(new CustomEvent("panegeometry"));
+      return undefined;
+    }
+    const gen = ++scaleGenRef.current;
+    inner.style.transition = "none";
+    inner.style.transform = `scale(${from})`;
+    void inner.offsetWidth;
+    inner.style.transition = `transform ${SMART_EASE}`;
+    inner.style.transform = `scale(${target})`;
+    inner.closest("[data-project-scroll]")?.dispatchEvent(new CustomEvent("panegeometry"));
+
+    const finish = () => {
+      if (gen !== scaleGenRef.current) return;
+      scaleGenRef.current += 1;
+      if (Math.abs(target - 1) < 0.0005) {
+        inner.style.transition = "none";
+        inner.style.removeProperty("transform");
+      }
+      setScaling(false);
+    };
+    const onEnd = (event: TransitionEvent) => {
+      if (event.target !== inner || event.propertyName !== "transform") return;
+      finish();
+    };
+    inner.addEventListener("transitionend", onEnd);
+    const timer = window.setTimeout(finish, SMART_MS + 80);
+    return () => {
+      window.clearTimeout(timer);
+      inner.removeEventListener("transitionend", onEnd);
+    };
+  }, [smart.scale, reduceMotion]);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -281,19 +367,23 @@ export function ProjectContentPane({
       userClosedMenuRef.current = false;
       const wasOpen = menuState === "open";
       if (wasOpen) onMenuStateChange("hidden");
-      /* Wait for menu-hide + smart-object ease (420ms), then one smooth scroll. */
+      /* Wait for the smart-object scale, then one smooth scroll. */
       scrollSectionToMenuAlign(sectionId, {
-        delayMs: wasOpen ? 440 : 0,
+        delayMs: wasOpen ? SMART_MS + 40 : 0,
       });
     },
     [menuState, onMenuStateChange],
   );
 
-  const transition =
-    reduceMotion || !easeScale
-      ? "none"
-      : `transform ${SMART_EASE}, height ${SMART_EASE}`;
-  const bleed = menuState === "hidden" ? INNER_BLEED : 0;
+  const transformTransition =
+    reduceMotion || !scaling ? "none" : `transform ${SMART_EASE}`;
+  const bleed =
+    menuState === "hidden" ||
+    holdBleed ||
+    scaling ||
+    (smart.scale || 1) > 1.0005
+      ? INNER_BLEED
+      : 0;
   const metrics = getDesktopStageMetrics();
   const paneContentW =
     smart.baseW > 0
@@ -321,13 +411,13 @@ export function ProjectContentPane({
             style={{
               height:
                 smart.innerH > 0 ? smart.innerH * smart.scale : undefined,
-              transition,
               ["--smart-scale" as string]: String(smart.scale || 1),
             }}
           >
             <div
               ref={innerRef}
               className="project-pane__inner"
+              data-scaling={scaling ? "" : undefined}
               style={{
                 width: smart.baseW > 0 ? smart.baseW + bleed : "100%",
                 left: -bleed,
@@ -335,13 +425,14 @@ export function ProjectContentPane({
                   bleed > 0
                     ? `calc(${bleed}px + var(--project-gutter-left, 0px))`
                     : undefined,
-                /* scale(1) still makes a Safari compositor layer and a 1px seam. */
+                /* scale(1) at rest makes a Safari compositor layer and a 1px seam.
+                   Keep it only while the scale is actually easing. */
                 transform:
-                  Math.abs(smart.scale - 1) < 0.0005
-                    ? undefined
-                    : `scale(${smart.scale})`,
+                  scaling || Math.abs(smart.scale - 1) >= 0.0005
+                    ? `scale(${smart.scale})`
+                    : undefined,
                 transformOrigin: `${bleed}px top`,
-                transition,
+                transition: transformTransition,
                 ["--pane-content-w" as string]: paneContentW
                   ? `${paneContentW}px`
                   : undefined,

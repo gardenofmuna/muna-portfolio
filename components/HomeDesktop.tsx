@@ -5,7 +5,7 @@ import { startTransition, useCallback, useEffect, useRef, useState } from "react
 import { AboutBio, ABOUT_BIO_PIN_OFFSET_X } from "@/components/AboutBio";
 import { CircularNavWheel } from "@/components/CircularNavWheel";
 import { ContactTopLinks } from "@/components/ContactTopLinks";
-import { CvPressHoverAccordion } from "@/components/CvPressHoverAccordion";
+import { CV_TONES, CvPane } from "@/components/CvPane";
 import { DesignLandingIndex } from "@/components/DesignLandingIndex";
 import { DesktopSiteShell } from "@/components/DesktopSiteShell";
 import { DesktopStageCanvas } from "@/components/DesktopStageCanvas";
@@ -220,6 +220,15 @@ export function HomeDesktop({
     setInstallClosing(true);
   }, [reduceMotion]);
 
+  const onActiveLabelChange = useCallback((label: string) => {
+    setActiveLabel(label);
+    /* Leaving the CV resets the scroll-hidden menu / hamburger veil. */
+    if (label !== "cv + press") {
+      setMenuVeil(false);
+      setMenuState("open");
+    }
+  }, []);
+
   const goToLanding = useCallback(
     (label = "contact", opts?: { preserveWheel?: boolean }) => {
       setActiveLabel(label);
@@ -363,6 +372,18 @@ export function HomeDesktop({
    */
   const showLandingPreviews = !projectOpen && installationShow == null;
   const installOpen = installationShow != null;
+  /** cv + press shows the CV text straight in the middle quadrant. */
+  const cvShown = showLandingPreviews && previewLabel === "cv + press";
+  /* Each opening of the CV prints it on the next paper colour. */
+  const [cvPress, setCvPress] = useState(cvShown ? 0 : -1);
+  const [cvWasShown, setCvWasShown] = useState(cvShown);
+  if (cvWasShown !== cvShown) {
+    setCvWasShown(cvShown);
+    if (cvShown) setCvPress((n) => n + 1);
+  }
+  const cvTone = CV_TONES[Math.max(0, cvPress) % CV_TONES.length];
+  /** Case study or CV owns the middle quadrant — same scroll/menu behaviour. */
+  const paneOpen = projectOpen || cvShown;
   const showInstallGallery =
     (!projectOpen && previewLabel === "installation" && !installOpen) ||
     galleryHandoff;
@@ -410,7 +431,7 @@ export function HomeDesktop({
         layout="stage"
         showPolaroid={showLandingPreviews && previewLabel === "about"}
         menuState={
-          projectOpen
+          paneOpen
             ? menuState
             : /* Open zone as soon as close starts so the dial is present with
                the gallery neighbors — not after the hero FLIP settles. */
@@ -419,17 +440,17 @@ export function HomeDesktop({
               : "open"
         }
         navLayerState={
-          projectOpen
+          paneOpen
             ? undefined
             : installOpen && !installClosing
               ? "hidden"
               : "open"
         }
         /* Dial slide shares the hero FLIP duration/ease (in and out). */
-        navHandoff={!projectOpen && installOpen}
-        menuVeil={projectOpen && menuVeil}
+        navHandoff={!paneOpen && installOpen}
+        menuVeil={paneOpen && menuVeil}
         onOpenMenu={
-          projectOpen
+          paneOpen
             ? () => {
                 setMenuVeil(true);
                 setMenuState("open");
@@ -439,7 +460,7 @@ export function HomeDesktop({
               : undefined
         }
         onCloseMenu={
-          projectOpen
+          paneOpen
             ? () => {
                 setMenuVeil(false);
                 setMenuState("hidden");
@@ -468,9 +489,10 @@ export function HomeDesktop({
               : "Back to contact"
         }
         signatureCompact={
-          projectOpen ||
+          paneOpen ||
           installOpen ||
-          (!projectOpen && previewLabel === "installation")
+          previewLabel === "installation" ||
+          previewLabel === "cv + press"
         }
         nav={
           <CircularNavWheel
@@ -481,7 +503,7 @@ export function HomeDesktop({
             initialActiveLabel={
               initialProject && wheelEpoch === 0 ? "design" : activeLabel
             }
-            onActiveLabelChange={setActiveLabel}
+            onActiveLabelChange={onActiveLabelChange}
             onLabelActivate={onNavLabelActivate}
             onHoverLabelChange={setHoverNavLabel}
             onWheelInteractingChange={setWheelInteracting}
@@ -523,6 +545,25 @@ export function HomeDesktop({
                   }
                 }}
               />
+            </div>
+          ) : cvShown ? (
+            <div
+              className={
+                reduceMotion
+                  ? "desktop-site-shell__center-slot"
+                  : "desktop-site-shell__center-slot desktop-site-shell__quadrant-fill"
+              }
+            >
+              <ProjectContentPane
+                menuState={menuState}
+                signatureCompact
+                onMenuStateChange={(next) => {
+                  setMenuState(next);
+                  if (next === "hidden") setMenuVeil(false);
+                }}
+              >
+                <CvPane tone={cvTone} />
+              </ProjectContentPane>
             </div>
           ) : paneProject ? (
             <div
@@ -599,11 +640,6 @@ export function HomeDesktop({
             />
             <FilmHoverGif
               visible={showLandingPreviews && previewLabel === "film"}
-              layout="desktop"
-              stageLocked
-            />
-            <CvPressHoverAccordion
-              visible={showLandingPreviews && previewLabel === "cv + press"}
               layout="desktop"
               stageLocked
             />

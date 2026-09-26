@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "encode:installation": "node scripts/encode-installation-web.mjs"
+    "encode:installation": "node scripts/encode-installation-web.mjs",
+    "cv:pdf": "node scripts/build-cv-pdf.mjs"
   },
   "dependencies": {
     "framer-motion": "^12.34.3",

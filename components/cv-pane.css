@@ -1,0 +1,429 @@
+/* CV in the desktop middle quadrant — shares project-pane type scale, printed
+   on a pastel sheet whose colour changes with each opening (CvPane `tone`). */
+
+.cv-sheet {
+  /* Paper, the back of the sheet (dog ear), and the dark of the same hue
+     used for folds and shading. */
+  --cv-paper: #f4adc2;
+  --cv-back: #f7bfd0;
+  --cv-tint: 70 14 32;
+  --cv-ear: 52px;
+  --cv-cut: polygon(
+    var(--cv-ear) 0,
+    100% 0,
+    100% 100%,
+    0 100%,
+    0 var(--cv-ear)
+  );
+  /* Bottom of the sheet that blows in the wind, split into 16 hinged bands
+     (CvPane's WIND_STRIPS). */
+  --cv-wind-h: 480px;
+  --cv-band: calc(var(--cv-wind-h) / 16);
+  --cv-body-cut: polygon(
+    var(--cv-ear) 0,
+    100% 0,
+    100% calc(100% - var(--cv-wind-h)),
+    0 calc(100% - var(--cv-wind-h)),
+    0 var(--cv-ear)
+  );
+
+  position: relative;
+  margin: 0 0 80px;
+}
+
+.cv-sheet[data-tone="yellow"] {
+  --cv-paper: #f5dc8e;
+  --cv-tint: 70 52 8;
+}
+
+.cv-sheet[data-tone="green"] {
+  --cv-paper: #b4dcaa;
+  --cv-tint: 22 58 24;
+}
+
+.cv-sheet[data-tone="orange"] {
+  --cv-paper: #f7bd92;
+  --cv-tint: 80 36 12;
+}
+
+.cv-sheet[data-tone="purple"] {
+  --cv-paper: #cdb4ea;
+  --cv-tint: 46 22 72;
+}
+
+.cv-sheet[data-tone="blue"] {
+  --cv-paper: #a9c8f0;
+  --cv-tint: 16 38 76;
+}
+
+.cv-sheet[data-tone]:not([data-tone="pink"]) {
+  --cv-back: color-mix(in srgb, var(--cv-paper), #fff 22%);
+}
+
+/*
+ * On the desktop stage the visible sheet floats in the top layer (above the
+ * nav, veil and photos) and CvPane pins it over `.cv-anchor` every frame.
+ * The anchor is the real CV — invisible, but it scrolls the pane and keeps
+ * the links clickable and readable by assistive tech.
+ */
+/* No bottom margin: the pane's scroll padding already leaves the same
+   air under the sheet as under nzeribe1.webp, unscaled. */
+.cv-anchor {
+  margin: 0;
+}
+
+.cv-pane.cv-pane--anchor {
+  opacity: 0;
+  background: none;
+  clip-path: none;
+}
+
+/* Clicking the paper downloads the CV (CvPane). */
+@media (hover: hover) and (pointer: fine) {
+  .cv-pane.cv-pane--anchor {
+    cursor: pointer;
+  }
+}
+
+/* Keyboard / screen-reader route to the same PDF. */
+.cv-pane__download {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Follows the pointer over the paper; positioned by CvPane. */
+.cv-download-pill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 60;
+  pointer-events: none;
+}
+
+.cv-download-pill__label {
+  display: block;
+  margin: 16px 0 0 14px;
+  padding: 7px 13px 8px;
+  border-radius: 999px;
+  background: #000;
+  color: #fff;
+  font-family: "Arial", Helvetica, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  opacity: 0;
+  transform: scale(0.85);
+  transform-origin: 0 0;
+  transition:
+    opacity 160ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.cv-download-pill[data-shown] .cv-download-pill__label {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.cv-float {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 50;
+  pointer-events: none;
+  transform-origin: 0 0;
+}
+
+.cv-float[data-moving] {
+  will-change: transform;
+}
+
+.cv-float .cv-sheet {
+  margin: 0;
+}
+
+/*
+ * Shadow in the sheet's cut outline (so the dog ear gets a bevelled shadow).
+ * The blur is painted once; CvPane only moves it and fades it, which stays
+ * on the compositor in Chrome and Safari.
+ */
+.cv-sheet__shadow {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.56;
+  transform: translate3d(0, 12px, 0);
+  backface-visibility: hidden;
+}
+
+/* Blur lives on a child that never moves, so Safari paints it once and the
+   parent only transforms that bitmap. A filter on the transformed element
+   is re-blurred every frame and the arrival hitch is that re-blur. */
+.cv-sheet__shadow-blur {
+  position: absolute;
+  inset: 0;
+  filter: blur(11px);
+  pointer-events: none;
+}
+
+.cv-sheet__shadow-blur::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.16);
+  clip-path: var(--cv-cut);
+}
+
+.cv-sheet__mover {
+  position: relative;
+  z-index: 1;
+}
+
+.cv-sheet[data-moving] .cv-sheet__shadow,
+.cv-sheet[data-moving] .cv-sheet__mover,
+.cv-sheet[data-moving] .cv-pane__sheen {
+  will-change: transform, opacity;
+}
+
+/* One cached texture for the pink sheet while it curls. The mover's 3D
+   transform then only composites that texture. Removed with data-moving
+   so resting text stays sharp. */
+.cv-sheet[data-moving] .cv-sheet__mover > .cv-pane {
+  transform: translate3d(0, 0, 0);
+}
+
+.cv-pane {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+  padding: 64px 72px 88px;
+  background: var(--cv-paper);
+  color: #000;
+  backface-visibility: hidden;
+  clip-path: var(--cv-cut);
+}
+
+.cv-sheet[data-wind] .cv-sheet__mover > .cv-pane {
+  clip-path: var(--cv-body-cut);
+}
+
+/*
+ * Wind bands: each is a full-sheet box hinged on the top line of its band,
+ * nested in the band above so their bends add up down the page. The face
+ * is a band-sized window onto a copy of the CV lined up with the page, so
+ * the flat sheet looks whole and each layer stays small.
+ */
+.cv-strip {
+  --band-top: calc(100% - var(--cv-wind-h) + var(--i) * var(--cv-band));
+  --band-below: max(0px, calc(var(--cv-wind-h) - (var(--i) + 1) * var(--cv-band) - 1px));
+
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  /* Sixteen full CV copies. display:none keeps them out of the arrival
+     curl's 3D layer — visibility/content-visibility still get walked by
+     Safari when an ancestor has perspective, and that walk is the freeze. */
+  display: none;
+  visibility: hidden;
+  content-visibility: hidden;
+  transform-origin: 50% var(--band-top);
+}
+
+.cv-sheet[data-wind] .cv-strip {
+  display: block;
+  visibility: visible;
+  content-visibility: visible;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+/* Faces overlap their neighbours by a pixel each way so the antialiased
+   edges of a bent hinge never let the background through. */
+.cv-strip__face {
+  position: absolute;
+  top: calc(var(--band-top) - 1px);
+  bottom: var(--band-below);
+  left: 0;
+  right: 0;
+  overflow: hidden;
+  pointer-events: none;
+  backface-visibility: hidden;
+}
+
+.cv-pane.cv-strip__page {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(-1 * var(--band-below));
+  clip-path: none;
+}
+
+/* Tone follows how far the band is tipped from facing the viewer; faded
+   by CvPane. */
+.cv-strip__shade {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  background: rgb(var(--cv-tint) / 0.22);
+}
+
+/* Dog ear: the corner folded back over the page. The wrapper casts the
+   flap’s shadow; the flap itself is the back of the sheet. */
+.cv-pane__dogear {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  width: var(--cv-ear);
+  height: var(--cv-ear);
+  pointer-events: none;
+  filter: drop-shadow(1px 1.5px 3px rgb(var(--cv-tint) / 0.1));
+}
+
+.cv-pane__dogear::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+  background:
+    linear-gradient(
+      135deg,
+      rgb(var(--cv-tint) / 0.08) 50%,
+      rgb(var(--cv-tint) / 0) 64%,
+      rgba(255, 255, 255, 0.22) 100%
+    ),
+    var(--cv-back);
+}
+
+/* Light across the rolled corner, shade toward the far edge; faded by CvPane. */
+.cv-pane__sheen {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(255, 255, 255, 0.12) 18%,
+    rgba(255, 255, 255, 0) 34%,
+    rgba(0, 0, 0, 0) 62%,
+    rgb(var(--cv-tint) / 0.22) 100%
+  );
+}
+
+/* Paper grain */
+.cv-pane::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.2;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.3  0 0 0 0 0.1  0 0 0 0 0.15  0 0 0 0.9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+.cv-pane a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.cv-pane a:hover {
+  text-decoration-thickness: 2px;
+}
+
+.cv-pane__header {
+  margin-bottom: 64px;
+}
+
+.cv-pane .project-header__title {
+  font-size: 52.88px;
+}
+
+.cv-pane__contact {
+  margin-top: 14px;
+  font-size: 19.8px;
+  line-height: 1.2;
+}
+
+/* Two columns like the source CV: Education / Experience / Skills | Projects / Press. */
+.cv-pane__columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: 56px;
+  align-items: start;
+}
+
+.cv-pane__column {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  min-width: 0;
+}
+
+.cv-pane__heading {
+  margin: 0 0 24px;
+  font-family: "Arial", Helvetica, sans-serif;
+  font-size: 27px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+}
+
+.cv-pane__entries,
+.cv-pane__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cv-pane__entries {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.cv-pane__entry {
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr);
+  column-gap: 16px;
+  align-items: baseline;
+}
+
+.cv-pane__dates {
+  font-size: 16.2px;
+  line-height: 1.15;
+}
+
+.cv-pane__title {
+  margin: 0 0 4px;
+  font-family: "Arial", Helvetica, sans-serif;
+  font-size: 16.2px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+}
+
+.cv-pane__line {
+  font-size: 18px;
+  line-height: 1.12;
+}
+
+.cv-pane__list {
+  font-size: 18px;
+  line-height: 1.35;
+}

@@ -58,14 +58,6 @@ const MASTER_SIGNATURE_LEFT = 2229.7;
 /** Menu-hidden hamburger column — title/body start at x=301 on the 8514 scroll. */
 const MASTER_NAV_HIDDEN = 301;
 
-/**
- * Hamburger toggle in layout coords (see .desktop-site-shell__menu-toggle).
- * Hidden-state left gutter = navZoneClosed − hamburgerRight; the right
- * project gutter is compensated so that same air survives smart-object scale.
- */
-const HAMBURGER_LEFT_LAYOUT = 42;
-const HAMBURGER_WIDTH_LAYOUT = 53.5;
-
 const FRAME_SCALE_LAYOUT = DESKTOP_LAYOUT_H / REF_PAGE_HEIGHT;
 
 export function desktopStageCoverScale(
@@ -344,20 +336,9 @@ export function getDesktopStageShellStyle(
 ): CSSProperties {
   const m = getDesktopStageMetrics();
   const signatureZone = getDesktopSignatureZoneWidth(signatureCompact);
-  const baseW = Math.max(1, DESKTOP_LAYOUT_W - m.navZoneOpen - signatureZone);
-  const hiddenW = Math.max(1, DESKTOP_LAYOUT_W - m.navZoneClosed - signatureZone);
-  const smartScale = hiddenW / baseW;
-  /**
-   * Open: equal select-works ↔ content ↔ nzeribe air (projectGutterRight).
-   * Hidden: smart scale would inflate that right pad; shrink the unscaled pad
-   * so post-scale right air matches hamburger → “I” on the left.
-   */
-  const hamburgerRight = HAMBURGER_LEFT_LAYOUT + HAMBURGER_WIDTH_LAYOUT;
-  const leftGutterHidden = Math.max(0, m.navZoneClosed - hamburgerRight);
-  const gutterRight =
-    menuState === "hidden"
-      ? leftGutterHidden / smartScale
-      : m.projectGutterRight;
+  /* Right pad stays the open measure in both menu states. Shrinking it when
+     the dial hides widens the text and the lines rewrap. Scale carries the
+     same layout, pad included. */
 
   return {
     width: "100%",
@@ -369,6 +350,6 @@ export function getDesktopStageShellStyle(
     ["--shell-inset-top" as string]: `${m.inset}px`,
     ["--shell-inset-bottom" as string]: `${m.shellInsetBottom}px`,
     ["--project-gutter-left" as string]: `${m.projectGutter}px`,
-    ["--project-gutter-right" as string]: `${gutterRight}px`,
+    ["--project-gutter-right" as string]: `${m.projectGutterRight}px`,
   };
 }

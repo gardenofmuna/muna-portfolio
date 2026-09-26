@@ -15,7 +15,10 @@ import {
 import { CircularNavWheel } from "@/components/CircularNavWheel";
 import { useNarrowArtboardMetrics } from "@/components/NarrowArtboard";
 import { SiteWordmark } from "@/components/SiteWordmark";
-import { SHOT_ON_FILM_STILLS } from "@/data/shot-on-film";
+import {
+  SHOT_ON_FILM_START,
+  SHOT_ON_FILM_STILLS,
+} from "@/data/shot-on-film";
 import { DESKTOP_LAYOUT_H, DESKTOP_LAYOUT_W } from "@/lib/desktop-stage";
 import { NARROW_NZERIBE } from "@/lib/narrow-stage";
 import {
@@ -67,7 +70,7 @@ export function PhotosNarrow({ visible, onNavigate, onOpenDesign }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [viewportH, setViewportH] = useState(0);
   const [reduceMotion, setReduceMotion] = useState(false);
-  const [pos, setPos] = useState(0);
+  const [pos, setPos] = useState(SHOT_ON_FILM_START);
   const [dragDy, setDragDy] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [reel, setReel] = useState({ w: 0, h: 0, gutter: 20 });
@@ -107,7 +110,7 @@ export function PhotosNarrow({ visible, onNavigate, onOpenDesign }: Props) {
     setWasVisible(visible);
     if (!visible) {
       setMenuOpen(false);
-      setPos(0);
+      setPos(SHOT_ON_FILM_START);
       setDragDy(0);
       setDragging(false);
     }
@@ -409,7 +412,7 @@ export function PhotosNarrow({ visible, onNavigate, onOpenDesign }: Props) {
                       className="photos-narrow__image"
                       unoptimized
                       loading="eager"
-                      priority={active && pos === 0}
+                      priority={active}
                     />
                   </button>
                 );
@@ -479,7 +482,8 @@ export function PhotosNarrow({ visible, onNavigate, onOpenDesign }: Props) {
                   label === "design" ||
                   label === "about" ||
                   label === "installation" ||
-                  label === "contact"
+                  label === "contact" ||
+                  label === "cv + press"
                 ) {
                   leavePhotos(label);
                 }

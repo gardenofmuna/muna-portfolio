@@ -206,7 +206,8 @@ export function ProjectNarrowClient({
                 if (
                   label === "installation" ||
                   label === "about" ||
-                  label === "photos"
+                  label === "photos" ||
+                  label === "cv + press"
                 ) {
                   goHome(label);
                 }

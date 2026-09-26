@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import {
+  memo,
   useCallback,
   useEffect,
   useRef,
@@ -17,7 +18,10 @@ import {
   NARROW_PHOTOS_NUDGE_UP_PX,
   NARROW_PHOTOS_POPUP_SCALE,
 } from "@/lib/narrow-stage";
-import { SHOT_ON_FILM_STILLS } from "@/data/shot-on-film";
+import {
+  SHOT_ON_FILM_START,
+  SHOT_ON_FILM_STILLS,
+} from "@/data/shot-on-film";
 
 import "./photos-hover-cluster.css";
 
@@ -50,6 +54,11 @@ const WHEEL_MIN_GAP_MS = 300;
 const DRAG_THRESHOLD = 48;
 const NEIGHBOR_SCALE = 0.88;
 
+/** Each opening lands on the start still, inside the middle copy of the loop. */
+function startIndex(n: number) {
+  return n + SHOT_ON_FILM_START;
+}
+
 function fittedStill(width: number, height: number, scale = 1) {
   const fit = Math.min(REEL_MAX_W / width, REEL_MAX_H / height);
   return { w: width * fit * scale, h: height * fit * scale };
@@ -65,8 +74,10 @@ type Props = {
 /**
  * Desktop: Studio Motion–style vertical film reel (viewfinder corners).
  * Narrow: keep the three-print fan popup.
+ * Memoized: the reel is ~200 images and stays mounted while hidden, so it
+ * must not re-render on unrelated home state (CV menu, nav wheel).
  */
-export function PhotosHoverCluster({
+export const PhotosHoverCluster = memo(function PhotosHoverCluster({
   visible,
   variant = "desktop",
   stageLocked = false,
@@ -74,7 +85,7 @@ export function PhotosHoverCluster({
   const n = SHOT_ON_FILM_STILLS.length;
   const [reduceMotion, setReduceMotion] = useState(false);
   const [fanOut, setFanOut] = useState(false);
-  const [loopIndex, setLoopIndex] = useState(n);
+  const [loopIndex, setLoopIndex] = useState(() => startIndex(n));
   const [motionOn, setMotionOn] = useState(true);
   const wheelGesture = useRef({
     sum: 0,
@@ -104,13 +115,15 @@ export function PhotosHoverCluster({
     return () => mq.removeEventListener("change", u);
   }, []);
 
-  useEffect(() => {
+  const [wasVisible, setWasVisible] = useState(visible);
+  if (wasVisible !== visible) {
+    setWasVisible(visible);
     if (!visible) {
       setFanOut(false);
-      setLoopIndex(n);
+      setLoopIndex(startIndex(n));
       setMotionOn(false);
     }
-  }, [visible]);
+  }
 
   const isNarrow = variant === "narrow";
 
@@ -494,4 +507,4 @@ export function PhotosHoverCluster({
       </div>
     </div>
   );
-}
+});
