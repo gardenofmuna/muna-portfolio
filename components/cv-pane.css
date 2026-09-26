@@ -72,6 +72,30 @@
   margin: 0;
 }
 
+/*
+ * Fixed-measure page scaled to the quadrant by CvPane (useSheetFit): the
+ * box is the quadrant's width and takes the scaled height; the page keeps
+ * one layout, so text and proportions never change, only the scale.
+ * Width in step with CV_SHEET_W.
+ */
+.cv-fit {
+  width: 100%;
+}
+
+.cv-fit:not(.cv-anchor) {
+  margin-bottom: 80px;
+}
+
+.cv-fit-page {
+  box-sizing: border-box;
+  width: 892px;
+  transform-origin: 0 0;
+}
+
+.cv-fit > .cv-sheet {
+  margin: 0;
+}
+
 .cv-pane.cv-pane--anchor {
   opacity: 0;
   background: none;
@@ -198,6 +222,22 @@
   transform: translate3d(0, 0, 0);
 }
 
+/*
+ * Paper colour behind the print. Not its own layer (no will-change): it
+ * only has to fill the page if the print is clipped for the wind.
+ */
+.cv-sheet__backing {
+  position: absolute;
+  inset: var(--cv-ear) 0 0;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--cv-paper);
+}
+
+.cv-sheet[data-wind-cut] .cv-sheet__backing {
+  bottom: var(--cv-wind-h);
+}
+
 .cv-pane {
   position: relative;
   z-index: 1;
@@ -209,31 +249,46 @@
   clip-path: var(--cv-cut);
 }
 
-.cv-sheet[data-wind] .cv-sheet__mover > .cv-pane {
+/* Cut only after the bands have shown for a few frames (CvPane
+   WIND_CUT_FRAMES), so the page is never missing its bottom unpainted. */
+.cv-sheet[data-wind-cut] .cv-sheet__mover > .cv-pane {
   clip-path: var(--cv-body-cut);
 }
 
 /*
- * Wind bands: each is a full-sheet box hinged on the top line of its band,
- * nested in the band above so their bends add up down the page. The face
- * is a band-sized window onto a copy of the CV lined up with the page, so
- * the flat sheet looks whole and each layer stays small.
+ * Wind bands. Each strip is only one band tall, hinged on the band above,
+ * so the bend is a chain of small layers. A full-page layer with rotateX
+ * is what Chrome splits into tiles; the gaps are the white lines.
+ * 4px of extra height (2px each side of the band) keeps the hinges shut.
  */
 .cv-strip {
-  --band-top: calc(100% - var(--cv-wind-h) + var(--i) * var(--cv-band));
-  --band-below: max(0px, calc(var(--cv-wind-h) - (var(--i) + 1) * var(--cv-band) - 1px));
-
   position: absolute;
-  inset: 0;
+  left: 0;
+  right: 0;
+  height: calc(var(--cv-band) + 4px);
   z-index: 3;
   pointer-events: none;
-  /* Sixteen full CV copies. display:none keeps them out of the arrival
-     curl's 3D layer — visibility/content-visibility still get walked by
-     Safari when an ancestor has perspective, and that walk is the freeze. */
+  /* Sixteen CV copies. display:none keeps them out of the arrival curl's
+     3D layer — visibility/content-visibility still get walked by Safari
+     when an ancestor has perspective, and that walk is the freeze. */
   display: none;
   visibility: hidden;
   content-visibility: hidden;
-  transform-origin: 50% var(--band-top);
+  transform-origin: 50% 2px;
+}
+
+.cv-sheet__mover > .cv-strip {
+  top: calc(100% - var(--cv-wind-h) - 2px);
+}
+
+.cv-strip > .cv-strip {
+  top: var(--cv-band);
+}
+
+/* Near the end of the CV: laid out, still invisible. */
+.cv-sheet[data-wind-prep] .cv-strip {
+  display: block;
+  content-visibility: visible;
 }
 
 .cv-sheet[data-wind] .cv-strip {
@@ -244,25 +299,58 @@
   will-change: transform;
 }
 
-/* Faces overlap their neighbours by a pixel each way so the antialiased
-   edges of a bent hinge never let the background through. */
+/* The band is the whole strip. Paper fill, so a hinge never shows the site. */
 .cv-strip__face {
   position: absolute;
-  top: calc(var(--band-top) - 1px);
-  bottom: var(--band-below);
-  left: 0;
-  right: 0;
+  inset: 0;
   overflow: hidden;
   pointer-events: none;
+  background: var(--cv-paper);
   backface-visibility: hidden;
 }
 
+/* Page bottom sits on the sheet bottom, so this band's window shows its slice. */
 .cv-pane.cv-strip__page {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: calc(-1 * var(--band-below));
+  bottom: calc((var(--i) + 1) * var(--cv-band) - var(--cv-wind-h) + 2px);
   clip-path: none;
+}
+
+/*
+ * Safari keeps the original bands: each one is the full sheet, and the face
+ * is a window onto it. The short Chrome bands flicker and jump in Safari's
+ * 3D compositor once the wind starts.
+ */
+.cv-sheet[data-safari] .cv-sheet__backing {
+  display: none;
+}
+
+.cv-sheet[data-safari] .cv-strip {
+  --band-top: calc(100% - var(--cv-wind-h) + var(--i) * var(--cv-band));
+  --band-below: max(0px, calc(var(--cv-wind-h) - (var(--i) + 1) * var(--cv-band) - 1px));
+
+  inset: 0;
+  height: auto;
+  transform-origin: 50% var(--band-top);
+}
+
+.cv-sheet[data-safari] .cv-strip > .cv-strip {
+  top: 0;
+}
+
+.cv-sheet[data-safari] .cv-strip__face {
+  inset: auto;
+  top: calc(var(--band-top) - 1px);
+  bottom: var(--band-below);
+  left: 0;
+  right: 0;
+  background: none;
+}
+
+.cv-sheet[data-safari] .cv-pane.cv-strip__page {
+  bottom: calc(-1 * var(--band-below));
 }
 
 /* Tone follows how far the band is tipped from facing the viewer; faded

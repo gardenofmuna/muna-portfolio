@@ -43,14 +43,14 @@ const EASE_SCALE = 0.12;
 const EASE_Y = 0.12;
 const EASE_ROTATION = 0.18;
 const EASE_CURL = 0.2;
-const EASE_FLEX = 0.14;
-const FLEX_DECAY = 0.86;
 const FRAME_MS = 1000 / 60;
 const SHADOW_OFFSET = 12;
 const SHADOW_OPACITY = 0.56;
 
 /* The sheet trails the scroll a little and settles into place, like the
-   archive’s lerped scroll. */
+   archive’s lerped scroll. The trail is a plain translate: a perspective
+   tilt on this page makes Chrome paint it as tiles, and a fast scroll
+   shows the gaps between them as white lines. */
 const EASE_TRAIL = 0.14;
 const TRAIL_MAX = 180;
 const TRAIL_OFFSET = 0.3;
@@ -78,6 +78,10 @@ const WAVE_LENGTH = 1.25;
 const STRIP_STIFFNESS = 0.08;
 const STRIP_DAMPING = 0.2;
 const STRIP_SHADE_AT = 90;
+/* The bands show over the whole page for these frames before its bottom is
+   cut away; cutting in the frame they first show let Chrome draw the gap
+   (white) before it had painted them. */
+const WIND_CUT_FRAMES = 4;
 
 type PaperState = {
   scale: number;
@@ -108,6 +112,16 @@ function isSettled(s: PaperState) {
     Math.abs(s.rotation) < 0.01 &&
     s.curl < 0.0005 &&
     Math.abs(s.flex) < 0.01
+  );
+}
+
+/** Arrival finished. Ignores scroll trail: that keeps running in 2D. */
+function entrySettled(s: PaperState) {
+  return (
+    Math.abs(1 - s.scale) < 0.002 &&
+    Math.abs(s.y) < 0.5 &&
+    Math.abs(s.rotation) < 0.05 &&
+    s.curl < 0.002
   );
 }
 
@@ -156,7 +170,15 @@ function usePaperMotion(
 ) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const anchorRef = useRef<HTMLDivElement>(null);
+  const anchorPageRef = useRef<HTMLElement>(null);
   const floatRef = useRef<HTMLDivElement>(null);
+  const fitBoxRef = useRef<HTMLDivElement>(null);
+  /* Ahead of the motion effect, so the paper is first placed on fitted geometry. */
+  useSheetFit(
+    floating ? anchorRef : fitBoxRef,
+    floating ? anchorPageRef : sheetRef,
+    floating,
+  );
   const windRef = useRef({ ready: windReady, want: onWindWanted });
   useLayoutEffect(() => {
     windRef.current = { ready: windReady, want: onWindWanted };
@@ -164,9 +186,14 @@ function usePaperMotion(
 
   useLayoutEffect(() => {
     const sheet = sheetRef.current;
-    const anchor = floating ? anchorRef.current : null;
+    const anchorBox = floating ? anchorRef.current : null;
+    /* The fixed-width page inside the anchor; its on-screen box already
+       carries the fit, pane and stage scales. */
+    const anchor = floating ? anchorPageRef.current : null;
     const float = floating ? floatRef.current : null;
-    if (!sheet || (floating && (!anchor || !float))) return undefined;
+    if (!sheet || (floating && (!anchorBox || !anchor || !float))) {
+      return undefined;
+    }
     const mover = sheet.querySelector<HTMLElement>(".cv-sheet__mover");
     const shadow = sheet.querySelector<HTMLElement>(".cv-sheet__shadow");
     const sheen = sheet.querySelector<HTMLElement>(".cv-pane__sheen");
@@ -180,8 +207,11 @@ function usePaperMotion(
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     /* Safari drops CSS transitions that share a frame with layout, and a
        perspective tilt on this sheet steps, then snaps flat. Keep it flat
-       and ease the visible layer on the compositor instead. */
+       and ease the visible layer on the compositor instead. The wind bands
+       stay the full sheet there too: the short Chrome bands flicker in
+       Safari's 3D compositor. */
     const safari = readSafari();
+    if (safari) sheet.setAttribute("data-safari", "");
 
     const frame = anchor ?? sheet;
     const scroller = frame.closest<HTMLElement>("[data-project-scroll]");
@@ -215,10 +245,13 @@ function usePaperMotion(
     const paneTargetScale = () => {
       const inner = anchor?.closest<HTMLElement>(".project-pane__inner");
       const match = inner?.style.transform.match(/scale\(([\d.]+)\)/);
+      const fit = anchor?.style.transform.match(/scale\(([\d.]+)\)/);
       const stage = scroller
         ? scroller.getBoundingClientRect().width / (scroller.offsetWidth || 1) || 1
         : 1;
-      return (match ? Number(match[1]) : 1) * stage;
+      return (
+        (match ? Number(match[1]) : 1) * (fit ? Number(fit[1]) : 1) * stage
+      );
     };
     const place = () => {
       if (!anchor || !float) return;
@@ -247,7 +280,7 @@ function usePaperMotion(
       shownY = y;
       float.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${scale.toFixed(5)})`;
       placedScroll = scroller?.scrollTop ?? 0;
-      if (safari) rememberPose(scroller?.scrollTop ?? 0, x, y, scale);
+      rememberPose(scroller?.scrollTop ?? 0, x, y, scale);
     };
 
     let pinning = false;
@@ -277,15 +310,19 @@ function usePaperMotion(
     };
     /* Scroll only moves the sheet — no layout read, so Safari can stay on
        the compositor between frames. */
-    const placeFast = (scrollTop: number) => {
+    const placeFast = (scrollTop: number, lag = 0) => {
       if (!float || !pose) {
         place();
         return;
       }
       const dpr = window.devicePixelRatio || 1;
       const y =
-        Math.round((pose.y - (scrollTop - pose.scrollTop) * pose.py) * dpr) /
-        dpr;
+        Math.round(
+          (pose.y -
+            (scrollTop - pose.scrollTop) * pose.py +
+            lag * TRAIL_OFFSET * pose.scale) *
+            dpr,
+        ) / dpr;
       float.style.transform = `translate3d(${pose.x}px, ${y}px, 0) scale(${pose.scale.toFixed(5)})`;
     };
 
@@ -330,33 +367,64 @@ function usePaperMotion(
 
     let pull = 0;
     let lastPush = 0;
+    /* Frames left before the page's bottom is cut away for the bands. */
+    let cutFrames = -1;
+    let prepped = false;
+    /* Near the end, lay the bands out (still hidden) so the wind's first
+       frame only has to show and promote them, not build 16 pages. */
+    const prepWind = () => {
+      if (!scroller) return;
+      const near =
+        windRef.current.ready &&
+        scroller.scrollTop + scroller.clientHeight * 2 >= scroller.scrollHeight;
+      const want = near || sheet.hasAttribute("data-wind");
+      if (want === prepped) return;
+      prepped = want;
+      sheet.toggleAttribute("data-wind-prep", want);
+    };
     let wind = 0;
     let gustTime = 0;
     const angles = new Array<number>(WIND_STRIPS).fill(0);
     const velocities = new Array<number>(WIND_STRIPS).fill(0);
 
     const render = (scrollTop: number) => {
-      const curl = state.curl + Math.min(0.35, Math.abs(state.flex) * 0.03);
+      const curl = state.curl;
       const lag = clamp(scrollTop - trail, -TRAIL_MAX, TRAIL_MAX);
       const y = state.y + lag * TRAIL_OFFSET - wind * WIND_LIFT;
       const swayY = wind * 3 * Math.sin(2 * Math.PI * 0.55 * gustTime + 0.4);
       const swayZ = wind * 0.6 * Math.sin(2 * Math.PI * 0.4 * gustTime);
 
-      const origin = `50% ${pivotY(scrollTop).toFixed(1)}px`;
-      const transform =
-        `perspective(1800px) translate3d(0, ${y.toFixed(2)}px, 0) ` +
-        `rotateZ(${(state.rotation + swayZ).toFixed(3)}deg) ` +
-        `rotateX(${(curl * 24 + state.flex + wind * 2).toFixed(3)}deg) ` +
-        `rotateY(${(curl * -32 + swayY).toFixed(3)}deg) ` +
-        `scale(${state.scale.toFixed(4)})`;
-      mover.style.transformOrigin = origin;
+      /* Perspective only while the sheet is still uncurling. After that,
+         Chrome only translates the page — a 3D tilt is what breaks it into
+         white lines. Safari keeps the wind tilt; its bands are the full
+         sheet and do not tile. */
+      const curling = curl > 0.002;
+      const safariWind = safari && sheet.hasAttribute("data-wind") && !curling;
+      let transform: string;
+      if (curling || safariWind) {
+        const origin = `50% ${pivotY(scrollTop).toFixed(1)}px`;
+        const rotX = curling ? curl * 24 : wind * 2;
+        const rotY = curling ? curl * -32 + swayY : swayY;
+        transform =
+          `perspective(1800px) translate3d(0, ${y.toFixed(2)}px, 0) ` +
+          `rotateZ(${(state.rotation + swayZ).toFixed(3)}deg) ` +
+          `rotateX(${rotX.toFixed(3)}deg) ` +
+          `rotateY(${rotY.toFixed(3)}deg) ` +
+          `scale(${state.scale.toFixed(4)})`;
+        mover.style.transformOrigin = origin;
+        shadow.style.transformOrigin = origin;
+      } else {
+        transform = `translate3d(0, ${y.toFixed(2)}px, 0) scale(${state.scale.toFixed(4)})`;
+        mover.style.removeProperty("transform-origin");
+        shadow.style.removeProperty("transform-origin");
+      }
       mover.style.transform = transform;
-      shadow.style.transformOrigin = origin;
       shadow.style.transform = `translate3d(0, ${(SHADOW_OFFSET + 40 * curl).toFixed(2)}px, 0) ${transform}`;
       shadow.style.opacity = (SHADOW_OPACITY + (1 - SHADOW_OPACITY) * curl).toFixed(3);
       sheen.style.opacity = curl.toFixed(3);
 
-      if (!sheet.hasAttribute("data-wind")) return;
+      /* Bands stay flat over the uncut page until the cut is made. */
+      if (!sheet.hasAttribute("data-wind-cut")) return;
       let bend = 0;
       strips.forEach((strip, i) => {
         const angle = angles[i];
@@ -383,6 +451,8 @@ function usePaperMotion(
         el.style.removeProperty("opacity");
       }
       sheet.removeAttribute("data-wind");
+      sheet.removeAttribute("data-wind-cut");
+      cutFrames = -1;
       sheet.removeAttribute("data-moving");
       float?.removeAttribute("data-moving");
       /* Dropping the 3D layer and measuring layout in the same turn is the
@@ -444,6 +514,48 @@ function usePaperMotion(
       const scrollTop = scroller?.scrollTop ?? 0;
       const t = reduced ? 1 : clamp((now - start) / ENTRY_MS, 0, 1);
       const winding = sheet.hasAttribute("data-wind");
+      prepWind();
+      if (winding && cutFrames >= 0 && --cutFrames < 0) {
+        sheet.setAttribute("data-wind-cut", "");
+      }
+      if (!entryDone && t >= 1 && entrySettled(state)) {
+        entryDone = true;
+        flexTarget = 0;
+        state.flex = 0;
+      }
+      /* After the curl, scrolling only slides the sheet. No perspective,
+         so a fast fling cannot open white gaps in the page. */
+      const menuScaling = paneBusy();
+      if (
+        entryDone &&
+        !winding &&
+        !pinning &&
+        carry === null &&
+        !menuScaling &&
+        !safari
+      ) {
+        trail += (scrollTop - trail) * ease(EASE_TRAIL, dt);
+        const lag = clamp(scrollTop - trail, -TRAIL_MAX, TRAIL_MAX);
+        if (mover.style.transform) {
+          mover.style.removeProperty("transform");
+          mover.style.removeProperty("transform-origin");
+          shadow.style.removeProperty("transform");
+          shadow.style.removeProperty("transform-origin");
+          shadow.style.removeProperty("opacity");
+          sheen.style.removeProperty("opacity");
+        }
+        placeFast(scrollTop, lag);
+        lastScrollTop = scrollTop;
+        if (Math.abs(scrollTop - trail) < 0.3) {
+          trail = scrollTop;
+          placeFast(scrollTop, 0);
+          running = false;
+          rest();
+          return;
+        }
+        raf = requestAnimationFrame(tick);
+        return;
+      }
       const flat =
         safari &&
         !winding &&
@@ -462,7 +574,6 @@ function usePaperMotion(
         place();
       }
 
-      const menuScaling = paneBusy();
       if (reduced || flat) {
         trail = scrollTop;
         flexTarget = 0;
@@ -471,22 +582,15 @@ function usePaperMotion(
         const target = entryTargets(1 - Math.pow(1 - t, 2));
         /* While the dial is returning, the pane scale is the motion.
            Extra scroll lag here reads as a jump. */
-        if (menuScaling || safari) {
-          flexTarget = 0;
-          state.flex = 0;
-          trail = scrollTop;
-        } else {
-          const velocity = ((scrollTop - lastScrollTop) * FRAME_MS) / dt;
-          flexTarget = clamp(flexTarget + velocity * 0.08, -6, 6);
-        }
-        flexTarget *= Math.pow(FLEX_DECAY, dt / FRAME_MS);
+        flexTarget = 0;
+        state.flex = 0;
+        if (menuScaling || safari) trail = scrollTop;
 
         state.scale += (target.scale - state.scale) * ease(EASE_SCALE, dt);
         state.y += (target.y - state.y) * ease(EASE_Y, dt);
         state.rotation += (target.rotation - state.rotation) * ease(EASE_ROTATION, dt);
         state.curl += (target.curl - state.curl) * ease(EASE_CURL, dt);
-        state.flex += (flexTarget - state.flex) * ease(EASE_FLEX, dt);
-        if (!menuScaling) {
+        if (!menuScaling && !safari) {
           trail += (scrollTop - trail) * ease(EASE_TRAIL, dt);
         }
         stepWind(now, dt);
@@ -521,7 +625,9 @@ function usePaperMotion(
       measurePivot();
       lastFrame = performance.now();
       lastScrollTop = scroller?.scrollTop ?? 0;
-      if (!reduced) {
+      /* Promoting the page on an ordinary scroll is what makes Chrome
+         rebuild it mid-fling. Only the curl and the wind need a layer. */
+      if (!reduced && (!entryDone || sheet.hasAttribute("data-wind"))) {
         sheet.setAttribute("data-moving", "");
         float?.setAttribute("data-moving", "");
       }
@@ -535,6 +641,7 @@ function usePaperMotion(
 
     const onScroll = () => {
       if (pinning) return;
+      prepWind();
       if (safari && entryDone && !sheet.hasAttribute("data-wind")) {
         placeFast(scroller?.scrollTop ?? 0);
         return;
@@ -551,8 +658,8 @@ function usePaperMotion(
       wake();
     };
 
-    const resizeObserver = anchor ? new ResizeObserver(() => wake()) : null;
-    if (anchor) resizeObserver?.observe(anchor);
+    const resizeObserver = anchorBox ? new ResizeObserver(() => wake()) : null;
+    if (anchorBox) resizeObserver?.observe(anchorBox);
 
     const onWheel = (event: WheelEvent) => {
       if (!scroller || reduced) return;
@@ -566,7 +673,10 @@ function usePaperMotion(
         }
         pull = Math.min(PULL_MAX, pull + dy);
         lastPush = performance.now();
-        sheet.setAttribute("data-wind", "");
+        if (!sheet.hasAttribute("data-wind")) {
+          sheet.setAttribute("data-wind", "");
+          cutFrames = WIND_CUT_FRAMES;
+        }
       } else if (dy < 0 && pull > 0) {
         pull = Math.max(0, pull + dy * 2);
       } else {
@@ -671,10 +781,54 @@ function usePaperMotion(
       window.removeEventListener("resize", onResize);
       resizeObserver?.disconnect();
       rest();
+      sheet.removeAttribute("data-wind-prep");
     };
   }, [floating]);
 
-  return { sheetRef, anchorRef, floatRef };
+  return { sheetRef, anchorRef, anchorPageRef, floatRef, fitBoxRef };
+}
+
+/*
+ * The CV is laid out once at this width (the quadrant's measure at the
+ * reference stage, and the PDF's) and scaled to whatever the quadrant is,
+ * so its lines never rewrap. Keep in step with `.cv-fit-page`.
+ */
+const CV_SHEET_W = 892;
+
+/** Scales `page` (laid out at CV_SHEET_W) to fill `box`'s width; `box` takes the scaled height. */
+function useSheetFit(
+  boxRef: RefObject<HTMLElement | null>,
+  pageRef: RefObject<HTMLElement | null>,
+  key: unknown,
+) {
+  useLayoutEffect(() => {
+    const box = boxRef.current;
+    const page = pageRef.current;
+    if (!box || !page) return undefined;
+    let lastFit = -1;
+    let lastHeight = -1;
+    const fit = () => {
+      const width = box.clientWidth;
+      if (!width) return;
+      const k = width / CV_SHEET_W;
+      const height = page.offsetHeight;
+      if (Math.abs(k - lastFit) < 1e-5 && height === lastHeight) return;
+      lastFit = k;
+      lastHeight = height;
+      page.style.transform = `scale(${k.toFixed(5)})`;
+      box.style.height = `${(height * k).toFixed(2)}px`;
+    };
+    fit();
+    /* Width from the quadrant; height from the page (late fonts). */
+    const observer = new ResizeObserver(fit);
+    observer.observe(box);
+    observer.observe(page);
+    return () => {
+      observer.disconnect();
+      page.style.removeProperty("transform");
+      box.style.removeProperty("height");
+    };
+  }, [boxRef, pageRef, key]);
 }
 
 function downloadCv() {
@@ -791,18 +945,22 @@ export function CvPane({ tone = "pink" }: { tone?: CvTone }) {
       cancelAnimationFrame(raf);
     };
   }, [windPages, windReady]);
-  const { sheetRef, anchorRef, floatRef } = usePaperMotion(floating, windReady, () =>
-    setWindPages(WIND_STRIPS),
-  );
+  const { sheetRef, anchorRef, anchorPageRef, floatRef, fitBoxRef } =
+    usePaperMotion(floating, windReady, () => setWindPages(WIND_STRIPS));
   const pillRef = useRef<HTMLDivElement>(null);
   useDownloadPill(anchorRef, pillRef, floating);
 
   const sheet = (
-    <div ref={sheetRef} className="cv-sheet" data-tone={tone}>
+    <div
+      ref={sheetRef}
+      className={floating ? "cv-sheet" : "cv-sheet cv-fit-page"}
+      data-tone={tone}
+    >
       <div className="cv-sheet__shadow" aria-hidden>
         <div className="cv-sheet__shadow-blur" />
       </div>
       <div className="cv-sheet__mover">
+        <span className="cv-sheet__backing" aria-hidden />
         <article
           className="cv-pane"
           aria-label={floating ? undefined : "CV"}
@@ -817,12 +975,22 @@ export function CvPane({ tone = "pink" }: { tone?: CvTone }) {
     </div>
   );
 
-  if (!chromeEl) return sheet;
+  if (!chromeEl) {
+    return (
+      <div ref={fitBoxRef} className="cv-fit">
+        {sheet}
+      </div>
+    );
+  }
 
   return (
     <>
-      <div ref={anchorRef} className="cv-anchor">
-        <article className="cv-pane cv-pane--anchor" aria-label="CV">
+      <div ref={anchorRef} className="cv-anchor cv-fit">
+        <article
+          ref={anchorPageRef}
+          className="cv-pane cv-pane--anchor cv-fit-page"
+          aria-label="CV"
+        >
           <a className="cv-pane__download" href={CV_PDF.href} download={CV_PDF.filename}>
             Download CV (PDF)
           </a>
