@@ -46,6 +46,9 @@ const EASE_CURL = 0.2;
 const FRAME_MS = 1000 / 60;
 const SHADOW_OFFSET = 12;
 const SHADOW_OPACITY = 0.56;
+/* Keep in step with `--cv-shadow-out`. The shadow box is this much larger
+   than the sheet, so its pivot has to drop by the same amount. */
+const SHADOW_OUT = 36;
 
 /* The sheet trails the scroll a little and settles into place, like the
    archive’s lerped scroll. The trail is a plain translate: a perspective
@@ -196,12 +199,13 @@ function usePaperMotion(
     }
     const mover = sheet.querySelector<HTMLElement>(".cv-sheet__mover");
     const shadow = sheet.querySelector<HTMLElement>(".cv-sheet__shadow");
+    const shadowBlur = sheet.querySelector<HTMLElement>(".cv-sheet__shadow-blur");
     const sheen = sheet.querySelector<HTMLElement>(".cv-pane__sheen");
     const strips = Array.from(sheet.querySelectorAll<HTMLElement>(".cv-strip"));
     const shades = Array.from(
       sheet.querySelectorAll<HTMLElement>(".cv-strip__shade"),
     );
-    if (!mover || !shadow || !sheen || strips.length !== WIND_STRIPS) {
+    if (!mover || !shadow || !shadowBlur || !sheen || strips.length !== WIND_STRIPS) {
       return undefined;
     }
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -371,12 +375,20 @@ function usePaperMotion(
     let cutFrames = -1;
     let prepped = false;
     /* Near the end, lay the bands out (still hidden) so the wind's first
-       frame only has to show and promote them, not build 16 pages. */
-    const prepWind = () => {
+       frame only has to show and promote them, not build 16 pages.
+       Height is cached: reading it every frame forces Safari to lay the
+       sheet out again through the colour-change curl. */
+    let windView = 0;
+    let windHeight = 0;
+    const readWindBox = () => {
+      if (!scroller) return;
+      windView = scroller.clientHeight;
+      windHeight = scroller.scrollHeight;
+    };
+    const prepWind = (scrollTop: number) => {
       if (!scroller) return;
       const near =
-        windRef.current.ready &&
-        scroller.scrollTop + scroller.clientHeight * 2 >= scroller.scrollHeight;
+        windRef.current.ready && scrollTop + windView * 2 >= windHeight;
       const want = near || sheet.hasAttribute("data-wind");
       if (want === prepped) return;
       prepped = want;
@@ -412,7 +424,7 @@ function usePaperMotion(
           `rotateY(${rotY.toFixed(3)}deg) ` +
           `scale(${state.scale.toFixed(4)})`;
         mover.style.transformOrigin = origin;
-        shadow.style.transformOrigin = origin;
+        shadow.style.transformOrigin = `50% ${(pivotY(scrollTop) + SHADOW_OUT).toFixed(1)}px`;
       } else {
         transform = `translate3d(0, ${y.toFixed(2)}px, 0) scale(${state.scale.toFixed(4)})`;
         mover.style.removeProperty("transform-origin");
@@ -420,6 +432,8 @@ function usePaperMotion(
       }
       mover.style.transform = transform;
       shadow.style.transform = `translate3d(0, ${(SHADOW_OFFSET + 40 * curl).toFixed(2)}px, 0) ${transform}`;
+      /* Fade the wrapper, not the blurred child. Opacity on the filter
+         element makes Safari repaint the blur on every frame of the curl. */
       shadow.style.opacity = (SHADOW_OPACITY + (1 - SHADOW_OPACITY) * curl).toFixed(3);
       sheen.style.opacity = curl.toFixed(3);
 
@@ -514,7 +528,7 @@ function usePaperMotion(
       const scrollTop = scroller?.scrollTop ?? 0;
       const t = reduced ? 1 : clamp((now - start) / ENTRY_MS, 0, 1);
       const winding = sheet.hasAttribute("data-wind");
-      prepWind();
+      prepWind(scrollTop);
       if (winding && cutFrames >= 0 && --cutFrames < 0) {
         sheet.setAttribute("data-wind-cut", "");
       }
@@ -531,8 +545,7 @@ function usePaperMotion(
         !winding &&
         !pinning &&
         carry === null &&
-        !menuScaling &&
-        !safari
+        !menuScaling
       ) {
         trail += (scrollTop - trail) * ease(EASE_TRAIL, dt);
         const lag = clamp(scrollTop - trail, -TRAIL_MAX, TRAIL_MAX);
@@ -584,13 +597,13 @@ function usePaperMotion(
            Extra scroll lag here reads as a jump. */
         flexTarget = 0;
         state.flex = 0;
-        if (menuScaling || safari) trail = scrollTop;
+        if (menuScaling) trail = scrollTop;
 
         state.scale += (target.scale - state.scale) * ease(EASE_SCALE, dt);
         state.y += (target.y - state.y) * ease(EASE_Y, dt);
         state.rotation += (target.rotation - state.rotation) * ease(EASE_ROTATION, dt);
         state.curl += (target.curl - state.curl) * ease(EASE_CURL, dt);
-        if (!menuScaling && !safari) {
+        if (!menuScaling) {
           trail += (scrollTop - trail) * ease(EASE_TRAIL, dt);
         }
         stepWind(now, dt);
@@ -631,6 +644,7 @@ function usePaperMotion(
         sheet.setAttribute("data-moving", "");
         float?.setAttribute("data-moving", "");
       }
+      readWindBox();
       raf = requestAnimationFrame(tick);
     };
 
@@ -641,11 +655,7 @@ function usePaperMotion(
 
     const onScroll = () => {
       if (pinning) return;
-      prepWind();
-      if (safari && entryDone && !sheet.hasAttribute("data-wind")) {
-        placeFast(scroller?.scrollTop ?? 0);
-        return;
-      }
+      prepWind(scroller?.scrollTop ?? 0);
       if (!running) wake();
     };
 

@@ -173,35 +173,48 @@
 
 /*
  * Shadow in the sheet's cut outline (so the dog ear gets a bevelled shadow).
- * The blur is painted once; CvPane only moves it and fades it, which stays
- * on the compositor in Chrome and Safari.
+ * The blur is painted once on the child; CvPane only moves and fades the
+ * parent, which stays on the compositor. The parent is larger than the sheet
+ * by the blur: Safari clips a filtered child to its ancestor's border box
+ * when that ancestor fades, and this outset keeps that clip a soft shadow.
  */
 .cv-sheet__shadow {
+  --cv-shadow-out: 36px;
+
   position: absolute;
-  inset: 0;
+  inset: calc(-1 * var(--cv-shadow-out));
   z-index: 0;
   pointer-events: none;
+  overflow: visible;
   opacity: 0.56;
   transform: translate3d(0, 12px, 0);
   backface-visibility: hidden;
 }
 
-/* Blur lives on a child that never moves, so Safari paints it once and the
-   parent only transforms that bitmap. A filter on the transformed element
-   is re-blurred every frame and the arrival hitch is that re-blur. */
 .cv-sheet__shadow-blur {
   position: absolute;
   inset: 0;
   filter: blur(11px);
   pointer-events: none;
+  transform: translate3d(0, 0, 0);
 }
 
 .cv-sheet__shadow-blur::before {
   content: "";
   position: absolute;
-  inset: 0;
+  inset: var(--cv-shadow-out);
   background: rgba(0, 0, 0, 0.16);
   clip-path: var(--cv-cut);
+}
+
+/* will-change and a hidden backface on the fading shadow are what make
+   Safari flatten the blur into a hard box after a few colour changes. */
+.cv-sheet[data-safari] .cv-sheet__shadow {
+  backface-visibility: visible;
+}
+
+.cv-sheet[data-safari][data-moving] .cv-sheet__shadow {
+  will-change: auto;
 }
 
 .cv-sheet__mover {
