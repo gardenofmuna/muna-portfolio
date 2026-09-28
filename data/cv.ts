@@ -53,15 +53,6 @@ export const CV_SECTIONS: CvSection[] = [
     column: "left",
     entries: [
       {
-        dates: "06.26 –",
-        datesItalic: "present",
-        title: "Independent Curator",
-        lines: [
-          "DIDI Museum, Lagos, Nigeria",
-          "Curating “Flora Nwapa: Efuru at the Threshold,” a retrospective marking the 60th anniversary of Efuru.",
-        ],
-      },
-      {
         dates: "09.25 – 06.25",
         title: "Writing and Language Support Consultant",
         lines: [
