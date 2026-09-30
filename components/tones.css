@@ -1,0 +1,38 @@
+/*
+ * Paper tones, in the order successive openings step through them
+ * (CvPane `CV_TONES`). Shared by the CV sheet and the landing contact form so
+ * both cycle through the same six colours.
+ *
+ * `--tone-paper` is the pastel stock; `--tone-tint` is an unwrapped rgb triple
+ * of the dark of the same hue, so callers can set their own alpha.
+ */
+
+[data-tone="pink"] {
+  --tone-paper: #f4adc2;
+  --tone-tint: 70 14 32;
+}
+
+[data-tone="yellow"] {
+  --tone-paper: #f5dc8e;
+  --tone-tint: 70 52 8;
+}
+
+[data-tone="green"] {
+  --tone-paper: #b4dcaa;
+  --tone-tint: 22 58 24;
+}
+
+[data-tone="orange"] {
+  --tone-paper: #f7bd92;
+  --tone-tint: 80 36 12;
+}
+
+[data-tone="purple"] {
+  --tone-paper: #cdb4ea;
+  --tone-tint: 46 22 72;
+}
+
+[data-tone="blue"] {
+  --tone-paper: #a9c8f0;
+  --tone-tint: 16 38 76;
+}

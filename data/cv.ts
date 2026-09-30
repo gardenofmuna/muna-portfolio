@@ -142,6 +142,14 @@ export const CV_SECTIONS: CvSection[] = [
     column: "right",
     entries: [
       {
+        dates: "09.25",
+        title: "Gallery TPW",
+        href: "https://www.gallerytpw.ca/_files/ugd/0dfb56_ea7155ecddff4a4db769f18d9f8d0d1c.pdf",
+        lines: [
+          "“Things That Hold Us Together” — conversation with Cynthia Nkiruka Anyadi",
+        ],
+      },
+      {
         dates: "02.21",
         title: "Elephant",
         href: "https://elephant.art/the-women-making-video-art-under-lockdown-15022021/",
@@ -175,7 +183,6 @@ export const CV_SECTIONS: CvSection[] = [
       "Film Photography",
       "WordPress",
       "Mailchimp",
-      "Social Media Management",
       "Writing / Editing",
     ],
   },

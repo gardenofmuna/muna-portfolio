@@ -25,6 +25,7 @@ import {
   type CvSection,
 } from "@/data/cv";
 
+import "./tones.css";
 import "./cv-pane.css";
 
 /*

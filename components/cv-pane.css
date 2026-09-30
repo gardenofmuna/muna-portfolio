@@ -3,10 +3,10 @@
 
 .cv-sheet {
   /* Paper, the back of the sheet (dog ear), and the dark of the same hue
-     used for folds and shading. */
-  --cv-paper: #f4adc2;
+     used for folds and shading. Tone values live in tones.css. */
+  --cv-paper: var(--tone-paper, #f4adc2);
   --cv-back: #f7bfd0;
-  --cv-tint: 70 14 32;
+  --cv-tint: var(--tone-tint, 70 14 32);
   --cv-ear: 52px;
   --cv-cut: polygon(
     var(--cv-ear) 0,
@@ -29,31 +29,6 @@
 
   position: relative;
   margin: 0 0 80px;
-}
-
-.cv-sheet[data-tone="yellow"] {
-  --cv-paper: #f5dc8e;
-  --cv-tint: 70 52 8;
-}
-
-.cv-sheet[data-tone="green"] {
-  --cv-paper: #b4dcaa;
-  --cv-tint: 22 58 24;
-}
-
-.cv-sheet[data-tone="orange"] {
-  --cv-paper: #f7bd92;
-  --cv-tint: 80 36 12;
-}
-
-.cv-sheet[data-tone="purple"] {
-  --cv-paper: #cdb4ea;
-  --cv-tint: 46 22 72;
-}
-
-.cv-sheet[data-tone="blue"] {
-  --cv-paper: #a9c8f0;
-  --cv-tint: 16 38 76;
 }
 
 .cv-sheet[data-tone]:not([data-tone="pink"]) {

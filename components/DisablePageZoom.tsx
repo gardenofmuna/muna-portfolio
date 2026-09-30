@@ -22,6 +22,13 @@ export function DisablePageZoom() {
 
     let lastTouchEnd = 0;
     const onTouchEnd = (event: TouchEvent) => {
+      /* Double-tap selects a word in a field; the viewport can't zoom anyway. */
+      if (
+        event.target instanceof Element &&
+        event.target.closest("input, textarea, select, [contenteditable]")
+      ) {
+        return;
+      }
       const now = Date.now();
       if (now - lastTouchEnd <= 320) event.preventDefault();
       lastTouchEnd = now;

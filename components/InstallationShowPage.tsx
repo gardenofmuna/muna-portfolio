@@ -1387,7 +1387,7 @@ export function InstallationShowPage({
               placement="flow"
               onClick={(event) => {
                 event.preventDefault();
-                leaveViaMenu("contact");
+                leaveViaMenu("home");
               }}
             />
             <button
@@ -1443,7 +1443,7 @@ export function InstallationShowPage({
                 initialActiveLabel="installation"
                 onLabelActivate={(label) => {
                   if (label === "contact") {
-                    leaveViaMenu("about");
+                    leaveViaMenu("contact");
                     return;
                   }
                   if (

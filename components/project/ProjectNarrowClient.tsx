@@ -204,7 +204,7 @@ export function ProjectNarrowClient({
                   return;
                 }
                 if (label === "contact") {
-                  goHome("about");
+                  goHome("contact");
                   return;
                 }
                 if (

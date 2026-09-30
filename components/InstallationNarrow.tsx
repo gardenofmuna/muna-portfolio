@@ -149,7 +149,7 @@ export function InstallationNarrow({
           placement="flow"
           onClick={(event) => {
             event.preventDefault();
-            leaveInstallation("contact");
+            leaveInstallation("home");
           }}
         />
         <button
@@ -261,7 +261,7 @@ export function InstallationNarrow({
                   return;
                 }
                 if (label === "contact") {
-                  leaveInstallation("about");
+                  leaveInstallation("contact");
                   return;
                 }
                 if (

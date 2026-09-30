@@ -4,6 +4,7 @@ import { startTransition, useCallback, useEffect, useRef, useState } from "react
 
 import { AboutBio, ABOUT_BIO_PIN_OFFSET_X } from "@/components/AboutBio";
 import { CircularNavWheel } from "@/components/CircularNavWheel";
+import { ContactForm } from "@/components/ContactForm";
 import { ContactTopLinks } from "@/components/ContactTopLinks";
 import { CV_TONES, CvPane } from "@/components/CvPane";
 import { DesignLandingIndex } from "@/components/DesignLandingIndex";
@@ -382,6 +383,15 @@ export function HomeDesktop({
     if (cvShown) setCvPress((n) => n + 1);
   }
   const cvTone = CV_TONES[Math.max(0, cvPress) % CV_TONES.length];
+  /* Contact form is printed on the same stock, on its own count. */
+  const contactShown = showLandingPreviews && isContact;
+  const [contactPress, setContactPress] = useState(contactShown ? 0 : -1);
+  const [contactWasShown, setContactWasShown] = useState(contactShown);
+  if (contactWasShown !== contactShown) {
+    setContactWasShown(contactShown);
+    if (contactShown) setContactPress((n) => n + 1);
+  }
+  const contactTone = CV_TONES[Math.max(0, contactPress) % CV_TONES.length];
   /** Case study or CV owns the middle quadrant — same scroll/menu behaviour. */
   const paneOpen = projectOpen || cvShown;
   const showInstallGallery =
@@ -654,6 +664,14 @@ export function HomeDesktop({
               top={`${m.inset}px`}
               left={`${DESKTOP_LAYOUT_BIO_LEFT + ABOUT_BIO_PIN_OFFSET_X}px`}
               right={`${contactBarRight}px`}
+            />
+            <ContactForm
+              visible={contactShown}
+              tone={contactTone}
+              top={m.inset}
+              right={m.inset}
+              width={m.nzeribeW}
+              transition={crossfade}
             />
             <div
               aria-hidden={!(showLandingPreviews && showAboutBio)}

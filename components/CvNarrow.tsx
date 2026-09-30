@@ -148,7 +148,7 @@ export function CvNarrow({ visible, onNavigate, onOpenDesign }: Props) {
           placement="flow"
           onClick={(event) => {
             event.preventDefault();
-            leaveCv("contact");
+            leaveCv("home");
           }}
         />
         <button
@@ -244,7 +244,7 @@ export function CvNarrow({ visible, onNavigate, onOpenDesign }: Props) {
                   return;
                 }
                 if (label === "contact") {
-                  leaveCv("about");
+                  leaveCv("contact");
                   return;
                 }
                 if (

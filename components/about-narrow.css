@@ -1,5 +1,6 @@
 /*
- * Narrow / tablet about page — polaroid + flowing bio.
+ * Narrow / tablet about + contact pages. Static: header, body and footer
+ * links share one screen and the body is fitted to what's left — no scroll.
  * Chrome matches installation / project (wordmark + hamburger).
  */
 
@@ -9,10 +10,14 @@
   position: fixed;
   inset: 0;
   z-index: 40;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: #fff;
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
+  overscroll-behavior: none;
 }
 
 .about-narrow[data-visible] {
@@ -21,31 +26,21 @@
   pointer-events: auto;
 }
 
+.about-narrow[data-visible]:not([data-armed]),
+.about-narrow[data-visible]:not([data-armed]) * {
+  pointer-events: none !important;
+}
+
 .about-narrow__header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 50;
+  position: relative;
+  z-index: 60;
+  flex: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
   box-sizing: border-box;
   padding: var(--ab-chrome-pad) var(--ab-gutter);
   pointer-events: none;
-  background: #fff;
-  transition: box-shadow 180ms ease;
-}
-
-.about-narrow__header[data-scrolled] {
-  box-shadow: 0 1px 0 rgb(0 0 0 / 6%);
-}
-
-.about-narrow[data-menu-state="open"] .about-narrow__header {
-  background: transparent;
-  box-shadow: none;
-  /* Above nav overlay so the hamburger stays tappable (same as design). */
-  z-index: 60;
 }
 
 .about-narrow__header .project-narrow__wordmark,
@@ -66,6 +61,7 @@
   cursor: pointer;
   width: var(--ab-menu-w);
   height: var(--ab-menu-h, var(--ab-nzeribe-h));
+  touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -75,42 +71,39 @@
   height: 100%;
 }
 
-.about-narrow__scroll {
-  position: absolute;
-  inset: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
-  touch-action: pan-y;
-  background: #fff;
-}
-
-/* Column fills the screen so a short bio still drops the footer to the
-   bottom, the landing footer's 24px above the edge. */
-.about-narrow__page {
+.about-narrow__body {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  min-height: 100%;
-  margin: 0;
-  padding: calc(var(--ab-chrome-pad) + var(--ab-nzeribe-h, 40px) + 28px)
-    var(--ab-gutter)
-    var(--ab-chrome-pad);
+  touch-action: manipulation;
 }
 
 .about-narrow__footer {
-  margin: auto calc(-1 * var(--ab-gutter)) 0;
-  padding-top: 48px;
+  flex: none;
+  padding: 16px 0 var(--ab-chrome-pad);
+}
+
+/* ── About ── */
+
+/* Polaroid tucks straight under the header: the only gap is the header's
+   own bottom pad, the same air as above the wordmark. */
+.about-narrow[data-page="about"] .about-narrow__body {
+  padding: 0 var(--ab-gutter);
+}
+
+/* Font size is fitted in JS; the polaroid and gap ride on it. */
+.about-narrow__fit {
+  font-size: 22px;
 }
 
 .about-narrow__polaroid {
   position: relative;
   display: block;
-  width: min(52vw, 220px);
+  width: min(52%, 10em);
   aspect-ratio: 2099 / 2546;
-  margin: 0 0 2.75rem;
+  margin: 0 0 2em;
 }
 
 .about-narrow__polaroid-image {
@@ -118,8 +111,32 @@
   object-position: left top;
 }
 
-.about-bio-flow__text {
-  font-size: clamp(17px, 4.6vw, 22px);
+.about-narrow__fit .about-bio-flow__text {
+  font-size: 1em;
+}
+
+/* ── Contact ── */
+
+/*
+ * The stub scales to the body: twice the chrome gutter on each side, never
+ * taller than the space under the header (the tear included), and capped
+ * so tablets don't blow it up past a comfortable size.
+ */
+.about-narrow[data-page="contact"] .about-narrow__body {
+  container-type: size;
+  padding-top: 28px;
+  --cf-u: min(
+    (100cqw - 4 * var(--ab-gutter)) / 272,
+    (100cqh - 24px) / 318,
+    2px
+  );
+}
+
+.about-narrow[data-page="contact"] .about-narrow__footer nav {
+  width: var(--ab-ticket-w, calc(100% - 4 * var(--ab-gutter)));
+  margin: 0 auto;
+  justify-content: space-between;
+  gap: 0 !important;
 }
 
 /* Hamburger nav overlay — same stage scale as project / installation. */
@@ -161,8 +178,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .about-narrow,
-  .about-narrow__header {
+  .about-narrow {
     transition: none !important;
   }
 }

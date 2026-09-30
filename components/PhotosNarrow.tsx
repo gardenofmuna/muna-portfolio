@@ -311,7 +311,7 @@ export function PhotosNarrow({ visible, onNavigate, onOpenDesign }: Props) {
           placement="flow"
           onClick={(event) => {
             event.preventDefault();
-            leavePhotos("contact");
+            leavePhotos("home");
           }}
         />
         <button
@@ -479,7 +479,7 @@ export function PhotosNarrow({ visible, onNavigate, onOpenDesign }: Props) {
                   return;
                 }
                 if (label === "contact") {
-                  leavePhotos("about");
+                  leavePhotos("contact");
                   return;
                 }
                 if (

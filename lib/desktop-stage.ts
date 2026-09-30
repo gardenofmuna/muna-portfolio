@@ -87,6 +87,9 @@ export type StageFitMode = "expand" | "fit" | "crop";
 /** 4:3 iPad landscape and 16:10 laptops still count as a desktop rectangle. */
 export const STAGE_DESKTOP_MIN_ASPECT = 1.25;
 
+/** Narrower windows crop rather than width-fit, however wide their aspect. */
+export const STAGE_CROP_BELOW_W = 1300;
+
 /** Always fill viewport height so the nav wheel has no top/bottom gap. */
 export function desktopStageHeightScale(viewportH: number): number {
   return viewportH > 0 ? viewportH / DESKTOP_STAGE_H : 1;
@@ -100,7 +103,8 @@ export function desktopStageNaturalWidth(viewportH: number): number {
  * expand — window is wide enough: height-fill, extra width opens Q2/Q3.
  * fit — desktop rectangle but not wide enough (13" 16:10, iPad landscape):
  *       width-fit so Q3 right padding and equal gutters stay; nav fills height.
- * crop — too square / squeezed from the sides: height-fill + horizontal crop.
+ * crop — too square / squeezed from the sides, or narrower than
+ *        STAGE_CROP_BELOW_W: height-fill + horizontal crop.
  */
 export function desktopStageFitMode(
   viewportW: number,
@@ -109,6 +113,7 @@ export function desktopStageFitMode(
   if (viewportH <= 0) return "crop";
   const naturalW = desktopStageNaturalWidth(viewportH);
   if (viewportW + 0.5 >= naturalW) return "expand";
+  if (viewportW < STAGE_CROP_BELOW_W) return "crop";
   const aspect = viewportW / viewportH;
   if (aspect >= STAGE_DESKTOP_MIN_ASPECT) return "fit";
   return "crop";

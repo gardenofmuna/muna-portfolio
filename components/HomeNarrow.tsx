@@ -17,6 +17,7 @@ import { NarrowWheelFit, useNarrowArtboardMetrics } from "@/components/NarrowArt
 import { PhotosHoverCluster } from "@/components/PhotosHoverCluster";
 import { PhotosNarrow } from "@/components/PhotosNarrow";
 import { CvNarrow } from "@/components/CvNarrow";
+import { CV_TONES } from "@/components/CvPane";
 import { CvPressHoverAccordion } from "@/components/CvPressHoverAccordion";
 import { FilmHoverGif } from "@/components/FilmHoverGif";
 import { SelectedWorksHoverGif } from "@/components/SelectedWorksHoverGif";
@@ -79,8 +80,14 @@ export function HomeNarrow({
   const [photosOpen, setPhotosOpen] = useState(false);
   /** Full-page CV — opens on tapping the centred “cv + press” label. */
   const [cvOpen, setCvOpen] = useState(false);
-  /** Tapping “contact” opens the about page; the wheel still rests on contact. */
+  /** Full-page contact form — opens on tapping “contact”. */
   const [contactOpen, setContactOpen] = useState(false);
+  /* Each opening prints the ticket on the next CV paper colour. */
+  const [contactPress, setContactPress] = useState(0);
+  const openContact = useCallback(() => {
+    setContactOpen(true);
+    setContactPress((n) => n + 1);
+  }, []);
   const projectRef = useRef(project);
   projectRef.current = project;
 
@@ -146,7 +153,8 @@ export function HomeNarrow({
     setInstallationShow(null);
     setPhotosOpen(label === "photos");
     setCvOpen(label === "cv + press");
-    setContactOpen(false);
+    if (label === "contact") openContact();
+    else setContactOpen(false);
     setEnteredFromLanding(false);
     document.title = "Muna | Portfolio";
     if (label && (NARROW_NAV_LABELS as readonly string[]).includes(label)) {
@@ -156,7 +164,7 @@ export function HomeNarrow({
     if (window.location.pathname !== "/") {
       window.history.pushState(null, "", "/");
     }
-  }, []);
+  }, [openContact]);
 
   const onProjectChange = useCallback((next: ProjectDefinition) => {
     setEnteredFromLanding(false);
@@ -203,10 +211,12 @@ export function HomeNarrow({
   const previewLabel =
     wheelInteracting && hoverNavLabel ? hoverNavLabel : activeLabel;
   /** Full-page about — settle or tap “about”. */
-  const showAboutPage = !project && (activeLabel === "about" || contactOpen);
+  const showAboutPage = !project && activeLabel === "about" && !contactOpen;
+  const showContactPage = !project && contactOpen;
   const showAboutBio =
     !project &&
     !showAboutPage &&
+    !showContactPage &&
     (previewLabel === "about" || previewLabel === "contact");
   const showPhotos = !project && previewLabel === "photos";
   const showDesign = !project && previewLabel === "design";
@@ -229,30 +239,39 @@ export function HomeNarrow({
   const mountLanding = !projectOpen || enteredFromLanding || !initialProject;
   const installationOpen = showInstallation && !projectOpen;
   const aboutOpen = showAboutPage && !projectOpen;
+  const contactPageOpen = showContactPage && !projectOpen;
   const caseStudyOpen = installationShow != null && !projectOpen;
   const photosPageOpen = photosOpen && !projectOpen;
   const cvPageOpen = cvOpen && !projectOpen;
   const overlayOpen =
     installationOpen ||
     aboutOpen ||
+    contactPageOpen ||
     caseStudyOpen ||
     photosPageOpen ||
     cvPageOpen;
 
-  const leaveOverlay = useCallback((label: string) => {
-    setInstallationShow(null);
-    setPhotosOpen(label === "photos");
-    setCvOpen(label === "cv + press");
-    setContactOpen(false);
-    if ((NARROW_NAV_LABELS as readonly string[]).includes(label)) {
-      setActiveLabel(label as NarrowLabel);
-    }
-    setWheelEpoch((n) => n + 1);
-    document.title = "Muna | Portfolio";
-    if (window.location.pathname !== "/") {
-      window.history.pushState(null, "", "/");
-    }
-  }, []);
+  /* "home" is the wordmark: back to the landing wheel, resting on contact.
+     "contact" from any page menu opens the contact page. */
+  const leaveOverlay = useCallback(
+    (label: string) => {
+      const next = label === "home" ? "contact" : label;
+      setInstallationShow(null);
+      setPhotosOpen(next === "photos");
+      setCvOpen(next === "cv + press");
+      if (label === "contact") openContact();
+      else setContactOpen(false);
+      if ((NARROW_NAV_LABELS as readonly string[]).includes(next)) {
+        setActiveLabel(next as NarrowLabel);
+      }
+      setWheelEpoch((n) => n + 1);
+      document.title = "Muna | Portfolio";
+      if (window.location.pathname !== "/") {
+        window.history.pushState(null, "", "/");
+      }
+    },
+    [openContact],
+  );
 
   return (
     <div className="narrow-app fixed inset-0 overflow-hidden bg-white">
@@ -296,7 +315,7 @@ export function HomeNarrow({
                 return;
               }
               if (label === "contact") {
-                setContactOpen(true);
+                openContact();
                 return;
               }
               if (label === "photos") {
@@ -328,7 +347,15 @@ export function HomeNarrow({
       </div>
       ) : null}
       <AboutNarrow
+        page="about"
         visible={aboutOpen}
+        onNavigate={leaveOverlay}
+        onOpenDesign={openDesignProject}
+      />
+      <AboutNarrow
+        page="contact"
+        visible={contactPageOpen}
+        tone={CV_TONES[(contactPress - 1 + CV_TONES.length) % CV_TONES.length]}
         onNavigate={leaveOverlay}
         onOpenDesign={openDesignProject}
       />

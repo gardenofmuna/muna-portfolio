@@ -4,6 +4,7 @@ import Image from "next/image";
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -11,6 +12,8 @@ import {
 
 import { AboutBio } from "@/components/AboutBio";
 import { CircularNavWheel } from "@/components/CircularNavWheel";
+import { ContactForm } from "@/components/ContactForm";
+import type { CvTone } from "@/components/CvPane";
 import { MobileFooterLinks } from "@/components/MobileFooterLinks";
 import { useNarrowArtboardMetrics } from "@/components/NarrowArtboard";
 import { SiteWordmark } from "@/components/SiteWordmark";
@@ -23,8 +26,13 @@ import {
 
 import "./about-narrow.css";
 
+export type NarrowInfoPage = "about" | "contact";
+
 type Props = {
+  page: NarrowInfoPage;
   visible: boolean;
+  /** Contact page ticket stock. */
+  tone?: CvTone;
   onNavigate: (label: string) => void;
   onOpenDesign: () => void;
 };
@@ -33,23 +41,36 @@ type Props = {
 const MENU_ASPECT = 107 / 74;
 const MENU_HEIGHT_SCALE = 0.85;
 
+/** Bio size when the screen has room (px), and the floor when it doesn't. */
+const BIO_MIN_PX = 11;
+const ARM_MS = 450;
+const bioPreferredPx = (vw: number) => Math.min(22, Math.max(17, vw * 0.046));
+
 /**
- * Mobile / tablet about page — polaroid + flowing bio under shared chrome.
+ * Mobile / tablet about and contact pages under the shared chrome. Neither
+ * scrolls: the body is sized to fit between the header and the footer links.
  */
-export function AboutNarrow({ visible, onNavigate, onOpenDesign }: Props) {
+export function AboutNarrow({
+  page,
+  visible,
+  tone = "pink",
+  onNavigate,
+  onOpenDesign,
+}: Props) {
   const { u } = useNarrowArtboardMetrics();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [viewportH, setViewportH] = useState(0);
+  const [viewport, setViewport] = useState({ width: 0, height: 0 });
   const [reduceMotion, setReduceMotion] = useState(false);
-  const scrollerRef = useRef<HTMLDivElement>(null);
-  const headerRef = useRef<HTMLElement>(null);
-  const headerScrolledRef = useRef(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const fitRef = useRef<HTMLDivElement>(null);
 
   const scale = u || 1;
   const nzeribeH = NARROW_NZERIBE.h * scale;
   const menuH = nzeribeH * MENU_HEIGHT_SCALE;
   const menuW = menuH * MENU_ASPECT;
-  const navScale = viewportH > 0 ? viewportH / DESKTOP_LAYOUT_H : 0;
+  const navScale =
+    viewport.height > 0 ? viewport.height / DESKTOP_LAYOUT_H : 0;
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -60,38 +81,73 @@ export function AboutNarrow({ visible, onNavigate, onOpenDesign }: Props) {
   }, []);
 
   useEffect(() => {
-    const read = () => {
-      setViewportH(readStableLayoutSize().height);
-    };
+    const read = () => setViewport(readStableLayoutSize());
     read();
     return subscribeStableLayout(read);
   }, []);
 
+  /* The tap that opens the page lands on it too (a field would take focus
+     and raise the keyboard), so it ignores touches for a beat. */
+  const [armed, setArmed] = useState(visible);
+  const [wasVisible, setWasVisible] = useState(visible);
+  if (wasVisible !== visible) {
+    setWasVisible(visible);
+    setArmed(false);
+    if (!visible) setMenuOpen(false);
+  }
   useEffect(() => {
-    if (!visible) {
-      setMenuOpen(false);
-      return;
-    }
-    const scroller = scrollerRef.current;
-    if (scroller) scroller.scrollTop = 0;
-  }, [visible]);
+    if (!visible || armed) return;
+    const t = window.setTimeout(() => setArmed(true), ARM_MS);
+    return () => window.clearTimeout(t);
+  }, [armed, visible]);
 
-  useEffect(() => {
-    const scroller = scrollerRef.current;
-    const header = headerRef.current;
-    if (!scroller || !header || !visible) return;
+  /* About: largest bio size (up to the usual one) whose polaroid + text
+     still fit the body. Keyed to the stable viewport so the keyboard or
+     browser bars never reflow it. */
+  useLayoutEffect(() => {
+    if (page !== "about") return;
+    const body = bodyRef.current;
+    const fit = fitRef.current;
+    if (!body || !fit || viewport.width <= 0) return;
 
-    const sync = () => {
-      const next = scroller.scrollTop > 8;
-      if (next === headerScrolledRef.current) return;
-      headerScrolledRef.current = next;
-      header.toggleAttribute("data-scrolled", next);
+    const run = () => {
+      const room = body.clientHeight;
+      if (room <= 0) return;
+      let lo = BIO_MIN_PX;
+      let hi = bioPreferredPx(viewport.width);
+      fit.style.fontSize = `${hi}px`;
+      if (fit.offsetHeight <= room) return;
+      for (let i = 0; i < 9; i++) {
+        const mid = (lo + hi) / 2;
+        fit.style.fontSize = `${mid}px`;
+        if (fit.offsetHeight <= room) lo = mid;
+        else hi = mid;
+      }
+      fit.style.fontSize = `${lo}px`;
     };
 
-    sync();
-    scroller.addEventListener("scroll", sync, { passive: true });
-    return () => scroller.removeEventListener("scroll", sync);
-  }, [visible]);
+    run();
+    let live = true;
+    document.fonts?.ready.then(() => {
+      if (live) run();
+    });
+    return () => {
+      live = false;
+    };
+  }, [page, viewport]);
+
+  /* Contact: the footer links span the ticket's width. */
+  useLayoutEffect(() => {
+    if (page !== "contact") return;
+    const root = rootRef.current;
+    const ticket = root?.querySelector<HTMLElement>(".contact-form__ticket");
+    if (!root || !ticket) return;
+    const ro = new ResizeObserver(() => {
+      root.style.setProperty("--ab-ticket-w", `${ticket.offsetWidth}px`);
+    });
+    ro.observe(ticket);
+    return () => ro.disconnect();
+  }, [page]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -104,22 +160,25 @@ export function AboutNarrow({ visible, onNavigate, onOpenDesign }: Props) {
 
   const closeMenu = useCallback(() => setMenuOpen(false), []);
 
-  const leaveAbout = useCallback(
+  const leavePage = useCallback(
     (label: string) => {
       closeMenu();
-      if (label === "about") return;
+      if (label === page) return;
       onNavigate(label);
       if (label === "design") onOpenDesign();
     },
-    [closeMenu, onNavigate, onOpenDesign],
+    [closeMenu, onNavigate, onOpenDesign, page],
   );
 
   const fadeMs = reduceMotion ? 80 : 420;
 
   return (
     <div
+      ref={rootRef}
       className="about-narrow"
+      data-page={page}
       data-visible={visible ? "" : undefined}
+      data-armed={armed ? "" : undefined}
       data-menu-state={menuOpen ? "open" : "hidden"}
       aria-hidden={!visible}
       inert={!visible ? true : undefined}
@@ -128,19 +187,22 @@ export function AboutNarrow({ visible, onNavigate, onOpenDesign }: Props) {
           "--ab-nzeribe-h": `${nzeribeH}px`,
           "--ab-menu-w": `${menuW}px`,
           "--ab-menu-h": `${menuH}px`,
+          ...(viewport.height > 0
+            ? { height: `${viewport.height}px`, bottom: "auto" }
+            : null),
           transition: reduceMotion
             ? "none"
             : `opacity ${fadeMs}ms cubic-bezier(0.22, 1, 0.36, 1)`,
         } as CSSProperties
       }
     >
-      <header ref={headerRef} className="about-narrow__header">
+      <header className="about-narrow__header">
         <SiteWordmark
           href="/"
           placement="flow"
           onClick={(event) => {
             event.preventDefault();
-            leaveAbout("contact");
+            leavePage("home");
           }}
         />
         <button
@@ -166,28 +228,36 @@ export function AboutNarrow({ visible, onNavigate, onOpenDesign }: Props) {
         </button>
       </header>
 
-      <div
-        ref={scrollerRef}
-        className="about-narrow__scroll"
+      <main
+        ref={bodyRef}
+        className="about-narrow__body"
         inert={menuOpen ? true : undefined}
       >
-        <div className="about-narrow__page">
-          <div className="about-narrow__polaroid">
-            <Image
-              src="/muna-polaroid.webp"
-              alt="Muna"
-              fill
-              className="about-narrow__polaroid-image"
-              sizes="(max-width: 700px) 52vw, 220px"
-              priority
-            />
+        {page === "about" ? (
+          <div ref={fitRef} className="about-narrow__fit">
+            <div className="about-narrow__polaroid">
+              <Image
+                src="/muna-polaroid.webp"
+                alt="Muna"
+                fill
+                className="about-narrow__polaroid-image"
+                sizes="(max-width: 700px) 52vw, 220px"
+                priority
+              />
+            </div>
+            <AboutBio visible={visible} flow />
           </div>
-          <AboutBio visible={visible} flow />
-          <footer className="about-narrow__footer">
-            <MobileFooterLinks placement="flow" />
-          </footer>
-        </div>
-      </div>
+        ) : (
+          <ContactForm layout="page" visible={visible} tone={tone} />
+        )}
+      </main>
+
+      <footer
+        className="about-narrow__footer"
+        inert={menuOpen ? true : undefined}
+      >
+        <MobileFooterLinks placement="flow" />
+      </footer>
 
       {menuOpen && navScale > 0 ? (
         <div
@@ -208,19 +278,17 @@ export function AboutNarrow({ visible, onNavigate, onOpenDesign }: Props) {
               layout="desktop"
               containment="stage"
               spinFeel="narrow"
-              initialActiveLabel="about"
+              initialActiveLabel={page}
               onLabelActivate={(label) => {
-                if (label === "about" || label === "contact") {
-                  closeMenu();
-                  return;
-                }
                 if (
+                  label === "about" ||
+                  label === "contact" ||
                   label === "design" ||
                   label === "installation" ||
                   label === "photos" ||
                   label === "cv + press"
                 ) {
-                  leaveAbout(label);
+                  leavePage(label);
                 }
               }}
             />
