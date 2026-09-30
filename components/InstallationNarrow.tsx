@@ -32,13 +32,15 @@ type Props = {
   onOpenShow?: (show: InstallationShow) => void;
 };
 
+const ARM_MS = 450;
+
 /** Hamburger SVG viewBox — match project-narrow chrome. */
 const MENU_ASPECT = 107 / 74;
 const MENU_HEIGHT_SCALE = 0.85;
 
 /**
  * Mobile / tablet installation landing — vertical scroll of every show
- * (image + right-aligned caption). Tap title to open the case study.
+ * (image + right-aligned caption). Tap the image or title to open the case study.
  */
 export function InstallationNarrow({
   visible,
@@ -76,11 +78,23 @@ export function InstallationNarrow({
     return subscribeStableLayout(read);
   }, []);
 
+  /* The tap that opens the feed lands on it too (usually on the first hero),
+     so the shows ignore taps for a beat. */
+  const [armed, setArmed] = useState(visible);
+  const [wasVisible, setWasVisible] = useState(visible);
+  if (wasVisible !== visible) {
+    setWasVisible(visible);
+    setArmed(false);
+    if (!visible) setMenuOpen(false);
+  }
   useEffect(() => {
-    if (!visible) {
-      setMenuOpen(false);
-      return;
-    }
+    if (!visible || armed) return;
+    const t = window.setTimeout(() => setArmed(true), ARM_MS);
+    return () => window.clearTimeout(t);
+  }, [armed, visible]);
+
+  useEffect(() => {
+    if (!visible) return;
     const scroller = scrollerRef.current;
     if (scroller) scroller.scrollTop = 0;
   }, [visible]);
@@ -129,6 +143,7 @@ export function InstallationNarrow({
     <div
       className="installation-narrow"
       data-visible={visible ? "" : undefined}
+      data-armed={armed ? "" : undefined}
       data-menu-state={menuOpen ? "open" : "hidden"}
       aria-hidden={!visible}
       inert={!visible ? true : undefined}
@@ -187,7 +202,13 @@ export function InstallationNarrow({
                 id={`installation-narrow-${show.id}`}
                 className="installation-narrow__entry"
               >
-                <div className="installation-narrow__frame">
+                <button
+                  type="button"
+                  className="installation-narrow__frame"
+                  onClick={() => onOpenShow?.(show)}
+                  aria-label={`Open ${show.titleLines.join(" ")}`}
+                  tabIndex={-1}
+                >
                   <Image
                     src={show.src}
                     alt={show.alt}
@@ -198,7 +219,7 @@ export function InstallationNarrow({
                     /* Same files as the desktop carousel (`INSTALLATION_SHOWS`). */
                     unoptimized
                   />
-                </div>
+                </button>
                 <div className="installation-narrow__meta">
                   <p className="installation-narrow__year">{show.year}</p>
                   <p className="installation-narrow__kind">{show.kind}</p>

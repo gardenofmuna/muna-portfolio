@@ -29,6 +29,8 @@ type Props = {
       top: number;
       right: number;
       width: number;
+      /** Height of the pink stub, not counting the tear below it. */
+      height: number;
       /** Shared landing crossfade. */
       transition: string;
     }
@@ -103,6 +105,7 @@ export function ContactForm(props: Props) {
               top: props.top,
               right: props.right,
               width: props.width,
+              height: props.height,
               opacity: visible ? 1 : 0,
               visibility: visible ? "visible" : "hidden",
               transition: props.transition,

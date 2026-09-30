@@ -107,6 +107,24 @@
   border-style: solid;
 }
 
+/* Desktop stage: the stub fills the polaroid's height; the note box takes up
+   whatever the fixed rows leave. */
+.contact-form:not(.contact-form--page) .contact-form__ticket {
+  flex: 1;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+.contact-form:not(.contact-form--page) .contact-form__field {
+  font-size: 15px;
+}
+
+.contact-form:not(.contact-form--page) textarea.contact-form__field {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+}
+
 textarea.contact-form__field {
   height: calc(84 * var(--cf-u, 1px));
   resize: none;

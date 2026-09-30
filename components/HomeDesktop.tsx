@@ -671,6 +671,7 @@ export function HomeDesktop({
               top={m.inset}
               right={m.inset}
               width={m.nzeribeW}
+              height={m.frameH}
               transition={crossfade}
             />
             <div

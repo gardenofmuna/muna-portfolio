@@ -110,8 +110,22 @@
 }
 
 .installation-narrow__frame {
+  display: block;
   width: 100%;
   margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.installation-narrow:not([data-armed]) .installation-narrow__frame,
+.installation-narrow:not([data-armed]) .installation-narrow__frame *,
+.installation-narrow:not([data-armed]) .installation-narrow__title,
+.installation-narrow:not([data-armed]) .installation-narrow__title * {
+  pointer-events: none;
 }
 
 .installation-narrow__image {
