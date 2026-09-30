@@ -6,6 +6,7 @@ import { AboutBio } from "@/components/AboutBio";
 import { AboutNarrow } from "@/components/AboutNarrow";
 import { CircularNavWheel } from "@/components/CircularNavWheel";
 import { DesignCluster } from "@/components/DesignCluster";
+import { InstallationLottie } from "@/components/InstallationLottie";
 import { InstallationNarrow } from "@/components/InstallationNarrow";
 import { InstallationShowPage } from "@/components/InstallationShowPage";
 import {
@@ -76,6 +77,11 @@ export function HomeNarrow({
         : null,
     );
   const [enteredFromLanding, setEnteredFromLanding] = useState(false);
+  /* Rolling the wheel onto a label only previews it; a tap opens the page. */
+  const [installListOpen, setInstallListOpen] = useState(
+    Boolean(initialInstallationId),
+  );
+  const [aboutRequested, setAboutRequested] = useState(false);
   /** Full-page photos reel — opens on tapping the centred “photos” label. */
   const [photosOpen, setPhotosOpen] = useState(false);
   /** Full-page CV — opens on tapping the centred “cv + press” label. */
@@ -105,6 +111,7 @@ export function HomeNarrow({
     const show = getInstallationShowById(initialInstallationId);
     if (!show) return;
     setInstallationShow(show);
+    setInstallListOpen(true);
     setActiveLabel("installation");
     document.title = `${show.titleLines.join(" ")} | Muna | Portfolio`;
   }, [initialInstallationId]);
@@ -131,6 +138,7 @@ export function HomeNarrow({
 
   const openInstallationShow = useCallback((show: InstallationShow) => {
     setInstallationShow(show);
+    setInstallListOpen(true);
     setActiveLabel("installation");
     document.title = `${show.titleLines.join(" ")} | Muna | Portfolio`;
     const path = `/installation/${show.id}`;
@@ -141,6 +149,7 @@ export function HomeNarrow({
 
   const closeInstallationShow = useCallback(() => {
     setInstallationShow(null);
+    setInstallListOpen(true);
     setActiveLabel("installation");
     document.title = "Muna | Portfolio";
     if (window.location.pathname.startsWith("/installation/")) {
@@ -151,6 +160,8 @@ export function HomeNarrow({
   const goToLanding = useCallback((label?: string) => {
     setProject(null);
     setInstallationShow(null);
+    setInstallListOpen(label === "installation");
+    setAboutRequested(label === "about");
     setPhotosOpen(label === "photos");
     setCvOpen(label === "cv + press");
     if (label === "contact") openContact();
@@ -188,6 +199,7 @@ export function HomeNarrow({
       );
       if (installMatch) {
         setProject(null);
+        setInstallListOpen(true);
         setActiveLabel("installation");
         const show = getInstallationShowById(installMatch[1] ?? "");
         setInstallationShow(show ?? null);
@@ -210,8 +222,8 @@ export function HomeNarrow({
   /** While spinning, only the label at 12 o'clock previews — no stacked hovers. */
   const previewLabel =
     wheelInteracting && hoverNavLabel ? hoverNavLabel : activeLabel;
-  /** Full-page about — settle or tap “about”. */
-  const showAboutPage = !project && activeLabel === "about" && !contactOpen;
+  const showAboutPage =
+    !project && aboutRequested && activeLabel === "about" && !contactOpen;
   const showContactPage = !project && contactOpen;
   const showAboutBio =
     !project &&
@@ -222,7 +234,12 @@ export function HomeNarrow({
   const showDesign = !project && previewLabel === "design";
   /** Installation landing feed — hidden while a case study is open. */
   const showInstallation =
-    !project && activeLabel === "installation" && !installationShow;
+    !project &&
+    installListOpen &&
+    activeLabel === "installation" &&
+    !installationShow;
+  const showInstallHover =
+    !project && !installListOpen && previewLabel === "installation";
   const showCvPress = !project && previewLabel === "cv + press";
   const showFilm = !project && previewLabel === "film";
   const showSelectedWorks = !project && previewLabel === "selected works";
@@ -257,6 +274,8 @@ export function HomeNarrow({
     (label: string) => {
       const next = label === "home" ? "contact" : label;
       setInstallationShow(null);
+      setInstallListOpen(next === "installation");
+      setAboutRequested(next === "about");
       setPhotosOpen(next === "photos");
       setCvOpen(next === "cv + press");
       if (label === "contact") openContact();
@@ -310,8 +329,14 @@ export function HomeNarrow({
                 openDesignProject();
                 return;
               }
-              if (label === "about" || label === "installation") {
+              if (label === "about") {
                 setActiveLabel(label);
+                setAboutRequested(true);
+                return;
+              }
+              if (label === "installation") {
+                setActiveLabel(label);
+                setInstallListOpen(true);
                 return;
               }
               if (label === "contact") {
@@ -330,6 +355,7 @@ export function HomeNarrow({
             }}
           />
           <DesignCluster visible={showDesign} variant="narrow" />
+          <InstallationLottie visible={showInstallHover} layout="narrow" />
           <FilmHoverGif visible={showFilm} layout="narrow" />
           <CvPressHoverAccordion visible={showCvPress} layout="narrow" />
           <SelectedWorksHoverGif visible={showSelectedWorks} layout="narrow" />

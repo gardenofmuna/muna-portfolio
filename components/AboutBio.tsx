@@ -66,6 +66,8 @@ function fauxBold(
 
 /** Mobile about paragraph — subtler weight than the desktop nine-line bio. */
 const FLOW_FAUX = "0.4px";
+/** Mobile about page: its type is fitted to the screen, so the weight scales with it. */
+const PAGE_FAUX = "0.028em";
 
 type Layout = {
   left: number;
@@ -266,22 +268,23 @@ export function AboutBio({
         ? 0
         : ABOUT_BIO_PIN_OFFSET_Y) + fadeTranslateY;
 
+  const faux = flow ? PAGE_FAUX : FLOW_FAUX;
   const bioCopy = (
     <>
       Muna Nzeribe (b. 2001) is a designer and artist born in{" "}
-      <span style={fauxBold(COL.lagos, FLOW_FAUX)}>Lagos,</span> Nigeria and currently
+      <span style={fauxBold(COL.lagos, faux)}>Lagos,</span> Nigeria and currently
       living and working in{" "}
-      <span style={fauxBold(COL.toronto, FLOW_FAUX)}>Toronto,</span> Canada. With a Bsc. in
+      <span style={fauxBold(COL.toronto, faux)}>Toronto,</span> Canada. With a Bsc. in
       Mass Communication (2022) and an MFA in Documentary Media (2025), she sees
       her practice as an embodiment of Marshall McLuhan&rsquo;s theory that{" "}
-      <span style={fauxBold(COL.medium, FLOW_FAUX)}>
+      <span style={fauxBold(COL.medium, faux)}>
         &lsquo;the medium is the message.&rsquo;
       </span>{" "}
       Utilizing an inherently{" "}
-      <span style={fauxBold(COL.interdisciplinary, FLOW_FAUX)}>interdisciplinary</span>{" "}
-      approach and <span style={fauxBold(COL.afro, FLOW_FAUX)}>Afro-modernist</span> lens,
+      <span style={fauxBold(COL.interdisciplinary, faux)}>interdisciplinary</span>{" "}
+      approach and <span style={fauxBold(COL.afro, faux)}>Afro-modernist</span> lens,
       she waves her creative wand excited to reveal the{" "}
-      <span style={fauxBold(COL.blue, FLOW_FAUX)}>
+      <span style={fauxBold(COL.blue, faux)}>
         hidden correspondence embedded in emerging technology.
       </span>
     </>

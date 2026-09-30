@@ -98,7 +98,11 @@ export function DesktopStageCanvas({ children, className }: Props) {
         width: stable.width,
         height: stable.height,
       };
-      const mode = desktopStageFitMode(next.width, next.height);
+      const mode = desktopStageFitMode(
+        next.width,
+        next.height,
+        navigator.maxTouchPoints > 0,
+      );
       const prev = frameRef.current;
       let alignX = alignXRef.current;
       if (mode === "crop" && prev) {
