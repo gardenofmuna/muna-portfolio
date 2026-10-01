@@ -14,7 +14,10 @@ type Props = {
   morphOnMount?: boolean;
 };
 
-/** Hamburger (107×74 master) whose bars cross into an X. */
+/**
+ * Hamburger (107×74 master) whose bars cross into an X. Plain boxes rather
+ * than SVG shapes: Safari misplaces CSS transforms on SVG children.
+ */
 export function MenuToggleIcon({ open, morphOnMount = false }: Props) {
   const [settled, setSettled] = useState(!morphOnMount);
 
@@ -33,34 +36,14 @@ export function MenuToggleIcon({ open, morphOnMount = false }: Props) {
   const shownOpen = settled ? open : !open;
 
   return (
-    <svg
+    <span
       className="menu-toggle-icon"
       data-open={shownOpen ? "" : undefined}
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 107 74"
       aria-hidden
     >
-      <rect
-        className="menu-toggle-icon__bar menu-toggle-icon__bar--top"
-        x="0.801"
-        y="0"
-        width="105.509"
-        height="11.661"
-      />
-      <rect
-        className="menu-toggle-icon__bar menu-toggle-icon__bar--mid"
-        x="0.801"
-        y="31.098"
-        width="105.509"
-        height="11.661"
-      />
-      <rect
-        className="menu-toggle-icon__bar menu-toggle-icon__bar--bot"
-        x="0.801"
-        y="62.195"
-        width="105.509"
-        height="11.661"
-      />
-    </svg>
+      <span className="menu-toggle-icon__bar menu-toggle-icon__bar--top" />
+      <span className="menu-toggle-icon__bar menu-toggle-icon__bar--mid" />
+      <span className="menu-toggle-icon__bar menu-toggle-icon__bar--bot" />
+    </span>
   );
 }
