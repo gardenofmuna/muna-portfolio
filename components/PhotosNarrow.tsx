@@ -14,6 +14,7 @@ import {
 
 import { CircularNavWheel } from "@/components/CircularNavWheel";
 import { useNarrowArtboardMetrics } from "@/components/NarrowArtboard";
+import { MenuToggleIcon } from "@/components/MenuToggleIcon";
 import { SiteWordmark } from "@/components/SiteWordmark";
 import {
   SHOT_ON_FILM_START,
@@ -321,13 +322,7 @@ export function PhotosNarrow({ visible, onNavigate, onOpenDesign }: Props) {
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((open) => !open)}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 107 74" aria-hidden>
-            <path
-              fillRule="evenodd"
-              fill="#000"
-              d="M0.801,73.857 L0.801,62.195 L106.310,62.195 L106.310,73.857 L0.801,73.857 ZM0.801,31.098 L106.310,31.098 L106.310,42.759 L0.801,42.759 L0.801,31.098 ZM0.801,-0.000 L106.310,-0.000 L106.310,11.661 L0.801,11.661 L0.801,-0.000 Z"
-            />
-          </svg>
+          <MenuToggleIcon open={menuOpen} />
         </button>
       </header>
 

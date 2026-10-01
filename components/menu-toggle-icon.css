@@ -1,0 +1,35 @@
+/*
+ * Bars sit 31.098 apart; the outer two slide to the middle and cross at 45°.
+ * scaleX trims them so the X stays inside the 74-tall box.
+ */
+.menu-toggle-icon {
+  overflow: visible;
+}
+
+.menu-toggle-icon__bar {
+  fill: #000;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    transform 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.menu-toggle-icon[data-open] .menu-toggle-icon__bar--top {
+  transform: translateY(31.098px) rotate(45deg) scaleX(0.88);
+}
+
+.menu-toggle-icon[data-open] .menu-toggle-icon__bar--mid {
+  opacity: 0;
+  transform: scaleX(0.2);
+}
+
+.menu-toggle-icon[data-open] .menu-toggle-icon__bar--bot {
+  transform: translateY(-31.097px) rotate(-45deg) scaleX(0.88);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-toggle-icon__bar {
+    transition: none;
+  }
+}
