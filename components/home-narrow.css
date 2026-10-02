@@ -38,7 +38,8 @@
 }
 
 .narrow-project-fade {
-  animation: narrow-project-fade 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  /* backwards, not both: a held animation keeps a page-sized GPU layer alive. */
+  animation: narrow-project-fade 480ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
 
 @keyframes narrow-project-fade {

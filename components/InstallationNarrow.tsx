@@ -19,6 +19,7 @@ import {
 } from "@/data/installation";
 import { DESKTOP_LAYOUT_H, DESKTOP_LAYOUT_W } from "@/lib/desktop-stage";
 import { NARROW_NZERIBE } from "@/lib/narrow-stage";
+import { usePageScroll } from "@/lib/page-scroll";
 import {
   readStableLayoutSize,
   subscribeStableLayout,
@@ -56,6 +57,7 @@ export function InstallationNarrow({
   const scrollerRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
   const headerScrolledRef = useRef(false);
+  usePageScroll(visible, scrollerRef);
 
   const scale = u || 1;
   const nzeribeH = NARROW_NZERIBE.h * scale;

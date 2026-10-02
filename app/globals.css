@@ -98,6 +98,49 @@ img {
   background-color: #fff;
 }
 
+/* A long mobile page is scrolling the document (lib/page-scroll.ts). The
+   scroll box and its ancestors join normal flow; horizontal overflow stays
+   clipped. !important beats inline body scroll locks, which would otherwise
+   stop the document scrolling. */
+html[data-page-scroll],
+html[data-page-scroll] body {
+  height: auto;
+  overflow: visible !important;
+}
+
+html[data-page-scroll] [data-page-scroll-path],
+html[data-page-scroll] #__next[data-page-scroll-path] {
+  position: static;
+  height: auto;
+  min-height: 0;
+  overflow-x: clip;
+  overflow-y: visible;
+}
+
+/* The hidden landing keeps its viewport box, and its wheel bleed can't widen
+   the document. */
+html[data-page-scroll] .narrow-landing {
+  position: fixed;
+}
+
+/* Safari keeps tinting its toolbar strip from the last full-screen layer it
+   sampled (the landing shell) for as long as that layer stays visible, so
+   the page would never show through after opening it without a reload.
+   Hiding the shells drops that tint; the delay lets the landing finish
+   fading out first. Open pages declare their own visibility. */
+html[data-page-scroll] #__next,
+html[data-page-scroll] .narrow-app {
+  visibility: hidden;
+  transition: visibility 0s linear 500ms;
+}
+
+/* The design page's fade wrapper too: iOS can leave a composited layer that
+   is itself hidden unpainted in places, even with visible content inside. */
+html[data-page-scroll] .narrow-project-fade,
+html[data-page-scroll] .project-narrow-shell {
+  visibility: visible;
+}
+
 *, *::before, *::after {
   box-sizing: inherit;
 }

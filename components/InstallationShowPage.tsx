@@ -21,6 +21,7 @@ import { SiteWordmark } from "@/components/SiteWordmark";
 import { useNarrowArtboardMetrics } from "@/components/NarrowArtboard";
 import { DESKTOP_LAYOUT_H, DESKTOP_LAYOUT_W } from "@/lib/desktop-stage";
 import { NARROW_NZERIBE } from "@/lib/narrow-stage";
+import { usePageScroll } from "@/lib/page-scroll";
 import {
   readStableLayoutSize,
   subscribeStableLayout,
@@ -345,6 +346,7 @@ export function InstallationShowPage({
   const caseStudy = show?.caseStudy;
   const isDesktop = variant === "desktop";
   smartRef.current = smart;
+  usePageScroll(visible && !isDesktop, scrollerRef);
 
   useEffect(() => {
     setPortalReady(true);

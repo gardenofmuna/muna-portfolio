@@ -31,17 +31,31 @@ import {
   type ProjectDefinition,
 } from "@/data/projects";
 import { NARROW_NAV_LABELS } from "@/lib/narrow-nav-ring";
+import {
+  NARROW_PAGE_PATHS,
+  isNarrowPage,
+  narrowPageForPath,
+  type NarrowPage,
+} from "@/lib/narrow-pages";
 
 import "./home-narrow.css";
 
 const DESIGN_PROJECT_PATH = `/design/${EGWU_RECORDS_SLUG}`;
 type NarrowLabel = (typeof NARROW_NAV_LABELS)[number];
 
+function showPath(path: string) {
+  if (window.location.pathname !== path) {
+    window.history.pushState(null, "", path);
+  }
+}
+
 type Props = {
   /** Direct visit to a project URL — same shell, already in project view. */
   initialProject?: ProjectDefinition;
   /** Deep link `/installation/[id]`. */
   initialInstallationId?: string;
+  /** Deep link `/about`, `/cv`, … — that page already open. */
+  initialPage?: NarrowPage;
 };
 
 /**
@@ -53,6 +67,7 @@ type Props = {
 export function HomeNarrow({
   initialProject,
   initialInstallationId,
+  initialPage,
 }: Props) {
   const { vx } = useNarrowArtboardMetrics();
   const [activeLabel, setActiveLabel] = useState<NarrowLabel>(
@@ -60,7 +75,7 @@ export function HomeNarrow({
       ? "design"
       : initialInstallationId
         ? "installation"
-        : "contact",
+        : (initialPage ?? "contact"),
   );
   const [hoverNavLabel, setHoverNavLabel] = useState<string | null>(null);
   const [wheelInteracting, setWheelInteracting] = useState(false);
@@ -79,17 +94,21 @@ export function HomeNarrow({
   const [enteredFromLanding, setEnteredFromLanding] = useState(false);
   /* Rolling the wheel onto a label only previews it; a tap opens the page. */
   const [installListOpen, setInstallListOpen] = useState(
-    Boolean(initialInstallationId),
+    Boolean(initialInstallationId) || initialPage === "installation",
   );
-  const [aboutRequested, setAboutRequested] = useState(false);
+  const [aboutRequested, setAboutRequested] = useState(
+    initialPage === "about",
+  );
   /** Full-page photos reel — opens on tapping the centred “photos” label. */
-  const [photosOpen, setPhotosOpen] = useState(false);
+  const [photosOpen, setPhotosOpen] = useState(initialPage === "photos");
   /** Full-page CV — opens on tapping the centred “cv + press” label. */
-  const [cvOpen, setCvOpen] = useState(false);
+  const [cvOpen, setCvOpen] = useState(initialPage === "cv + press");
   /** Full-page contact form — opens on tapping “contact”. */
-  const [contactOpen, setContactOpen] = useState(false);
+  const [contactOpen, setContactOpen] = useState(initialPage === "contact");
   /* Each opening prints the ticket on the next CV paper colour. */
-  const [contactPress, setContactPress] = useState(0);
+  const [contactPress, setContactPress] = useState(
+    initialPage === "contact" ? 1 : 0,
+  );
   const openContact = useCallback(() => {
     setContactOpen(true);
     setContactPress((n) => n + 1);
@@ -152,9 +171,7 @@ export function HomeNarrow({
     setInstallListOpen(true);
     setActiveLabel("installation");
     document.title = "Muna | Portfolio";
-    if (window.location.pathname.startsWith("/installation/")) {
-      window.history.pushState(null, "", "/");
-    }
+    showPath(NARROW_PAGE_PATHS.installation);
   }, []);
 
   const goToLanding = useCallback((label?: string) => {
@@ -172,9 +189,7 @@ export function HomeNarrow({
       setActiveLabel(label as NarrowLabel);
       setWheelEpoch((n) => n + 1);
     }
-    if (window.location.pathname !== "/") {
-      window.history.pushState(null, "", "/");
-    }
+    showPath(label && isNarrowPage(label) ? NARROW_PAGE_PATHS[label] : "/");
   }, [openContact]);
 
   const onProjectChange = useCallback((next: ProjectDefinition) => {
@@ -184,14 +199,22 @@ export function HomeNarrow({
 
   useEffect(() => {
     const onPop = () => {
-      setPhotosOpen(false);
-      setCvOpen(false);
-      setContactOpen(false);
-      if (window.location.pathname === "/") {
+      const page = narrowPageForPath(window.location.pathname);
+      setPhotosOpen(page === "photos");
+      setCvOpen(page === "cv + press");
+      setContactOpen(page === "contact");
+      setAboutRequested(page === "about");
+      if (window.location.pathname === "/" || page) {
         setProject(null);
         setInstallationShow(null);
         setEnteredFromLanding(false);
+        setInstallListOpen(page === "installation");
         document.title = "Muna | Portfolio";
+        if (page) {
+          if (page === "contact") setContactPress((n) => n || 1);
+          setActiveLabel(page);
+          setWheelEpoch((n) => n + 1);
+        }
         return;
       }
       const installMatch = /^\/installation\/([^/]+)/.exec(
@@ -285,9 +308,9 @@ export function HomeNarrow({
       }
       setWheelEpoch((n) => n + 1);
       document.title = "Muna | Portfolio";
-      if (window.location.pathname !== "/") {
-        window.history.pushState(null, "", "/");
-      }
+      showPath(
+        label !== "home" && isNarrowPage(next) ? NARROW_PAGE_PATHS[next] : "/",
+      );
     },
     [openContact],
   );
@@ -329,29 +352,23 @@ export function HomeNarrow({
                 openDesignProject();
                 return;
               }
+              if (!isNarrowPage(label)) return;
               if (label === "about") {
                 setActiveLabel(label);
                 setAboutRequested(true);
-                return;
-              }
-              if (label === "installation") {
+              } else if (label === "installation") {
                 setActiveLabel(label);
                 setInstallListOpen(true);
-                return;
-              }
-              if (label === "contact") {
+              } else if (label === "contact") {
                 openContact();
-                return;
-              }
-              if (label === "photos") {
+              } else if (label === "photos") {
                 setActiveLabel(label);
                 setPhotosOpen(true);
-                return;
-              }
-              if (label === "cv + press") {
+              } else {
                 setActiveLabel(label);
                 setCvOpen(true);
               }
+              showPath(NARROW_PAGE_PATHS[label]);
             }}
           />
           <DesignCluster visible={showDesign} variant="narrow" />

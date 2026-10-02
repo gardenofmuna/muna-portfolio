@@ -44,6 +44,8 @@ type Props = {
   initialProject?: ProjectDefinition;
   /** Deep link `/installation/[id]`. */
   initialInstallationId?: string;
+  /** Deep link `/about`, `/cv`, … — dial starts on that label. */
+  initialLabel?: string;
 };
 
 /**
@@ -57,9 +59,14 @@ type Props = {
 export function HomeDesktop({
   initialProject,
   initialInstallationId,
+  initialLabel,
 }: Props) {
   const [activeLabel, setActiveLabel] = useState(
-    initialProject ? "design" : initialInstallationId ? "installation" : "contact",
+    initialProject
+      ? "design"
+      : initialInstallationId
+        ? "installation"
+        : (initialLabel ?? "contact"),
   );
   const [hoverNavLabel, setHoverNavLabel] = useState<string | null>(null);
   const [project, setProject] = useState<ProjectDefinition | null>(

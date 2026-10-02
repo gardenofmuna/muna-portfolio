@@ -13,6 +13,30 @@ let lockedW = 0;
 let lockedH = 0;
 let lockedOrient = "";
 
+/*
+ * A page that scrolls the document lets Safari collapse its toolbar, which
+ * grows innerHeight. Keep the lock as it was until shortly after that page
+ * closes, so the landing comes back at the size it was laid out for.
+ */
+const HOLD_GRACE_MS = 800;
+let holds = 0;
+let heldUntil = 0;
+
+export function holdStableLayout(): () => void {
+  holds += 1;
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    holds -= 1;
+    heldUntil = performance.now() + HOLD_GRACE_MS;
+  };
+}
+
+function layoutHeld() {
+  return holds > 0 || performance.now() < heldUntil;
+}
+
 function orientationKey(width: number, height: number) {
   const type = window.screen?.orientation?.type;
   if (type) return type;
@@ -58,6 +82,9 @@ export function readStableLayoutSize(): { width: number; height: number } {
   }
 
   const orient = orientationKey(width, height);
+  if (lockedW && orient === lockedOrient && layoutHeld()) {
+    return { width: lockedW, height: lockedH };
+  }
   const widthJump = Math.abs(width - lockedW) > 48;
   const heightJump = Math.abs(height - lockedH) > 140;
 

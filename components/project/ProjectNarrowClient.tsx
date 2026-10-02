@@ -16,6 +16,7 @@ import {
   NARROW_NZERIBE,
   NARROW_PROJECT_CONTENT_W,
 } from "@/lib/narrow-stage";
+import { usePageScroll } from "@/lib/page-scroll";
 import {
   readStableLayoutSize,
   subscribeStableLayout,
@@ -48,6 +49,7 @@ export function ProjectNarrowClient({
   const headerRef = useRef<HTMLElement>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const headerScrolledRef = useRef(false);
+  usePageScroll(true, scrollerRef);
   const scale = u || 1;
   const nzeribeH = NARROW_NZERIBE.h * scale;
   const menuH = nzeribeH * MENU_HEIGHT_SCALE;
