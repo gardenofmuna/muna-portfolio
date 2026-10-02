@@ -1,5 +1,5 @@
 /*
- * Narrow / tablet photos page — vertical film reel under shared chrome.
+ * Narrow / tablet photos page — horizontal film reel under shared chrome.
  * Side padding matches --narrow-gutter (wordmark + hamburger).
  */
 
@@ -89,7 +89,8 @@
   position: absolute;
   top: 50%;
   left: 0;
-  right: 0;
+  width: 0;
+  height: 0;
   will-change: transform;
 }
 
@@ -173,16 +174,16 @@
   white-space: nowrap;
 }
 
+/* Sits on the viewfinder's top edge, flush with the still's left side. */
 .photos-narrow__caption {
   position: absolute;
   top: 50%;
-  right: var(--ph-gutter);
   z-index: 5;
   margin: 0;
-  padding-top: 4px;
+  transform: translateY(-100%);
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-start;
   pointer-events: none;
   animation: photos-narrow-caption-in 320ms ease-out both;
 }

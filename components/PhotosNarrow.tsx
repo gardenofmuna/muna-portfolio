@@ -40,15 +40,17 @@ const MENU_ASPECT = 107 / 74;
 const MENU_HEIGHT_SCALE = 0.85;
 
 /** Share of the reel's width / height the centred still may fill. */
-const COLUMN_W_SHARE = 0.68;
-const COLUMN_H_SHARE = 0.68;
+const ACTIVE_W_SHARE = 0.6;
+const ACTIVE_H_SHARE = 0.5;
+/** Landscape stills may run wider so they read as large as the portraits. */
+const LANDSCAPE_W_SHARE = 0.82;
 /** Viewfinder corners sit this far outside the still. */
 const FINDER_PAD = 7;
-const FRAME_GAP = 18;
-const NEIGHBOR_SCALE = 0.88;
+const FRAME_GAP = 12;
+const NEIGHBOR_SCALE = 0.5;
 const CAPTION_GAP = 10;
 /** Frames mounted either side of the centred one. */
-const WINDOW = 3;
+const WINDOW = 4;
 const SWIPE_MIN_PX = 40;
 const FLICK_MIN_PX = 14;
 const FLICK_MIN_VELOCITY = 0.35;
@@ -62,8 +64,8 @@ const CAPTION_LINES = Array.from(
 const mod = (k: number, n: number) => ((k % n) + n) % n;
 
 /**
- * Mobile / tablet photos page — vertical film reel with viewfinder corners
- * around the centred still and its place / date to the right.
+ * Mobile / tablet photos page — horizontal film reel with viewfinder corners
+ * around the centred still and its place / date above it.
  */
 export function PhotosNarrow({ visible, onNavigate, onOpenDesign }: Props) {
   const { u } = useNarrowArtboardMetrics();
@@ -72,7 +74,7 @@ export function PhotosNarrow({ visible, onNavigate, onOpenDesign }: Props) {
   const [viewportH, setViewportH] = useState(0);
   const [reduceMotion, setReduceMotion] = useState(false);
   const [pos, setPos] = useState(SHOT_ON_FILM_START);
-  const [dragDy, setDragDy] = useState(0);
+  const [dragDx, setDragDx] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [reel, setReel] = useState({ w: 0, h: 0, gutter: 20 });
   const [captionW, setCaptionW] = useState(96);
@@ -80,7 +82,7 @@ export function PhotosNarrow({ visible, onNavigate, onOpenDesign }: Props) {
   const measureRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
     pointerId: number;
-    startY: number;
+    startX: number;
     startT: number;
     moved: boolean;
   } | null>(null);
@@ -112,7 +114,7 @@ export function PhotosNarrow({ visible, onNavigate, onOpenDesign }: Props) {
     if (!visible) {
       setMenuOpen(false);
       setPos(SHOT_ON_FILM_START);
-      setDragDy(0);
+      setDragDx(0);
       setDragging(false);
     }
   }
@@ -133,7 +135,7 @@ export function PhotosNarrow({ visible, onNavigate, onOpenDesign }: Props) {
     return () => ro.disconnect();
   }, []);
 
-  /* The column leaves room for the widest caption so none collide. */
+  /* The widest caption keeps every caption inside the right gutter. */
   useEffect(() => {
     const el = measureRef.current;
     if (!el) return;
@@ -178,30 +180,44 @@ export function PhotosNarrow({ visible, onNavigate, onOpenDesign }: Props) {
 
   const layout = useMemo(() => {
     const { w, h, gutter } = reel;
-    const colW = Math.max(
-      120,
-      Math.min(
-        w * COLUMN_W_SHARE,
-        w - gutter * 2 - FINDER_PAD * 2 - captionW - CAPTION_GAP,
+    const maxW = Math.max(120, Math.min(w * ACTIVE_W_SHARE, w - gutter * 2));
+    const maxH = Math.max(120, h * ACTIVE_H_SHARE);
+    const portraitFit = (s: { width: number; height: number }) =>
+      Math.min(maxW / s.width, maxH / s.height);
+    /* A landscape still's long side matches a portrait's, within its own cap. */
+    const longSide = Math.max(
+      0,
+      ...SHOT_ON_FILM_STILLS.filter((s) => s.height >= s.width).map(
+        (s) => s.height * portraitFit(s),
       ),
+    ) || maxH;
+    const landscapeW = Math.min(
+      w * LANDSCAPE_W_SHARE,
+      w - gutter * 2 - FINDER_PAD * 2,
     );
-    const maxH = Math.max(120, h * COLUMN_H_SHARE);
     const full = SHOT_ON_FILM_STILLS.map((s) => {
-      const fit = Math.min(colW / s.width, maxH / s.height);
+      const fit =
+        s.width > s.height
+          ? Math.min(
+              Math.min(longSide, landscapeW) / s.width,
+              maxH / s.height,
+            )
+          : portraitFit(s);
       return { w: s.width * fit, h: s.height * fit };
     });
     const centers: number[] = [];
     let cursor = 0;
     for (const box of full) {
-      const hN = box.h * NEIGHBOR_SCALE;
-      centers.push(cursor + hN / 2);
-      cursor += hN + FRAME_GAP;
+      const wN = box.w * NEIGHBOR_SCALE;
+      centers.push(cursor + wN / 2);
+      cursor += wN + FRAME_GAP;
     }
     return {
       full,
       centers,
       cycle: cursor,
-      axisX: gutter + FINDER_PAD + colW / 2,
+      axisX: w / 2,
+      captionMaxLeft: w - gutter - captionW,
     };
   }, [reel, captionW]);
 
@@ -212,7 +228,7 @@ export function PhotosNarrow({ visible, onNavigate, onOpenDesign }: Props) {
   const activeSlot = mod(pos, n);
   const activeBox = layout.full[activeSlot]!;
   const activeStill = SHOT_ON_FILM_STILLS[activeSlot]!;
-  const extra = activeBox.h * (1 - NEIGHBOR_SCALE);
+  const extra = activeBox.w * (1 - NEIGHBOR_SCALE);
 
   const step = useCallback(
     (delta: number) => {
@@ -226,7 +242,7 @@ export function PhotosNarrow({ visible, onNavigate, onOpenDesign }: Props) {
     if (event.pointerType === "mouse" && event.button !== 0) return;
     dragRef.current = {
       pointerId: event.pointerId,
-      startY: event.clientY,
+      startX: event.clientX,
       startT: performance.now(),
       moved: false,
     };
@@ -236,9 +252,9 @@ export function PhotosNarrow({ visible, onNavigate, onOpenDesign }: Props) {
   const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     const drag = dragRef.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
-    const dy = event.clientY - drag.startY;
+    const dx = event.clientX - drag.startX;
     /* Capture only once it's a drag, so a tap still reaches a frame. */
-    if (!drag.moved && Math.abs(dy) > 6) {
+    if (!drag.moved && Math.abs(dx) > 6) {
       drag.moved = true;
       setDragging(true);
       try {
@@ -247,7 +263,7 @@ export function PhotosNarrow({ visible, onNavigate, onOpenDesign }: Props) {
         /* pointer already gone */
       }
     }
-    if (drag.moved) setDragDy(dy);
+    if (drag.moved) setDragDx(dx);
   };
 
   const endDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -261,18 +277,18 @@ export function PhotosNarrow({ visible, onNavigate, onOpenDesign }: Props) {
     }
     if (!drag.moved) return;
     suppressClickRef.current = true;
-    const dy = event.clientY - drag.startY;
-    const velocity = Math.abs(dy) / Math.max(1, performance.now() - drag.startT);
+    const dx = event.clientX - drag.startX;
+    const velocity = Math.abs(dx) / Math.max(1, performance.now() - drag.startT);
     const swiped =
-      Math.abs(dy) > SWIPE_MIN_PX ||
-      (Math.abs(dy) > FLICK_MIN_PX && velocity > FLICK_MIN_VELOCITY);
+      Math.abs(dx) > SWIPE_MIN_PX ||
+      (Math.abs(dx) > FLICK_MIN_PX && velocity > FLICK_MIN_VELOCITY);
     if (swiped) {
-      const unit = activeBox.h + FRAME_GAP;
-      const count = Math.max(1, Math.round(Math.abs(dy) / unit));
-      step(dy < 0 ? count : -count);
+      const unit = activeBox.w + FRAME_GAP;
+      const count = Math.max(1, Math.round(Math.abs(dx) / unit));
+      step(dx < 0 ? count : -count);
     }
     setDragging(false);
-    setDragDy(0);
+    setDragDx(0);
   };
 
   const slide = reduceMotion || dragging ? "none" : `${SLIDE_MS}ms ${SLIDE_EASE}`;
@@ -359,7 +375,7 @@ export function PhotosNarrow({ visible, onNavigate, onOpenDesign }: Props) {
             <div
               className="photos-narrow__track"
               style={{
-                transform: `translateY(${-baseCenter(pos) + dragDy}px)`,
+                transform: `translateX(${layout.axisX - baseCenter(pos) + dragDx}px)`,
                 transition: slide === "none" ? "none" : `transform ${slide}`,
               }}
             >
@@ -392,8 +408,8 @@ export function PhotosNarrow({ visible, onNavigate, onOpenDesign }: Props) {
                     style={{
                       width: w,
                       height: h,
-                      top: center - h / 2,
-                      left: layout.axisX - w / 2,
+                      top: -h / 2,
+                      left: center - w / 2,
                       transition: frameTransition,
                     }}
                   >
@@ -439,7 +455,13 @@ export function PhotosNarrow({ visible, onNavigate, onOpenDesign }: Props) {
             <p
               key={`${activeStill.place}-${activeStill.taken}`}
               className="photos-narrow__caption"
-              style={{ marginTop: -(activeBox.h / 2 + FINDER_PAD) }}
+              style={{
+                left: Math.max(
+                  reel.gutter,
+                  Math.min(layout.axisX - activeBox.w / 2, layout.captionMaxLeft),
+                ),
+                marginTop: -(activeBox.h / 2 + FINDER_PAD + CAPTION_GAP),
+              }}
             >
               <span>{activeStill.place}</span>
               <span>{activeStill.taken}</span>
