@@ -19,6 +19,7 @@ export function SelectedWorksHoverGif({
       layout={layout}
       stageLocked={stageLocked}
       src="/VHS_PII_MUM.mp4"
+      poster="/hover-posters/VHS_PII_MUM.webp"
     />
   );
 }

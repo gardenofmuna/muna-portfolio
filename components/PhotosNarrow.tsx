@@ -26,6 +26,7 @@ import {
   readStableLayoutSize,
   subscribeStableLayout,
 } from "@/lib/stable-viewport";
+import { useWarmSettled } from "@/lib/warm-media";
 
 import "./photos-narrow.css";
 
@@ -87,6 +88,7 @@ export function PhotosNarrow({ visible, onNavigate, onOpenDesign }: Props) {
     moved: boolean;
   } | null>(null);
   const suppressClickRef = useRef(false);
+  const showImages = useWarmSettled() || visible;
 
   const scale = u || 1;
   const nzeribeH = NARROW_NZERIBE.h * scale;
@@ -413,18 +415,20 @@ export function PhotosNarrow({ visible, onNavigate, onOpenDesign }: Props) {
                       transition: frameTransition,
                     }}
                   >
-                    <Image
-                      src={still.src}
-                      alt=""
-                      width={still.width}
-                      height={still.height}
-                      draggable={false}
-                      sizes="70vw"
-                      className="photos-narrow__image"
-                      unoptimized
-                      loading="eager"
-                      priority={active}
-                    />
+                    {showImages ? (
+                      <Image
+                        src={still.src}
+                        alt=""
+                        width={still.width}
+                        height={still.height}
+                        draggable={false}
+                        sizes="70vw"
+                        className="photos-narrow__image"
+                        unoptimized
+                        loading="eager"
+                        priority={active}
+                      />
+                    ) : null}
                   </button>
                 );
               })}

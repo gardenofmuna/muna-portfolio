@@ -24,6 +24,7 @@ import {
   readStableLayoutSize,
   subscribeStableLayout,
 } from "@/lib/stable-viewport";
+import { useWarmSettled } from "@/lib/warm-media";
 
 import "./installation-narrow.css";
 
@@ -58,6 +59,7 @@ export function InstallationNarrow({
   const headerRef = useRef<HTMLElement>(null);
   const headerScrolledRef = useRef(false);
   usePageScroll(visible, scrollerRef);
+  const showImages = useWarmSettled() || visible;
 
   const scale = u || 1;
   const nzeribeH = NARROW_NZERIBE.h * scale;
@@ -202,16 +204,18 @@ export function InstallationNarrow({
                   aria-label={`Open ${show.titleLines.join(" ")}`}
                   tabIndex={-1}
                 >
-                  <Image
-                    src={show.src}
-                    alt={show.alt}
-                    width={show.width}
-                    height={show.height}
-                    className="installation-narrow__image"
-                    sizes="(max-width: 700px) calc(100vw - 40px), calc(100vw - 104px)"
-                    /* Same files as the desktop carousel (`INSTALLATION_SHOWS`). */
-                    unoptimized
-                  />
+                  {showImages ? (
+                    <Image
+                      src={show.src}
+                      alt={show.alt}
+                      width={show.width}
+                      height={show.height}
+                      className="installation-narrow__image"
+                      sizes="(max-width: 700px) calc(100vw - 40px), calc(100vw - 104px)"
+                      /* Same files as the desktop carousel (`INSTALLATION_SHOWS`). */
+                      unoptimized
+                    />
+                  ) : null}
                 </button>
                 <div className="installation-narrow__meta">
                   <p className="installation-narrow__year">{show.year}</p>

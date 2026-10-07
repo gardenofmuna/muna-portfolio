@@ -19,6 +19,7 @@ export function FilmHoverGif({
       layout={layout}
       stageLocked={stageLocked}
       src="/S8GIF.mp4"
+      poster="/hover-posters/S8GIF.webp"
       narrowScaleMultiplier={1.08}
     />
   );

@@ -49,9 +49,53 @@ export function ContactForm(props: Props) {
   const [company, setCompany] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const messageRef = useRef<HTMLTextAreaElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const settleTimer = useRef<number | undefined>(undefined);
+  const onStage = props.layout !== "page";
 
   useEffect(() => () => window.clearTimeout(settleTimer.current), []);
+
+  /* The stage stub sits clear of the iPad keyboard, so while a field has
+     focus the page stays put instead of Safari sliding it up and letting it
+     scroll by the keyboard's height. */
+  useEffect(() => {
+    const form = formRef.current;
+    if (!onStage || !visible || !form) return;
+    const focused = () => form.contains(document.activeElement);
+    const pin = () => {
+      if (window.scrollX || window.scrollY) window.scrollTo(0, 0);
+    };
+    const onScroll = () => {
+      if (focused()) pin();
+    };
+    const timers: number[] = [];
+    const onFocusIn = () => {
+      pin();
+      requestAnimationFrame(pin);
+      for (const ms of [120, 320, 600]) timers.push(window.setTimeout(pin, ms));
+    };
+    const onTouchMove = (event: TouchEvent) => {
+      if (!focused()) return;
+      if (event.target instanceof Element && event.target.closest("input, textarea")) {
+        return;
+      }
+      event.preventDefault();
+    };
+    const vv = window.visualViewport;
+    form.addEventListener("focusin", onFocusIn);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    vv?.addEventListener("scroll", onScroll);
+    vv?.addEventListener("resize", onScroll);
+    document.addEventListener("touchmove", onTouchMove, { passive: false });
+    return () => {
+      timers.forEach((id) => window.clearTimeout(id));
+      form.removeEventListener("focusin", onFocusIn);
+      window.removeEventListener("scroll", onScroll);
+      vv?.removeEventListener("scroll", onScroll);
+      vv?.removeEventListener("resize", onScroll);
+      document.removeEventListener("touchmove", onTouchMove);
+    };
+  }, [onStage, visible]);
 
   const settle = (next: Status) => {
     setStatus(next);
@@ -114,6 +158,7 @@ export function ContactForm(props: Props) {
       }
     >
       <form
+        ref={formRef}
         className="contact-form__ticket"
         aria-label="Talk to me"
         onSubmit={(e) => {

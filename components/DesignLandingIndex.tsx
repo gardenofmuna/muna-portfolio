@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import Image, { getImageProps } from "next/image";
 import { useEffect, useState, type CSSProperties } from "react";
 
 import { ABOUT_BIO_INK } from "@/components/AboutBio";
@@ -14,6 +14,7 @@ import {
   STUDIO_ORRY_SLUG,
 } from "@/data/projects";
 import { DESKTOP_LAYOUT_H } from "@/lib/desktop-stage";
+import { queueWarm, warmImage } from "@/lib/warm-media";
 
 import "@/components/design-landing.css";
 
@@ -194,6 +195,22 @@ export function DesignLandingIndex({ visible }: Props) {
   useEffect(() => {
     if (!visible) setActiveIndex(null);
   }, [visible]);
+
+  useEffect(() => {
+    queueWarm(() =>
+      Promise.all(
+        DESIGN_LANDING_ITEMS.map((row, index) => {
+          const { props } = getImageProps({
+            src: row.preview.src,
+            alt: "",
+            fill: true,
+            sizes: `${Math.round(PREVIEW_SCATTER[index]!.w * 2)}px`,
+          });
+          return warmImage(props);
+        }),
+      ),
+    );
+  }, []);
 
   useEffect(() => {
     const mq = window.matchMedia("(pointer: coarse), (hover: none)");

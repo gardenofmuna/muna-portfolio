@@ -7,11 +7,14 @@ import {
   NARROW_INSTALLATION_POPUP_SCALE,
   NARROW_INSTALLATION_POPUP_W,
 } from "@/lib/narrow-stage";
+import { primeVideo, queueWarm } from "@/lib/warm-media";
 
 type Props = {
   visible: boolean;
   layout?: "desktop" | "narrow";
   src: string;
+  /** First frame, shown until the clip has data. */
+  poster?: string;
   /** Narrow-only scale multiplier (default 1). */
   narrowScaleMultiplier?: number;
   /** Lock position to the desktop stage (no vw). */
@@ -36,11 +39,24 @@ export function NavHubHoverGif({
   visible,
   layout = "desktop",
   src,
+  poster,
   narrowScaleMultiplier = 1,
   stageLocked = false,
 }: Props) {
   const [reduceMotion, setReduceMotion] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const visibleRef = useRef(visible);
+
+  useEffect(() => {
+    visibleRef.current = visible;
+  }, [visible]);
+
+  useEffect(() => {
+    queueWarm(async () => {
+      const el = videoRef.current;
+      if (el) await primeVideo(el, () => visibleRef.current);
+    });
+  }, []);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -74,6 +90,7 @@ export function NavHubHoverGif({
     <video
       ref={videoRef}
       src={src}
+      poster={poster}
       muted
       loop
       playsInline

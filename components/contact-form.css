@@ -119,6 +119,13 @@
   font-size: 15px;
 }
 
+/* iPadOS zooms the page into any field set under 16px when it's focused. */
+@media (pointer: coarse) {
+  .contact-form:not(.contact-form--page) .contact-form__field {
+    font-size: 16px;
+  }
+}
+
 .contact-form:not(.contact-form--page) textarea.contact-form__field {
   flex: 1;
   min-height: 0;

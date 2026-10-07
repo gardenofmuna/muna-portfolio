@@ -8,6 +8,23 @@ import {
   NARROW_INSTALLATION_POPUP_SCALE,
   NARROW_INSTALLATION_POPUP_W,
 } from "@/lib/narrow-stage";
+import { queueWarm } from "@/lib/warm-media";
+
+let workAnimation: Promise<object> | null = null;
+
+/** One shared download of the (large) animation, warmed before first view. */
+function loadWorkAnimation(): Promise<object> {
+  workAnimation ??= fetch("/work-animation.json")
+    .then((r) => {
+      if (!r.ok) throw new Error(String(r.status));
+      return r.json() as Promise<object>;
+    })
+    .catch((error: unknown) => {
+      workAnimation = null;
+      throw error;
+    });
+  return workAnimation;
+}
 
 type Props = {
   visible: boolean;
@@ -63,13 +80,13 @@ export function InstallationLottie({
   }, []);
 
   useEffect(() => {
+    queueWarm(loadWorkAnimation);
+  }, []);
+
+  useEffect(() => {
     if (!visible || animationData || loadError) return;
     let cancelled = false;
-    fetch("/work-animation.json")
-      .then((r) => {
-        if (!r.ok) throw new Error(String(r.status));
-        return r.json();
-      })
+    loadWorkAnimation()
       .then((data) => {
         if (!cancelled) setAnimationData(data);
       })
