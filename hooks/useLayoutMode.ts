@@ -6,8 +6,9 @@ import { NARROW_W } from "@/lib/narrow-stage";
 
 export type LayoutMode = "desktop" | "narrow";
 
+/* Portrait cap clears iPad Pro 13" (1032px wide) so it matches the 11". */
 const NARROW_MQ =
-  `(max-width: ${NARROW_W}px), (max-width: 1023px) and (orientation: portrait)`;
+  `(max-width: ${NARROW_W}px), (max-width: 1100px) and (orientation: portrait)`;
 
 function isPhone() {
   if (typeof window === "undefined") return false;
