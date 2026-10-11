@@ -166,6 +166,10 @@ html[data-page-scroll] .page-scroll-cover::before {
   height: 100vh;
   background: #fff;
 }
+
+html[data-debug-top][data-page-scroll] .page-scroll-cover::before {
+  background: #7cff00;
+}
 *, *::before, *::after {
   box-sizing: inherit;
 }
