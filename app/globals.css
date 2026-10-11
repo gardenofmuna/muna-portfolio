@@ -141,6 +141,32 @@ html[data-page-scroll] .project-narrow-shell {
   visibility: visible;
 }
 
+/* Some iPad browsers (e.g. Orion) pin top:0 below their own top bar yet still
+   draw the scrolled page behind it, so the fixed chrome paints upward too. */
+.project-narrow__header::before,
+.installation-narrow__header::before,
+.photos-narrow__header::before,
+.cv-narrow__header::before,
+.installation-show--narrow .installation-show__header::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 100vh;
+  background: #fff;
+  pointer-events: none;
+}
+
+.project-narrow__nav-overlay,
+.installation-narrow__nav-overlay,
+.photos-narrow__nav-overlay,
+.cv-narrow__nav-overlay,
+.about-narrow__nav-overlay,
+.installation-show--narrow .installation-show__nav-overlay {
+  box-shadow: 0 -100vh 0 0 #fff;
+}
+
 *, *::before, *::after {
   box-sizing: inherit;
 }
