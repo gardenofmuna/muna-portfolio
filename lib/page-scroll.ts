@@ -16,8 +16,36 @@ import { holdStableLayout } from "@/lib/stable-viewport";
 const ROOT_ATTR = "data-page-scroll";
 const PATH_ATTR = "data-page-scroll-path";
 
+/* Some iPad browsers (Orion) shrink their top bar on scroll but keep the
+   layout viewport below it, so the scrolled page shows above the fixed
+   header. Only in-flow document content paints there (fixed and sticky
+   layers don't), so a plain white box tracks the viewport top instead. It
+   reaches down behind the header so a frame of scroll lag never shows. */
+const COVER_ABOVE = 160;
+const COVER_BEHIND = 40;
+
 let holders = 0;
+let cover: HTMLDivElement | null = null;
 const pathCounts = new WeakMap<Element, number>();
+
+function placeCover() {
+  if (cover) cover.style.top = `${window.scrollY - COVER_ABOVE}px`;
+}
+
+function mountCover() {
+  cover = document.createElement("div");
+  cover.setAttribute("aria-hidden", "true");
+  cover.style.cssText = `position:absolute;left:0;width:100%;height:${COVER_ABOVE + COVER_BEHIND}px;background:#fff;z-index:49;pointer-events:none`;
+  document.body.appendChild(cover);
+  placeCover();
+  window.addEventListener("scroll", placeCover, { passive: true });
+}
+
+function unmountCover() {
+  window.removeEventListener("scroll", placeCover);
+  cover?.remove();
+  cover = null;
+}
 
 function retain(node: Element) {
   pathCounts.set(node, (pathCounts.get(node) ?? 0) + 1);
@@ -54,6 +82,7 @@ export function usePageScroll(
 
     const unhold = holdStableLayout();
     holders += 1;
+    if (!cover) mountCover();
     root.setAttribute(ROOT_ATTR, "");
     path.forEach(retain);
 
@@ -80,6 +109,7 @@ export function usePageScroll(
       if (holders <= 0) {
         holders = 0;
         root.removeAttribute(ROOT_ATTR);
+        unmountCover();
       }
       unhold();
     };

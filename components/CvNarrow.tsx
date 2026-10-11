@@ -170,7 +170,6 @@ export function CvNarrow({ visible, onNavigate, onOpenDesign }: Props) {
         className="cv-narrow__scroll"
         inert={menuOpen ? true : undefined}
       >
-        <div className="page-scroll-cover" aria-hidden />
         <article className="cv-narrow__page" aria-label="CV">
           <p className="cv-narrow__contact">
             <a href={`mailto:${CV_EMAIL}`}>{CV_EMAIL}</a>

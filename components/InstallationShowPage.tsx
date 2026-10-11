@@ -1411,7 +1411,6 @@ export function InstallationShowPage({
             inert={menuOpen ? true : undefined}
             data-project-scroll=""
           >
-            <div className="page-scroll-cover" aria-hidden />
             {page}
           </div>
         </div>

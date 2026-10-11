@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { DisablePageZoom } from "@/components/DisablePageZoom";
-import { TopGapDebug } from "@/components/TopGapDebug";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -22,7 +21,6 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
-  themeColor: "#ffffff",
   /* Keyboard / browser UI overlays instead of resizing the layout. */
   interactiveWidget: "overlays-content",
 };
@@ -95,7 +93,6 @@ export default function RootLayout({
           {children}
         </div>
         <Analytics />
-        <TopGapDebug />
       </body>
     </html>
   );

@@ -157,7 +157,6 @@ export function ProjectNarrowClient({
         data-project-scroll=""
         inert={menuOpen ? true : undefined}
       >
-        <div className="page-scroll-cover" aria-hidden />
         <div className="project-narrow__page">
           <ProjectIndexNav
             activeNumber={project.number}
