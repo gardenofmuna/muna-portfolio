@@ -117,6 +117,17 @@ html[data-page-scroll] #__next[data-page-scroll-path] {
   overflow-y: visible;
 }
 
+/* Orion on iPad draws the scrolled page in a strip above its layout
+   viewport, where the fixed header can't reach and a script-moved cover
+   trails fast flicks. Sticky layers are kept out of that strip, so on
+   tablets the scroll box becomes one, with an offset it never reaches. */
+@media (min-width: 600px) and (min-height: 600px) {
+  html[data-page-scroll] [data-page-scroll-box] {
+    position: sticky;
+    top: -100000px;
+  }
+}
+
 /* The hidden landing keeps its viewport box, and its wheel bleed can't widen
    the document. */
 html[data-page-scroll] .narrow-landing {

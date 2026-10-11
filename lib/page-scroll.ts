@@ -15,6 +15,7 @@ import { holdStableLayout } from "@/lib/stable-viewport";
  */
 const ROOT_ATTR = "data-page-scroll";
 const PATH_ATTR = "data-page-scroll-path";
+const BOX_ATTR = "data-page-scroll-box";
 
 /* Some iPad browsers (Orion) shrink their top bar on scroll but keep the
    layout viewport below it, so the scrolled page shows above the fixed
@@ -95,6 +96,7 @@ export function usePageScroll(
     if (!cover) mountCover();
     root.setAttribute(ROOT_ATTR, "");
     path.forEach(retain);
+    el.setAttribute(BOX_ATTR, "");
 
     Object.defineProperty(el, "scrollTop", {
       configurable: true,
@@ -114,6 +116,7 @@ export function usePageScroll(
       window.scrollTo(0, 0);
       Reflect.deleteProperty(el, "scrollTop");
       Reflect.deleteProperty(el, "scrollTo");
+      el.removeAttribute(BOX_ATTR);
       path.forEach(release);
       holders -= 1;
       if (holders <= 0) {
