@@ -190,6 +190,7 @@ export function InstallationNarrow({
         className="installation-narrow__scroll"
         inert={menuOpen ? true : undefined}
       >
+        <div className="page-scroll-cover" aria-hidden />
         <div className="installation-narrow__page">
           {INSTALLATION_SHOWS.map((show) => (
             <article key={show.id} className="installation-narrow__show">

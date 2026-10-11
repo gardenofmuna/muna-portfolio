@@ -140,6 +140,32 @@ html[data-page-scroll] .narrow-project-fade,
 html[data-page-scroll] .project-narrow-shell {
   visibility: visible;
 }
+
+/* Browsers whose top bar shrinks on scroll (Orion on iPad) keep drawing the
+   page behind it, above the fixed header, and clip fixed elements there. A
+   sticky strip isn't clipped, so it paints that band white instead. */
+.page-scroll-cover {
+  display: none;
+}
+
+html[data-page-scroll] .page-scroll-cover {
+  display: block;
+  position: sticky;
+  top: 0;
+  z-index: 49;
+  height: 0;
+  pointer-events: none;
+}
+
+html[data-page-scroll] .page-scroll-cover::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100vh;
+  background: #fff;
+}
 *, *::before, *::after {
   box-sizing: inherit;
 }

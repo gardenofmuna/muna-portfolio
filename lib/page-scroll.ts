@@ -2,20 +2,16 @@
 
 import { useLayoutEffect, type RefObject } from "react";
 
-import { isPhone } from "@/hooks/useLayoutMode";
 import { holdStableLayout } from "@/lib/stable-viewport";
 
 /**
  * iOS Safari only lets a page run under its floating toolbar when the
  * document itself scrolls; an inner overflow box never does. While a long
- * page is open on a phone, its scroll box hands scrolling to the document:
+ * mobile page is open, its scroll box hands scrolling to the document:
  * the box and its ancestors drop their fixed / clipped layout (see the
  * matching rules in globals.css), and the box's scrollTop, scrollTo and
  * scroll events are forwarded to the window so code that drives the box
  * keeps working as is.
- *
- * Tablets keep the inner scroll box: some iPad browsers (Orion) draw the
- * document behind their top bar, where the fixed header can't cover it.
  */
 const ROOT_ATTR = "data-page-scroll";
 const PATH_ATTR = "data-page-scroll-path";
@@ -44,7 +40,7 @@ export function usePageScroll(
 ) {
   useLayoutEffect(() => {
     const el = scrollerRef.current;
-    if (!active || !el || !isPhone()) return;
+    if (!active || !el) return;
 
     const root = document.documentElement;
     const path: Element[] = [el];

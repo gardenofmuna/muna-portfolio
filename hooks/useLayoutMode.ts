@@ -10,7 +10,7 @@ export type LayoutMode = "desktop" | "narrow";
 const NARROW_MQ =
   `(max-width: ${NARROW_W}px), (max-width: 1100px) and (orientation: portrait)`;
 
-export function isPhone() {
+function isPhone() {
   if (typeof window === "undefined") return false;
   const shortest = Math.min(screen.width, screen.height);
   if (shortest <= 500) return true;
