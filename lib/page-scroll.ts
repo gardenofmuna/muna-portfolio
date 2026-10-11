@@ -19,24 +19,34 @@ const PATH_ATTR = "data-page-scroll-path";
 /* Some iPad browsers (Orion) shrink their top bar on scroll but keep the
    layout viewport below it, so the scrolled page shows above the fixed
    header. Only in-flow document content paints there (fixed and sticky
-   layers don't), so a plain white box tracks the viewport top instead. It
-   reaches down behind the header so a frame of scroll lag never shows. */
-const COVER_ABOVE = 160;
-const COVER_BEHIND = 40;
+   layers don't), so a plain white box tracks the viewport top instead.
+   Script updates trail the scroll by a frame or two, leaving the box too
+   high while scrolling down and too low while scrolling up, so it reaches
+   down behind the header (the shortest is 81px) only in the down case. */
+const COVER_ABOVE = 240;
+const COVER_BEHIND_DOWN = 80;
 
 let holders = 0;
 let cover: HTMLDivElement | null = null;
+let lastY = 0;
 const pathCounts = new WeakMap<Element, number>();
 
 function placeCover() {
-  if (cover) cover.style.top = `${window.scrollY - COVER_ABOVE}px`;
+  if (!cover) return;
+  const y = window.scrollY;
+  const behind = y > lastY ? COVER_BEHIND_DOWN : 0;
+  lastY = y;
+  cover.style.top = `${y - COVER_ABOVE}px`;
+  cover.style.height = `${COVER_ABOVE + behind}px`;
 }
 
 function mountCover() {
   cover = document.createElement("div");
   cover.setAttribute("aria-hidden", "true");
-  cover.style.cssText = `position:absolute;left:0;width:100%;height:${COVER_ABOVE + COVER_BEHIND}px;background:#fff;z-index:49;pointer-events:none`;
+  cover.style.cssText =
+    "position:absolute;left:0;width:100%;background:#fff;z-index:49;pointer-events:none";
   document.body.appendChild(cover);
+  lastY = window.scrollY;
   placeCover();
   window.addEventListener("scroll", placeCover, { passive: true });
 }
