@@ -43,9 +43,9 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/preview-image.jpg",
-        width: 1200,
-        height: 630,
+        url: "/preview-image-2.jpg",
+        width: 1024,
+        height: 576,
         type: "image/jpeg",
         alt: "Muna — portfolio",
       },
@@ -55,7 +55,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Muna | Portfolio",
     description: "Hi! Welcome to my Portfolio!",
-    images: ["/preview-image.jpg"],
+    images: ["/preview-image-2.jpg"],
   },
 };
 
