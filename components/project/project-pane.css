@@ -638,6 +638,13 @@
   flex-grow: var(--egwu-bar-active);
 }
 
+/* Flush bars on fractional pixels each blend their seam with the white page,
+   which flickers as a light line while they resize; overlapping keeps the
+   seam over solid colour. */
+.project-egwu-colors__bar + .project-egwu-colors__bar {
+  margin-left: -1px;
+}
+
 .project-egwu-colors__meta {
   position: absolute;
   inset: 0;
