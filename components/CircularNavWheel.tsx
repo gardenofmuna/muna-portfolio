@@ -12,6 +12,7 @@ import {
 } from "react";
 
 import { useCoarsePointer } from "@/hooks/useCoarsePointer";
+import { playNavTick, unlockNavTick } from "@/lib/nav-tick";
 
 import {
   narrowHitOverlayRects,
@@ -350,6 +351,13 @@ export function CircularNavWheel({
     ),
   );
   const [reduceMotion, setReduceMotion] = useState(false);
+  /** Last dial step that already clicked — skips mount / no-op re-snaps. */
+  const lastTickedIndexRef = useRef(focusedIndex);
+  const tickNavStep = useCallback((index: number) => {
+    if (lastTickedIndexRef.current === index) return;
+    lastTickedIndexRef.current = index;
+    playNavTick();
+  }, []);
   const focusedRef = useRef(0);
   // During overlay drag, paintOverlayHot owns focusedRef — don't clobber it
   // on every parent re-render or the snap/tap path reads a stale center.
@@ -425,22 +433,29 @@ export function CircularNavWheel({
     setIsDragging(false);
   }, []);
 
-  const paintOverlayHot = useCallback((tileIndex: number) => {
-    const root = rotatorRef.current;
-    if (!root) return;
-    // Always clear every mark first — otherwise short taps / ref resets
-    // leave multiple [data-active] blacks on screen.
-    root.querySelectorAll("[data-active]").forEach((el) => {
-      el.removeAttribute("data-active");
-    });
-    root
-      .querySelector(`#circular-nav-item-${tileIndex}`)
-      ?.setAttribute("data-active", "");
-    overlayHotRef.current = tileIndex;
-    focusedRef.current = tileIndex;
-    // Drive landing hover previews while gliding (iPad / mobile-menu feel).
-    setHoveredIndex((prev) => (prev === tileIndex ? prev : tileIndex));
-  }, []);
+  const paintOverlayHot = useCallback(
+    (tileIndex: number) => {
+      const root = rotatorRef.current;
+      if (!root) return;
+      // Always clear every mark first — otherwise short taps / ref resets
+      // leave multiple [data-active] blacks on screen.
+      root.querySelectorAll("[data-active]").forEach((el) => {
+        el.removeAttribute("data-active");
+      });
+      root
+        .querySelector(`#circular-nav-item-${tileIndex}`)
+        ?.setAttribute("data-active", "");
+      const prev = overlayHotRef.current;
+      overlayHotRef.current = tileIndex;
+      focusedRef.current = tileIndex;
+      // Drive landing hover previews while gliding (iPad / mobile-menu feel).
+      setHoveredIndex((prevHover) =>
+        prevHover === tileIndex ? prevHover : tileIndex,
+      );
+      if (prev != null && prev !== tileIndex) tickNavStep(tileIndex);
+    },
+    [tickNavStep],
+  );
 
   const applyOverlayRotation = useCallback((φ: number) => {
     rotationRef.current = φ;
@@ -675,17 +690,22 @@ export function CircularNavWheel({
 
   const selectNarrowIndex = useCallback(
     (index: number, current = rotationRef.current) => {
+      tickNavStep(index);
       setHoveredIndex(null);
       setFocusedIndex(index);
       snapNarrowToIndex(index, current);
     },
-    [snapNarrowToIndex],
+    [snapNarrowToIndex, tickNavStep],
   );
 
-  const syncNarrowTopHover = useCallback((φ: number) => {
-    const top = narrowIndexAtTop(φ, labelAnglesRef.current);
-    setHoveredIndex((prev) => (prev === top ? prev : top));
-  }, []);
+  const syncNarrowTopHover = useCallback(
+    (φ: number) => {
+      const top = narrowIndexAtTop(φ, labelAnglesRef.current);
+      tickNavStep(top);
+      setHoveredIndex((prev) => (prev === top ? prev : top));
+    },
+    [tickNavStep],
+  );
 
   const finishNarrowSpin = useCallback(() => {
     const φ = rotationRef.current;
@@ -787,6 +807,7 @@ export function CircularNavWheel({
     }
     if (tile < 0) return;
     setHoveredIndex(null);
+    tickNavStep(tile);
     if (spinFeel === "narrow") paintOverlayHot(tile);
     setFocusedIndex(tile);
     rotationRef.current = nextRot;
@@ -822,6 +843,7 @@ export function CircularNavWheel({
       if (isNarrow) {
         selectNarrowIndex(next, rotationRef.current);
       } else {
+        tickNavStep(next);
         setFocusedIndex(next);
         setRotation((prev) => snapRotationForIndex(next, prev));
       }
@@ -833,7 +855,7 @@ export function CircularNavWheel({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [N, isNarrow, selectNarrowIndex, snapRotationForIndex]);
+  }, [N, isNarrow, selectNarrowIndex, snapRotationForIndex, tickNavStep]);
 
   /** Hover must not spin or drive landing previews — click / drag only. */
   const allowDesktopHoverSnap = () => false;
@@ -869,6 +891,7 @@ export function CircularNavWheel({
 
   const onPointerDownCapture = (e: React.PointerEvent) => {
     if (e.pointerType === "mouse" && e.button !== 0) return;
+    unlockNavTick();
     if (isNarrow) {
       const idx =
         e.pointerType === "mouse"
@@ -1023,6 +1046,14 @@ export function CircularNavWheel({
     });
     if (isNarrow) {
       syncNarrowTopHover(rotationRef.current);
+    } else {
+      /* Live dial ticks while spinning — same as the overlay glide path. */
+      const { tileIndex } = nearestDesktopLabelSnap(
+        rotationRef.current,
+        snapRotationForIndexRef.current,
+        NRef.current,
+      );
+      tickNavStep(tileIndex);
     }
   };
 
@@ -1086,6 +1117,7 @@ export function CircularNavWheel({
           const alreadyCentered =
             i === centerNow && Math.abs(nextRot - φ) < 0.04;
 
+          tickNavStep(i);
           paintOverlayHot(i);
           setFocusedIndex(i);
           rotationRef.current = nextRot;
@@ -1125,6 +1157,7 @@ export function CircularNavWheel({
           i === centerNow && Math.abs(nextRot - φ) < 0.04;
 
         setHoveredIndex(null);
+        tickNavStep(i);
         setFocusedIndex(i);
         rotationRef.current = nextRot;
         setRotation(nextRot);
@@ -1149,6 +1182,7 @@ export function CircularNavWheel({
         snapRotationForIndex,
         N,
       );
+      tickNavStep(tileIndex);
       paintOverlayHot(tileIndex);
       setFocusedIndex(tileIndex);
       rotationRef.current = nextRot;
@@ -1168,6 +1202,7 @@ export function CircularNavWheel({
         N,
         focusedRef.current,
       );
+      tickNavStep(tileIndex);
       setFocusedIndex(tileIndex);
       setRotation(nextRot);
       setWheelInteracting(false);
