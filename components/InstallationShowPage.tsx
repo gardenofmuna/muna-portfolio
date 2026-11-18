@@ -41,6 +41,8 @@ import {
   installationTitleFontSize,
 } from "@/lib/installation-layout";
 
+import { InstallationChapters } from "@/components/InstallationChapters";
+
 import "./installation-show.css";
 import "@/components/project/project-pane.css";
 
@@ -65,8 +67,9 @@ function LinkedBodyText({ text }: { text: string }) {
           <a
             key={i}
             href={m[2]}
-            target="_blank"
-            rel="noopener noreferrer"
+            {...(m[2].startsWith("/")
+              ? {}
+              : { target: "_blank", rel: "noopener noreferrer" })}
           >
             {m[1]}
           </a>
@@ -380,6 +383,8 @@ export function InstallationShowPage({
   const filmStep = hasFilm ? nextStep++ : -1;
   const captionStep =
     hasFilm && caseStudy?.filmCaption ? nextStep++ : -1;
+  const hasChapters = Boolean(caseStudy?.chapters?.length);
+  const chaptersStep = hasChapters ? nextStep++ : -1;
   const footerStep = nextStep;
   const revealCount = footerStep + 1;
 
@@ -1135,6 +1140,22 @@ export function InstallationShowPage({
             >
               {caseStudy.filmCaption}
             </p>
+          ) : null}
+          {caseStudy.chapters?.length ? (
+            <div
+              className="installation-show__reveal"
+              data-revealed={revealStep >= chaptersStep ? "" : undefined}
+            >
+              {revealStep >= chaptersStep ? (
+                <InstallationChapters
+                  chapters={caseStudy.chapters}
+                  archiveCredit={caseStudy.archiveCredit}
+                  accent={show.titleColor}
+                  isDesktop={isDesktop}
+                  ariaLabel={show.titleLines.join(" ")}
+                />
+              ) : null}
+            </div>
           ) : null}
         </>
       ) : null}

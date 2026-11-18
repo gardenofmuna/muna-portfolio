@@ -1011,3 +1011,189 @@
     opacity: 1;
   }
 }
+
+/* ── Exhibition chapters (Efuru at the Threshold) ──
+ * Wall quotes are set as type, the way the vinyl read on the wall:
+ * italic Garamont in the show's orange, credit in small Arial.
+ * Scan captions follow the printed wall labels.
+ */
+.installation-chapters {
+  --is-accent: #f75701;
+  width: 100%;
+  margin: 72px 0 0;
+}
+
+.installation-chapter + .installation-chapter {
+  margin-top: 96px;
+}
+
+.installation-chapter__head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6em;
+  margin: 0 0 36px;
+  padding-top: 14px;
+  border-top: 1px solid #000;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 700;
+  font-size: 22.38px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: #000;
+}
+
+.installation-chapter__num {
+  color: var(--is-accent);
+}
+
+.installation-chapter__vinyl {
+  margin: 0 0 48px;
+  max-width: 30em;
+}
+
+.installation-chapter__vinyl[data-closing] {
+  margin: 72px 0 0;
+}
+
+.installation-chapter__vinyl-text {
+  margin: 0;
+  font-family: "LTC Garamont Display OT", "Times New Roman", serif;
+  font-style: italic;
+  font-size: var(--is-body-size, 44px);
+  line-height: var(--is-body-leading, 47px);
+  letter-spacing: -0.015em;
+  color: var(--is-accent);
+  text-indent: -0.4em;
+}
+
+.installation-chapter__vinyl-credit {
+  margin: 18px 0 0;
+  font-family: Helvetica, "Helvetica Neue", sans-serif;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--is-accent);
+  max-width: 34em;
+}
+
+.installation-chapter__vinyl-credit-line {
+  display: block;
+}
+
+.installation-chapter__vinyl-credit-line + .installation-chapter__vinyl-credit-line {
+  margin-top: 6px;
+}
+
+.installation-chapter__img {
+  position: relative;
+  width: 100%;
+  line-height: 0;
+}
+
+.installation-chapter__view {
+  margin: 0 0 48px;
+}
+
+/* Portrait installation views sit narrower so they don't tower over the rail. */
+.installation-chapter__view[data-portrait] {
+  width: 62%;
+}
+
+.installation-chapter__strip {
+  margin: 0;
+}
+
+.installation-chapter__strip + .installation-show__media-caption {
+  margin: 8px 0 48px;
+}
+
+.installation-chapter__archive {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 48px 28px;
+  align-items: start;
+}
+
+.installation-chapter__scan {
+  background: transparent;
+}
+
+.installation-chapter__label {
+  margin-top: 12px;
+  font-family: Helvetica, "Helvetica Neue", sans-serif;
+  color: #000;
+}
+
+.installation-chapter__label p {
+  margin: 0;
+}
+
+.installation-chapter__label-title {
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.installation-chapter__label-date {
+  margin-top: 2px !important;
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.installation-chapter__label-maker {
+  margin-top: 10px !important;
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.installation-chapter__label-line,
+.installation-chapter__label-credit {
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.installation-chapter__label-credit {
+  margin-top: 10px !important;
+}
+
+/* Phone: one scan per row, quotes scale with body copy. */
+.installation-show--narrow .installation-chapters {
+  margin-top: 56px;
+}
+
+.installation-show--narrow .installation-chapter + .installation-chapter {
+  margin-top: 64px;
+}
+
+.installation-show--narrow .installation-chapter__head {
+  font-size: var(--is-meta-size);
+  margin-bottom: 24px;
+}
+
+.installation-show--narrow .installation-chapter__vinyl {
+  margin-bottom: 32px;
+}
+
+.installation-show--narrow .installation-chapter__vinyl[data-closing] {
+  margin-top: 48px;
+}
+
+.installation-show--narrow .installation-chapter__vinyl-credit {
+  font-size: 11px;
+}
+
+.installation-show--narrow .installation-chapter__view {
+  margin-bottom: 32px;
+}
+
+.installation-show--narrow .installation-chapter__archive {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 32px;
+}
+
+.installation-show--narrow .installation-chapter__view[data-portrait] {
+  width: 100%;
+}
