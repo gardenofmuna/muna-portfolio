@@ -19,6 +19,25 @@ import type {
  */
 
 function VinylQuote({ quote }: { quote: InstallationVinylQuote }) {
+  if (quote.print) {
+    /* Fixed composition, as printed: scales with the page, never rewraps. */
+    return (
+      <figure
+        className="installation-vinyl installation-vinyl--print"
+        data-wide={quote.print.width > 900 ? "" : undefined}
+        style={{ aspectRatio: `${quote.print.width} / ${quote.print.height}` }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={quote.print.src}
+          alt={`${quote.text} ${quote.credit.join(". ")}`}
+          width={quote.print.width}
+          height={quote.print.height}
+          className="installation-vinyl__print"
+        />
+      </figure>
+    );
+  }
   return (
     <figure
       className="installation-vinyl"

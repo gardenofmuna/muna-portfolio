@@ -1037,6 +1037,30 @@
   margin: 0;
 }
 
+/* Printed quotes: one column wide (half the content), the quote wall full. */
+.installation-vinyl--print {
+  width: calc(50% - 24px);
+  line-height: 0;
+}
+
+.installation-vinyl-group[data-count="2"] .installation-vinyl--print {
+  width: 100%;
+}
+
+.installation-vinyl--print[data-wide] {
+  width: 100%;
+}
+
+.installation-vinyl__print {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.installation-show--narrow .installation-vinyl--print {
+  width: 100%;
+}
+
 .installation-vinyl[data-tone="orange"],
 .installation-vinyl[data-tone="panel"] {
   --vinyl-ink: var(--is-accent);
