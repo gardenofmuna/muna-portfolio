@@ -165,6 +165,7 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
             { image: { src: "/installation/efuru/ekwensi.webp", width: 1396, height: 720, alt: "Flora Nwapa with Cyprian Ekwensi" }, title: "Flora Nwapa with Cyprian Ekwensi", date: "Undated", lines: ["Photographer unknown", "Photograph, black and white"] },
             { image: { src: "/installation/efuru/mbadiwe.webp", width: 1600, height: 1160, alt: "Flora Nwapa with Emeka Mbadiwe at her book launch in Lagos" }, title: "Flora Nwapa with Emeka Mbadiwe at her book launch in Lagos", date: "Undated", lines: ["Photographer unknown", "Photograph, colour"] },
             { image: { src: "/installation/efuru/decoration-1987.webp", width: 1800, height: 1384, alt: "Flora Nwapa receiving a decoration from Amadi Ikwechegh, Governor of Imo State, for the Better Life Programme" }, title: "Flora Nwapa receiving a decoration from Amadi Ikwechegh, Governor of Imo State, for the Better Life Programme", date: "1987", lines: ["Photographer unknown", "Photograph, black and white"] },
+            { image: { src: "/installation/efuru/commissioner-health.webp", width: 1040, height: 794, alt: "Flora Nwapa, as Commissioner for Health, visiting patients at the University of Nigeria Teaching Hospital, Enugu" }, title: "Flora Nwapa, as Commissioner for Health, visiting patients at the University of Nigeria Teaching Hospital, Enugu", date: "Undated", lines: ["Photographer unknown", "Photograph, black and white"] },
           ],
         },
         {
