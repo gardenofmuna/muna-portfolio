@@ -32,7 +32,7 @@
   /* Scrollport keeps --shell-inset-top so footer aligns with the “m” bottom. */
   padding-bottom: 0;
   padding-left: var(--project-gutter-left, 0px);
-  padding-right: var(--project-gutter-right, 0px);
+  padding-right: var(--is-pad-right, var(--project-gutter-right, 0px));
   background: #fff;
 }
 
@@ -1245,4 +1245,18 @@
 
 .installation-show--narrow .installation-chapter__view[data-portrait] {
   width: 100%;
+}
+
+/* Desktop: Back / Next sit as far above the window bottom as the "m" ink does. */
+.installation-show--desktop .project-pane__scroll {
+  padding-bottom: 29px;
+}
+
+/* Room between the last quote and Back / Next. */
+.installation-chapters {
+  margin-bottom: 140px;
+}
+
+.installation-show--narrow .installation-chapters {
+  margin-bottom: 88px;
 }

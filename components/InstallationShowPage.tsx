@@ -338,6 +338,7 @@ export function InstallationShowPage({
   const footerThreeRef = useRef<HTMLSpanElement>(null);
   const footerProbeRef = useRef<HTMLSpanElement>(null);
   const railRef = useRef<HTMLDivElement>(null);
+
   const pairSlotRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const metaRef = useRef<HTMLDivElement>(null);
@@ -348,6 +349,43 @@ export function InstallationShowPage({
   const visible = show != null;
   const caseStudy = show?.caseStudy;
   const isDesktop = variant === "desktop";
+
+  /*
+   * Mirror the left air on the right: the gap from the content to the corner
+   * "m" matches the gap from the hamburger to the content. On narrower
+   * windows the stage is cropped on the right, so the right padding grows
+   * instead of letting the content run into the mark.
+   */
+  useLayoutEffect(() => {
+    if (!isDesktop) return;
+    const rail = railRef.current;
+    if (!rail) return;
+    const fit = () => {
+      const ham = document.querySelector(".desktop-site-shell__menu-toggle");
+      const mark = document.querySelector(
+        ".desktop-site-shell__signature-mark",
+      );
+      if (!ham || !mark) return;
+      rail.style.removeProperty("--is-pad-right");
+      const rr = rail.getBoundingClientRect();
+      const u = rail.offsetWidth ? rr.width / rail.offsetWidth : 1;
+      const cs = getComputedStyle(rail);
+      const contentLeft = rr.left + parseFloat(cs.paddingLeft) * u;
+      const gap = contentLeft - ham.getBoundingClientRect().right;
+      const target = mark.getBoundingClientRect().left - gap;
+      const pad = Math.max(0, (rr.right - target) / u);
+      rail.style.setProperty("--is-pad-right", `${pad}px`);
+    };
+    fit();
+    const t = window.setTimeout(fit, 800);
+    const t2 = window.setTimeout(fit, 2000);
+    window.addEventListener("resize", fit);
+    return () => {
+      window.clearTimeout(t);
+      window.clearTimeout(t2);
+      window.removeEventListener("resize", fit);
+    };
+  }, [isDesktop]);
   smartRef.current = smart;
   usePageScroll(visible && !isDesktop, scrollerRef);
 
