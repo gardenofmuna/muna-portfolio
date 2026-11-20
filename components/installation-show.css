@@ -1026,11 +1026,14 @@
   margin: 72px 0 0;
 }
 
-.installation-vinyl-group[data-count="2"] {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 48px;
-  align-items: start;
+/* Quotes alternate sides as they fall between the pictures. */
+.installation-vinyl-group {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.installation-vinyl-group[data-side="right"] {
+  justify-content: flex-end;
 }
 
 .installation-vinyl {
@@ -1151,10 +1154,7 @@
   margin-top: 48px;
 }
 
-.installation-show--narrow .installation-vinyl-group[data-count="2"] {
-  grid-template-columns: minmax(0, 1fr);
-  row-gap: 32px;
-}
+
 
 .installation-show--narrow .installation-vinyl__credit {
   font-size: var(--is-meta-size, 16px);

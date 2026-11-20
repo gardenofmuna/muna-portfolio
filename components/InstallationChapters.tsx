@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 import { ProjectHorizontalStrip } from "@/components/project/ProjectHorizontalStrip";
 import type {
@@ -18,6 +18,9 @@ import type {
  * face, in the colour the vinyl had on the wall.
  */
 
+/** Type height (mm) of the large orange vinyls; it maps to body text size. */
+const PRINT_REF_TYPE_MM = 49;
+
 function VinylQuote({ quote }: { quote: InstallationVinylQuote }) {
   if (quote.print) {
     /* Fixed composition, as printed: scales with the page, never rewraps. */
@@ -27,10 +30,11 @@ function VinylQuote({ quote }: { quote: InstallationVinylQuote }) {
         data-wide={quote.print.width > 900 ? "" : undefined}
         style={{
           aspectRatio: `${quote.print.width} / ${quote.print.height}`,
-          /* Lettering comes out at the body text size: width scales with the
-             body size by the print's width-to-type-height ratio. */
+          /* One shared scale for every quote, so they keep their printed
+             sizes relative to each other: the 49 mm orange vinyl lettering
+             comes out at body size, the smaller collage quotes smaller. */
           width: `calc(var(--is-body-size, 44px) * ${(
-            quote.print.width / quote.print.type
+            quote.print.width / PRINT_REF_TYPE_MM
           ).toFixed(3)})`,
         }}
       >
@@ -115,19 +119,19 @@ function Label({
 }
 
 /** Scans in pairs, both at one height filling the column, captions beneath. */
-function ArchivePairs({
-  items,
+function ArchiveRow({
+  row,
   isDesktop,
   credit,
 }: {
-  items: readonly InstallationArchiveItem[];
+  row: readonly InstallationArchiveItem[];
   isDesktop: boolean;
   credit?: string;
 }) {
   if (!isDesktop) {
     return (
       <>
-        {items.map((item) => (
+        {row.map((item) => (
           <figure key={item.title} className="installation-archive__single">
             <div
               className="installation-archive__img"
@@ -151,48 +155,35 @@ function ArchivePairs({
       </>
     );
   }
-  const rows: InstallationArchiveItem[][] = [];
-  for (let i = 0; i < items.length; i += 2) rows.push(items.slice(i, i + 2));
+  const ars = row.map((it) => it.image.width / it.image.height);
+  /* A lone scan takes the width it would have beside a 4:3 partner. */
+  const cols =
+    row.length === 2 ? `${ars[0]}fr ${ars[1]}fr` : `${ars[0]}fr ${4 / 3}fr`;
   return (
-    <>
-      {rows.map((row) => {
-        const ars = row.map((it) => it.image.width / it.image.height);
-        /* A lone scan takes the width it would have beside a 4:3 partner. */
-        const cols =
-          row.length === 2
-            ? `${ars[0]}fr ${ars[1]}fr`
-            : `${ars[0]}fr ${4 / 3}fr`;
-        return (
-          <div
-            key={row[0].title}
-            className="installation-archive__row"
-            style={{ gridTemplateColumns: cols } as CSSProperties}
-          >
-            {row.map((item) => (
-              <div
-                key={item.title}
-                className="installation-archive__img"
-                style={{
-                  aspectRatio: `${item.image.width} / ${item.image.height}`,
-                }}
-              >
-                <Image
-                  src={item.image.src!}
-                  alt={item.image.alt}
-                  fill
-                  sizes="450px"
-                  className="object-contain"
-                />
-              </div>
-            ))}
-            {row.length === 1 ? <div /> : null}
-            {row.map((item) => (
-              <Label key={`${item.title}-cap`} item={item} credit={credit} />
-            ))}
-          </div>
-        );
-      })}
-    </>
+    <div
+      className="installation-archive__row"
+      style={{ gridTemplateColumns: cols } as CSSProperties}
+    >
+      {row.map((item) => (
+        <div
+          key={item.title}
+          className="installation-archive__img"
+          style={{ aspectRatio: `${item.image.width} / ${item.image.height}` }}
+        >
+          <Image
+            src={item.image.src!}
+            alt={item.image.alt}
+            fill
+            sizes="450px"
+            className="object-contain"
+          />
+        </div>
+      ))}
+      {row.length === 1 ? <div /> : null}
+      {row.map((item) => (
+        <Label key={`${item.title}-cap`} item={item} credit={credit} />
+      ))}
+    </div>
   );
 }
 
@@ -209,66 +200,97 @@ export function InstallationChapters({
   isDesktop: boolean;
   ariaLabel: string;
 }) {
+  let quoteSide = 0;
   return (
     <div
       className="installation-chapters"
       style={{ ["--is-accent" as string]: accent } as CSSProperties}
     >
-      {chapters.map((ch) => (
-        <section
-          key={ch.number}
-          className="installation-chapter"
-          aria-label={ch.title}
-        >
-          <div
-            className="installation-vinyl-group"
-            data-count={ch.quotes.length}
-          >
-            {ch.quotes.map((q) => (
-              <VinylQuote key={q.text.slice(0, 40)} quote={q} />
-            ))}
-          </div>
-
-          {ch.views?.map((v) => (
-            <FullImage key={v.src} image={v} isDesktop={isDesktop} />
-          ))}
-
-          {ch.strip?.length ? (
-            <div className="installation-show__strip">
-              <ProjectHorizontalStrip
-                items={ch.strip.map((img) => ({
-                  src: img.src!,
-                  width: img.width,
-                  height: img.height,
-                  alt: img.alt,
-                }))}
-                ariaLabel={`${ariaLabel}: ${ch.title}`}
-                variant="website"
-                mobileCutAutoplay={!isDesktop}
-              />
-            </div>
-          ) : null}
-          {ch.stripCaption ? (
-            <p className="installation-show__media-caption">
-              {ch.stripCaption}
-            </p>
-          ) : null}
-
-          {ch.archive?.length ? (
-            <ArchivePairs
-              items={ch.archive}
+      {chapters.map((ch) => {
+        /* Everything with a picture in it, in reading order. */
+        const rows: ReactNode[] = [];
+        ch.views?.forEach((v) =>
+          rows.push(<FullImage key={v.src} image={v} isDesktop={isDesktop} />),
+        );
+        if (ch.strip?.length) {
+          rows.push(
+            <div key="strip">
+              <div className="installation-show__strip">
+                <ProjectHorizontalStrip
+                  items={ch.strip.map((img) => ({
+                    src: img.src!,
+                    width: img.width,
+                    height: img.height,
+                    alt: img.alt,
+                  }))}
+                  ariaLabel={`${ariaLabel}: ${ch.title}`}
+                  variant="website"
+                  mobileCutAutoplay={!isDesktop}
+                />
+              </div>
+              {ch.stripCaption ? (
+                <p className="installation-show__media-caption">
+                  {ch.stripCaption}
+                </p>
+              ) : null}
+            </div>,
+          );
+        }
+        const items = ch.archive ?? [];
+        for (let i = 0; i < items.length; i += 2) {
+          const row = items.slice(i, i + 2);
+          rows.push(
+            <ArchiveRow
+              key={row[0].title}
+              row={row}
               isDesktop={isDesktop}
               credit={archiveCredit}
-            />
-          ) : null}
-
-          {ch.closingQuote ? (
-            <div className="installation-vinyl-group" data-count={1}>
+            />,
+          );
+        }
+        /* Quotes fall between the picture rows, spread evenly. */
+        const n = ch.quotes.length;
+        const slotFor = (i: number) =>
+          Math.floor(((i + 1) * rows.length) / (n + 1));
+        const flow: ReactNode[] = [];
+        let q = 0;
+        for (let r = 0; r <= rows.length; r++) {
+          while (q < n && slotFor(q) === r) {
+            const quote = ch.quotes[q];
+            flow.push(
+              <div
+                key={`q-${q}`}
+                className="installation-vinyl-group"
+                data-side={quoteSide++ % 2 ? "right" : "left"}
+              >
+                <VinylQuote quote={quote} />
+              </div>,
+            );
+            q++;
+          }
+          if (r < rows.length) flow.push(rows[r]);
+        }
+        if (ch.closingQuote) {
+          flow.push(
+            <div
+              key="closing"
+              className="installation-vinyl-group"
+              data-side={quoteSide++ % 2 ? "right" : "left"}
+            >
               <VinylQuote quote={ch.closingQuote} />
-            </div>
-          ) : null}
-        </section>
-      ))}
+            </div>,
+          );
+        }
+        return (
+          <section
+            key={ch.number}
+            className="installation-chapter"
+            aria-label={ch.title}
+          >
+            {flow}
+          </section>
+        );
+      })}
     </div>
   );
 }
