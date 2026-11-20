@@ -1037,18 +1037,10 @@
   margin: 0;
 }
 
-/* Printed quotes: one column wide (half the content), the quote wall full. */
+/* Printed quotes: sized from the body text (inline width), never wider than their column. */
 .installation-vinyl--print {
-  width: calc(50% - 24px);
+  max-width: 100%;
   line-height: 0;
-}
-
-.installation-vinyl-group[data-count="2"] .installation-vinyl--print {
-  width: 100%;
-}
-
-.installation-vinyl--print[data-wide] {
-  width: 100%;
 }
 
 .installation-vinyl__print {
@@ -1057,9 +1049,7 @@
   height: auto;
 }
 
-.installation-show--narrow .installation-vinyl--print {
-  width: 100%;
-}
+
 
 .installation-vinyl[data-tone="orange"],
 .installation-vinyl[data-tone="panel"] {

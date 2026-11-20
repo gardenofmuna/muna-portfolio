@@ -25,7 +25,14 @@ function VinylQuote({ quote }: { quote: InstallationVinylQuote }) {
       <figure
         className="installation-vinyl installation-vinyl--print"
         data-wide={quote.print.width > 900 ? "" : undefined}
-        style={{ aspectRatio: `${quote.print.width} / ${quote.print.height}` }}
+        style={{
+          aspectRatio: `${quote.print.width} / ${quote.print.height}`,
+          /* Lettering comes out at the body text size: width scales with the
+             body size by the print's width-to-type-height ratio. */
+          width: `calc(var(--is-body-size, 44px) * ${(
+            quote.print.width / quote.print.type
+          ).toFixed(3)})`,
+        }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
