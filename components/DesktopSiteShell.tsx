@@ -25,6 +25,13 @@ import {
 import { useSafari } from "@/lib/safari";
 import "./desktop-site-shell.css";
 
+/** Hamburger ink inset from the top-left, in layout px (toggle 42×36 + icon padding). */
+const MENU_INK_LEFT = 44;
+const MENU_INK_TOP = 38;
+/** Transparent room in nzeribe1.webp beside and below the "m", as a share of mark height. */
+const MARK_INK_PAD_RIGHT = 3 / 61;
+const MARK_INK_PAD_BOTTOM = 8 / 61;
+
 export type DesktopMenuState = "open" | "hidden";
 
 type Props = {
@@ -167,13 +174,21 @@ export function DesktopSiteShell({
   const markScreenFullW = Math.round(fullMarkLayoutW * u);
   const markScreenCompactW = Math.round(compactMarkLayoutW * u);
   const markScreenH = Math.round(fullMarkLayoutH * u);
+  /*
+   * Pin the corner mark to the viewport so its ink sits the same distance
+   * from the bottom-right corner as the hamburger's ink sits from the
+   * top-left (menu toggle at 42×36 + 2px icon padding). The nzeribe image
+   * carries a little transparent room right of and below the "m", so that
+   * is taken off. Measuring from the stage edge instead pushed the mark
+   * off-screen whenever the stage was wider than the window.
+   */
+  const markInkPadRight = markScreenH * MARK_INK_PAD_RIGHT;
+  const markInkPadBottom = markScreenH * MARK_INK_PAD_BOTTOM;
   const markCssRight = Math.round(
-    stageView.viewportW -
-      (stageView.offsetLeft + (stageView.layoutW - stageMetrics.inset) * u),
+    stageView.offsetLeft + MENU_INK_LEFT * u - markInkPadRight,
   );
   const markCssBottom = Math.round(
-    stageView.viewportH -
-      (stageView.offsetTop + (stageView.layoutH - stageMetrics.inset) * u),
+    stageView.offsetTop + MENU_INK_TOP * u - markInkPadBottom,
   );
 
   const stageMarkStyle = {

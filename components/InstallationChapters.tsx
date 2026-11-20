@@ -27,6 +27,7 @@ function VinylQuote({
     <figure
       className="installation-chapter__vinyl"
       data-closing={closing ? "" : undefined}
+      data-tone={quote.tone ?? "orange"}
     >
       <blockquote className="installation-chapter__vinyl-text">
         {quote.text}
@@ -107,9 +108,14 @@ export function InstallationChapters({
             <span className="installation-chapter__title">{ch.title}</span>
           </h2>
 
-          {ch.quotes.map((q) => (
-            <VinylQuote key={q.text.slice(0, 40)} quote={q} />
-          ))}
+          <div
+            className="installation-chapter__quotes"
+            data-count={ch.quotes.length}
+          >
+            {ch.quotes.map((q) => (
+              <VinylQuote key={q.text.slice(0, 40)} quote={q} />
+            ))}
+          </div>
 
           {ch.views?.map((v) => (
             <ChapterImage

@@ -1046,13 +1046,52 @@
   color: var(--is-accent);
 }
 
-.installation-chapter__vinyl {
+.installation-chapter__quotes {
   margin: 0 0 48px;
+}
+
+/* Two quotes in a chapter sit side by side in equal columns across the width. */
+.installation-chapter__quotes[data-count="2"] {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 48px;
+  align-items: start;
+}
+
+.installation-chapter__vinyl {
+  margin: 0;
   max-width: 30em;
+}
+
+.installation-chapter__quotes[data-count="2"] .installation-chapter__vinyl {
+  max-width: none;
+}
+
+/* Orange vinyl on white (the default). */
+.installation-chapter__vinyl[data-tone="orange"] {
+  --vinyl-ink: var(--is-accent);
+}
+
+/* Black vinyl on white, as on the collage wall. */
+.installation-chapter__vinyl[data-tone="black"] {
+  --vinyl-ink: #000;
+}
+
+/* The quote wall: white type on the orange wall, landscape. */
+.installation-chapter__vinyl[data-tone="panel"] {
+  --vinyl-ink: #fff;
+  max-width: none;
+  padding: 7% 8% 6%;
+  background: var(--is-accent);
 }
 
 .installation-chapter__vinyl[data-closing] {
   margin: 72px 0 0;
+}
+
+.installation-chapter__quotes + .installation-chapter__view,
+.installation-chapter__quotes + .installation-chapter__archive {
+  margin-top: 0;
 }
 
 .installation-chapter__vinyl-text {
@@ -1062,7 +1101,7 @@
   font-size: var(--is-body-size, 44px);
   line-height: var(--is-body-leading, 47px);
   letter-spacing: -0.015em;
-  color: var(--is-accent);
+  color: var(--vinyl-ink, var(--is-accent));
   text-indent: -0.4em;
 }
 
@@ -1071,7 +1110,7 @@
   font-family: Helvetica, "Helvetica Neue", sans-serif;
   font-size: 13px;
   line-height: 1.35;
-  color: var(--is-accent);
+  color: var(--vinyl-ink, var(--is-accent));
   max-width: 34em;
 }
 
@@ -1173,8 +1212,18 @@
   margin-bottom: 24px;
 }
 
-.installation-show--narrow .installation-chapter__vinyl {
+.installation-show--narrow .installation-chapter__quotes {
   margin-bottom: 32px;
+}
+
+/* Phone: the two columns stack; each quote keeps its own colours. */
+.installation-show--narrow .installation-chapter__quotes[data-count="2"] {
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: 32px;
+}
+
+.installation-show--narrow .installation-chapter__vinyl[data-tone="panel"] {
+  padding: 28px 24px 24px;
 }
 
 .installation-show--narrow .installation-chapter__vinyl[data-closing] {

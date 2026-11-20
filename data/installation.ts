@@ -40,6 +40,11 @@ export type InstallationCaseStudy = {
 /** A wall quote set as type in the exhibition's vinyl style (no photo of the vinyl). */
 export type InstallationVinylQuote = {
   text: string;
+  /**
+   * How the quote sat on the wall: "panel" = white type on the orange quote
+   * wall, "orange" = orange vinyl on white, "black" = black vinyl on white.
+   */
+  tone?: "panel" | "orange" | "black";
   /** Credit lines, smallest type. First line is the attribution. */
   credit: readonly string[];
 };
@@ -119,20 +124,21 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
         {
           number: "01",
           title: "Making",
-          quotes: [{ text: "“As a child . . . I listened to a lot of stories, moonlight stories told by the women in Ugwuta [Oguta]. . . . I would call on anybody who promised to tell me a story. . . . While I was teaching, I discovered I had plenty of time on my hands. . . . So, I began to write stories about my schooldays. It was in this process that I began the story of Efuru. It just happened. . . . There was nothing in me when I was in school that made me feel I was going to be a writer. . . . But having written Efuru and having published it, I continued to write.”", credit: ["Flora Nwapa, in conversation with Marie Umeh, 1992"] }],
+          quotes: [{ tone: "panel", text: "“As a child . . . I listened to a lot of stories, moonlight stories told by the women in Ugwuta [Oguta]. . . . I would call on anybody who promised to tell me a story. . . . While I was teaching, I discovered I had plenty of time on my hands. . . . So, I began to write stories about my schooldays. It was in this process that I began the story of Efuru. It just happened. . . . There was nothing in me when I was in school that made me feel I was going to be a writer. . . . But having written Efuru and having published it, I continued to write.”", credit: ["Flora Nwapa, in conversation with Marie Umeh, 1992"] }],
           views: [{ src: "/installation/efuru/view-making.webp", width: 1600, height: 2133, alt: "Framed photographs on the Making wall" }],
           archive: [
-            { image: { src: "/installation/efuru/pmgs-staff.webp", width: 1448, height: 584, alt: "Flora Nwapa with the staff of Priscilla Memorial Grammar School (PMGS), Oguta" }, title: "Flora Nwapa with the staff of Priscilla Memorial Grammar School (PMGS), Oguta", date: "1953", lines: ["Photographer unknown", "Photograph, black and white"] },
-            { image: { src: "/installation/efuru/children-bw.webp", width: 1600, height: 1099, alt: "Flora Nwapa with her children Uzoma and Amede" }, title: "Flora Nwapa with her children Uzoma and Amede", date: "Undated", lines: ["Photographer unknown", "Photograph, black and white"] },
+            { image: { src: "/installation/efuru/pmgs-staff.webp", width: 1157, height: 796, alt: "Flora Nwapa with the staff of Priscilla Memorial Grammar School (PMGS), Oguta" }, title: "Flora Nwapa with the staff of Priscilla Memorial Grammar School (PMGS), Oguta", date: "1953", lines: ["Photographer unknown", "Photograph, black and white"] },
+            { image: { src: "/installation/efuru/children-bw.webp", width: 1369, height: 908, alt: "Flora Nwapa with her children Uzoma and Amede" }, title: "Flora Nwapa with her children Uzoma and Amede", date: "Undated", lines: ["Photographer unknown", "Photograph, black and white"] },
+            { image: { src: "/installation/efuru/husband.webp", width: 1181, height: 806, alt: "Flora Nwapa with her husband, Gogo Nwakuche" }, title: "Flora Nwapa with her husband, Gogo Nwakuche", date: "Undated", lines: ["Photographer unknown", "Photograph, black and white"] },
             { image: { src: "/installation/efuru/children-1981.webp", width: 581, height: 749, alt: "Flora Nwapa with her children: Uzoma (top), with Ejine and Amede to her left" }, title: "Flora Nwapa with her children: Uzoma (top), with Ejine and Amede to her left", date: "1981", lines: ["Photographer unknown", "Photograph, colour"] },
             { image: { src: "/installation/efuru/sisters.webp", width: 363, height: 262, alt: "Flora Nwapa with her sisters Bee and Ogedi" }, title: "Flora Nwapa with her sisters Bee and Ogedi", date: "Undated", lines: ["Photographer unknown", "Photograph, colour"] },
           ],
-          closingQuote: { text: "“So I went on and on and on and wrote Efuru. I got it typed and thought it wasn’t a bad story, but I didn’t have the courage to give it to anybody, to read. Then I gave it to Chinua Achebe … And once your book is accepted for publication, you become a writer! … The first African woman to have a novel published by Heinemann of London … I made history!”", credit: ["Flora Nwapa, interviewed for NRK television, Norway, 1987", "As quoted in Paula Uimonen, Invoking Flora Nwapa: Nigerian Women Writers, Femininity and Spirituality in World Literature, 2020"] },
+          closingQuote: { tone: "orange", text: "“So I went on and on and on and wrote Efuru. I got it typed and thought it wasn’t a bad story, but I didn’t have the courage to give it to anybody, to read. Then I gave it to Chinua Achebe … And once your book is accepted for publication, you become a writer! … The first African woman to have a novel published by Heinemann of London … I made history!”", credit: ["Flora Nwapa, interviewed for NRK television, Norway, 1987", "As quoted in Paula Uimonen, Invoking Flora Nwapa: Nigerian Women Writers, Femininity and Spirituality in World Literature, 2020"] },
         },
         {
           number: "02",
           title: "Object",
-          quotes: [{ text: "“Efuru was her name. She was a remarkable woman. It was not only that she came from a distinguished family. She was distinguished herself.”", credit: ["Efuru (1966), p. 1"] }],
+          quotes: [{ tone: "black", text: "“Efuru was her name. She was a remarkable woman. It was not only that she came from a distinguished family. She was distinguished herself.”", credit: ["Efuru (1966), p. 1"] }],
           strip: [
             { src: "/installation/efuru/vitrine-1.webp", width: 1600, height: 2133, alt: "First edition of Efuru in a vitrine" },
             { src: "/installation/efuru/vitrine-2.webp", width: 1600, height: 2133, alt: "Efuru: roman nigérian, the French translation" },
@@ -144,27 +150,28 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
         {
           number: "03",
           title: "Reader",
-          quotes: [{ text: "“When I do write about women in Nigeria, in Africa, I try to paint a positive picture about women because there are many women who are very, very positive in their thinking, who are very, very independent and very, very industrious.”", credit: ["Flora Nwapa, in conversation with Marie Umeh, 1995"] }, { text: "“I think that I will go all out and say that I am a feminist with a big ‘f’ because Obioma [Nnaemeka] said on Monday that feminism is about possibilities; there are possibilities, there are choices. Let us not be afraid to say that we are feminists. We need one another, we really need one another. Globally, we need one another.”", credit: ["Flora Nwapa, speaking at “Women in Africa and the African Diaspora: Bridges Across Activism and the Academy,” Nsukka, Nigeria, 13–18 July 1992", "As quoted in Obioma Nnaemeka, “Feminism, Rebellious Women, and Cultural Boundaries: Rereading Flora Nwapa and Her Compatriots,” Research in African Literatures, 1995"] }],
+          quotes: [{ tone: "orange", text: "“When I do write about women in Nigeria, in Africa, I try to paint a positive picture about women because there are many women who are very, very positive in their thinking, who are very, very independent and very, very industrious.”", credit: ["Flora Nwapa, in conversation with Marie Umeh, 1995"] }, { tone: "orange", text: "“I think that I will go all out and say that I am a feminist with a big ‘f’ because Obioma [Nnaemeka] said on Monday that feminism is about possibilities; there are possibilities, there are choices. Let us not be afraid to say that we are feminists. We need one another, we really need one another. Globally, we need one another.”", credit: ["Flora Nwapa, speaking at “Women in Africa and the African Diaspora: Bridges Across Activism and the Academy,” Nsukka, Nigeria, 13–18 July 1992", "As quoted in Obioma Nnaemeka, “Feminism, Rebellious Women, and Cultural Boundaries: Rereading Flora Nwapa and Her Compatriots,” Research in African Literatures, 1995"] }],
           views: [{ src: "/installation/efuru/view-reader.webp", width: 1920, height: 1080, alt: "The desk portrait panel flanked by framed photographs on the Reader wall" }],
           archive: [
             { image: { src: "/installation/efuru/iowa.webp", width: 261, height: 323, alt: "Flora Nwapa presenting at the International Writing Program, University of Iowa" }, title: "Flora Nwapa presenting at the International Writing Program, University of Iowa", date: "Undated", lines: ["Photographer unknown", "Photograph, colour"] },
             { image: { src: "/installation/efuru/amsterdam-1.webp", width: 444, height: 303, alt: "Flora Nwapa with Zaynab Alkali and Grace Osifo at the 5th International Feminist Book Fair, Amsterdam" }, title: "Flora Nwapa with Zaynab Alkali and Grace Osifo at the 5th International Feminist Book Fair, Amsterdam", date: "1992", lines: ["Photographer unknown", "Photograph, colour"] },
-            { image: { src: "/installation/efuru/amsterdam-2.webp", width: 437, height: 303, alt: "Flora Nwapa with Femi Kuti, Zaynab Alkali and Christy Essien-Igbokwe" }, title: "Flora Nwapa with Femi Kuti, Zaynab Alkali and Christy Essien-Igbokwe", date: "Undated", lines: ["Photographer unknown", "Photograph, colour"] },
-            { image: { src: "/installation/efuru/buchi.webp", width: 442, height: 303, alt: "Flora Nwapa with Buchi Emecheta" }, title: "Flora Nwapa with Buchi Emecheta", date: "Undated", lines: ["Photographer unknown", "Photograph, colour"] },
+            { image: { src: "/installation/efuru/amsterdam-2.webp", width: 739, height: 515, alt: "Flora Nwapa with Femi Kuti, Zaynab Alkali and Christy Essien-Igbokwe" }, title: "Flora Nwapa with Femi Kuti, Zaynab Alkali and Christy Essien-Igbokwe", date: "Undated", lines: ["Photographer unknown", "Photograph, colour"] },
+            { image: { src: "/installation/efuru/buchi.webp", width: 786, height: 513, alt: "Flora Nwapa with Buchi Emecheta" }, title: "Flora Nwapa with Buchi Emecheta", date: "Undated", lines: ["Photographer unknown", "Photograph, colour"] },
             { image: { src: "/installation/efuru/ekwensi.webp", width: 1396, height: 720, alt: "Flora Nwapa with Cyprian Ekwensi" }, title: "Flora Nwapa with Cyprian Ekwensi", date: "Undated", lines: ["Photographer unknown", "Photograph, black and white"] },
             { image: { src: "/installation/efuru/mbadiwe.webp", width: 1600, height: 1160, alt: "Flora Nwapa with Emeka Mbadiwe at her book launch in Lagos" }, title: "Flora Nwapa with Emeka Mbadiwe at her book launch in Lagos", date: "Undated", lines: ["Photographer unknown", "Photograph, colour"] },
             { image: { src: "/installation/efuru/decoration.webp", width: 1600, height: 1255, alt: "Flora Nwapa receiving a decoration from Amadi Ikwechegh, Governor of Imo State, for the Better Life Programme" }, title: "Flora Nwapa receiving a decoration from Amadi Ikwechegh, Governor of Imo State, for the Better Life Programme", date: "1987", lines: ["Photographer unknown", "Photograph, black and white"] },
+            { image: { src: "/installation/efuru/commissioner.webp", width: 949, height: 774, alt: "Flora Nwapa, as Commissioner for Health, visiting patients at the University of Nigeria Teaching Hospital, Enugu" }, title: "Flora Nwapa, as Commissioner for Health, visiting patients at the University of Nigeria Teaching Hospital, Enugu", date: "Undated", lines: ["Photographer unknown", "Photograph, black and white"] },
           ],
         },
         {
           number: "04",
           title: "Memory",
-          quotes: [{ text: "“Have heart, my daughter. You are still young. It is still morning for you. So have heart. We cannot explain the mysteries of life, because we are mere human beings. Only God knows.”", credit: ["Efuru (1966), p. 91"] }, { text: "“She was not meant to suffer at all. Life for her meant living it fully. She did not want merely to exist. She wanted to live and use the world to her advantage.”", credit: ["Efuru (1966), p. 94"] }],
+          quotes: [{ tone: "black", text: "“Have heart, my daughter. You are still young. It is still morning for you. So have heart. We cannot explain the mysteries of life, because we are mere human beings. Only God knows.”", credit: ["Efuru (1966), p. 91"] }, { tone: "black", text: "“She was not meant to suffer at all. Life for her meant living it fully. She did not want merely to exist. She wanted to live and use the world to her advantage.”", credit: ["Efuru (1966), p. 94"] }],
           views: [{ src: "/installation/efuru/view-memory.webp", width: 1920, height: 1280, alt: "The collage wall of reader responses" }],
           archive: [
             { image: { src: "/installation/efuru/grave.webp", width: 374, height: 268, alt: "Ejine and Amede at Flora Nwapa's grave on the first anniversary of her death" }, title: "Ejine and Amede at Flora Nwapa's grave on the first anniversary of her death", date: "1994", lines: ["Photographer unknown", "Photograph, colour"] },
           ],
-          closingQuote: { text: "“She dreamt of the woman of the lake, her beauty, her long hair and her riches. She had lived for ages at the bottom of the lake. She was as old as the lake itself. She was happy, she was wealthy. She was beautiful. She gave women beauty and wealth but she had no child. She had never experienced the joy of motherhood. Why then did the women worship her?”", credit: ["Flora Nwapa, Efuru (London: Heinemann, 1966), 281. The closing lines of the novel."] },
+          closingQuote: { tone: "orange", text: "“She dreamt of the woman of the lake, her beauty, her long hair and her riches. She had lived for ages at the bottom of the lake. She was as old as the lake itself. She was happy, she was wealthy. She was beautiful. She gave women beauty and wealth but she had no child. She had never experienced the joy of motherhood. Why then did the women worship her?”", credit: ["Flora Nwapa, Efuru (London: Heinemann, 1966), 281. The closing lines of the novel."] },
         },
       ],
     },
