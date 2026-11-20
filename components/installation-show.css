@@ -1088,12 +1088,44 @@
   line-height: 0;
 }
 
-.installation-archive__row .installation-show__media-caption {
-  margin-top: 8px;
+/* Captions set like the printed wall labels. */
+.installation-label {
+  margin-top: 12px;
+  font-family: Helvetica, "Helvetica Neue", Arial, sans-serif;
+  color: #000;
 }
 
-.installation-chapters__credit {
-  margin-top: 72px !important;
+.installation-label p {
+  margin: 0;
+}
+
+.installation-label__title {
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.installation-label__date {
+  margin-top: 2px !important;
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.installation-label__maker {
+  margin-top: 10px !important;
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.installation-label__line,
+.installation-label__credit {
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.installation-label__credit {
+  margin-top: 10px !important;
 }
 
 /* Phone: one image per row, caption under each, quotes stacked. */

@@ -61,17 +61,42 @@ function FullImage({
   );
 }
 
-function captionFor(item: InstallationArchiveItem) {
-  return /undated/i.test(item.date) ? item.title : `${item.title}, ${item.date}`;
+/** Caption laid out like the printed wall labels. */
+function Label({
+  item,
+  credit,
+}: {
+  item: InstallationArchiveItem;
+  credit?: string;
+}) {
+  return (
+    <div className="installation-label">
+      <p className="installation-label__title">{item.title}</p>
+      <p className="installation-label__date">{item.date}</p>
+      {item.lines?.map((line, i) => (
+        <p
+          key={line}
+          className={
+            i === 0 ? "installation-label__maker" : "installation-label__line"
+          }
+        >
+          {line}
+        </p>
+      ))}
+      {credit ? <p className="installation-label__credit">{credit}</p> : null}
+    </div>
+  );
 }
 
 /** Scans in pairs, both at one height filling the column, captions beneath. */
 function ArchivePairs({
   items,
   isDesktop,
+  credit,
 }: {
   items: readonly InstallationArchiveItem[];
   isDesktop: boolean;
+  credit?: string;
 }) {
   if (!isDesktop) {
     return (
@@ -92,8 +117,8 @@ function ArchivePairs({
                 className="object-contain"
               />
             </div>
-            <figcaption className="installation-show__media-caption">
-              {captionFor(item)}
+            <figcaption>
+              <Label item={item} credit={credit} />
             </figcaption>
           </figure>
         ))}
@@ -136,12 +161,7 @@ function ArchivePairs({
             ))}
             {row.length === 1 ? <div /> : null}
             {row.map((item) => (
-              <p
-                key={`${item.title}-cap`}
-                className="installation-show__media-caption"
-              >
-                {captionFor(item)}
-              </p>
+              <Label key={`${item.title}-cap`} item={item} credit={credit} />
             ))}
           </div>
         );
@@ -209,7 +229,11 @@ export function InstallationChapters({
           ) : null}
 
           {ch.archive?.length ? (
-            <ArchivePairs items={ch.archive} isDesktop={isDesktop} />
+            <ArchivePairs
+              items={ch.archive}
+              isDesktop={isDesktop}
+              credit={archiveCredit}
+            />
           ) : null}
 
           {ch.closingQuote ? (
@@ -219,12 +243,6 @@ export function InstallationChapters({
           ) : null}
         </section>
       ))}
-      {archiveCredit ? (
-        <p className="installation-show__media-caption installation-chapters__credit">
-          Photographs {archiveCredit.charAt(0).toLowerCase()}
-          {archiveCredit.slice(1)}.
-        </p>
-      ) : null}
     </div>
   );
 }
