@@ -121,6 +121,17 @@ function Label({
   );
 }
 
+/**
+ * Low-resolution copies are never shown larger than they hold up: at most
+ * two thirds of their pixel size, so they read as small prints, not blurry
+ * enlargements. Sharp scans (1000 px and up) are left alone.
+ */
+const LOW_RES_PX = 1000;
+const LOW_RES_SHOW = 1 / 1.5;
+function capHeight(img: InstallationGalleryImage): number | null {
+  return img.width < LOW_RES_PX ? img.height * LOW_RES_SHOW : null;
+}
+
 /** Scans in pairs, both at one height filling the column, captions beneath. */
 function ArchiveRow({
   row,
@@ -140,6 +151,10 @@ function ArchiveRow({
               className="installation-archive__img"
               style={{
                 aspectRatio: `${item.image.width} / ${item.image.height}`,
+                maxWidth:
+                  item.image.width < LOW_RES_PX
+                    ? `${Math.round(item.image.width * LOW_RES_SHOW)}px`
+                    : undefined,
               }}
             >
               <Image
@@ -162,10 +177,26 @@ function ArchiveRow({
   /* A lone scan takes the width it would have beside a 4:3 partner. */
   const cols =
     row.length === 2 ? `${ars[0]}fr ${ars[1]}fr` : `${ars[0]}fr ${4 / 3}fr`;
+  /* If either scan is low-res, shrink the whole pair to the height it holds up at. */
+  const caps = row.map((it) => capHeight(it.image)).filter((h): h is number => h !== null);
+  const rowH = caps.length ? Math.min(...caps) : null;
+  const rowMaxW =
+    rowH !== null
+      ? Math.round(
+          ars.reduce((a, b) => a + b, 0) * rowH +
+            (row.length === 1 ? (4 / 3) * rowH : 0) +
+            6,
+        )
+      : null;
   return (
     <div
       className="installation-archive__row"
-      style={{ gridTemplateColumns: cols } as CSSProperties}
+      style={
+        {
+          gridTemplateColumns: cols,
+          maxWidth: rowMaxW ? `${rowMaxW}px` : undefined,
+        } as CSSProperties
+      }
     >
       {row.map((item) => (
         <div
@@ -251,6 +282,10 @@ export function InstallationChapters({
                 className="installation-archive__img"
                 style={{
                   aspectRatio: `${pic.item.image.width} / ${pic.item.image.height}`,
+                  maxWidth:
+                    pic.item.image.width < LOW_RES_PX
+                      ? `${Math.round(pic.item.image.width * LOW_RES_SHOW)}px`
+                      : undefined,
                 }}
               >
                 <Image
