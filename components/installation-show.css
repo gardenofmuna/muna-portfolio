@@ -1046,6 +1046,38 @@
   line-height: 0;
 }
 
+/* A quote with a picture beside it; sides alternate down the page. */
+.installation-quote-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 48px;
+  align-items: start;
+  margin: 72px 0 0;
+}
+
+.installation-quote-row[data-quote-side="right"] .installation-quote-row__quote {
+  order: 2;
+}
+
+.installation-quote-row__quote {
+  display: flex;
+}
+
+.installation-quote-row[data-quote-side="right"] .installation-quote-row__quote {
+  justify-content: flex-end;
+}
+
+.installation-show--narrow .installation-quote-row {
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: 24px;
+  margin-top: 48px;
+}
+
+.installation-show--narrow .installation-quote-row__quote {
+  order: 0 !important;
+  justify-content: flex-start !important;
+}
+
 .installation-vinyl__print {
   display: block;
   width: 100%;

@@ -20,6 +20,8 @@ import type {
 
 /** Type height (mm) of the large orange vinyls; it maps to body text size. */
 const PRINT_REF_TYPE_MM = 49;
+/** Smaller quotes stay smaller, but never under 70% of body size, to stay legible. */
+const MIN_RELATIVE_TYPE = 0.7;
 
 function VinylQuote({ quote }: { quote: InstallationVinylQuote }) {
   if (quote.print) {
@@ -34,7 +36,8 @@ function VinylQuote({ quote }: { quote: InstallationVinylQuote }) {
              sizes relative to each other: the 49 mm orange vinyl lettering
              comes out at body size, the smaller collage quotes smaller. */
           width: `calc(var(--is-body-size, 44px) * ${(
-            quote.print.width / PRINT_REF_TYPE_MM
+            (quote.print.width / quote.print.type) *
+            Math.max(MIN_RELATIVE_TYPE, quote.print.type / PRINT_REF_TYPE_MM)
           ).toFixed(3)})`,
         }}
       >
@@ -207,13 +210,120 @@ export function InstallationChapters({
       style={{ ["--is-accent" as string]: accent } as CSSProperties}
     >
       {chapters.map((ch) => {
-        /* Everything with a picture in it, in reading order. */
-        const rows: ReactNode[] = [];
-        ch.views?.forEach((v) =>
-          rows.push(<FullImage key={v.src} image={v} isDesktop={isDesktop} />),
+        type Pic =
+          | { kind: "view"; image: InstallationGalleryImage }
+          | { kind: "item"; item: InstallationArchiveItem };
+        const pics: Pic[] = [
+          ...(ch.views ?? []).map((image) => ({ kind: "view" as const, image })),
+          ...(ch.archive ?? []).map((item) => ({ kind: "item" as const, item })),
+        ];
+        const quotes = [
+          ...ch.quotes,
+          ...(ch.closingQuote ? [ch.closingQuote] : []),
+        ];
+        /* Each quote opens a row with a picture beside it, spread evenly. */
+        const pairedAt = new Map<number, InstallationVinylQuote>();
+        const nPair = Math.min(quotes.length, pics.length);
+        for (let k = 0; k < nPair; k++) {
+          pairedAt.set(Math.floor((k * pics.length) / nPair), quotes[k]);
+        }
+        const loose = quotes.slice(nPair);
+
+        const renderPic = (pic: Pic) =>
+          pic.kind === "view" ? (
+            <div
+              className="installation-archive__img"
+              style={{
+                aspectRatio: `${pic.image.width} / ${pic.image.height}`,
+              }}
+            >
+              <Image
+                src={pic.image.src!}
+                alt={pic.image.alt}
+                fill
+                sizes={isDesktop ? "450px" : "92vw"}
+                className="object-contain"
+              />
+            </div>
+          ) : (
+            <>
+              <div
+                className="installation-archive__img"
+                style={{
+                  aspectRatio: `${pic.item.image.width} / ${pic.item.image.height}`,
+                }}
+              >
+                <Image
+                  src={pic.item.image.src!}
+                  alt={pic.item.image.alt}
+                  fill
+                  sizes={isDesktop ? "450px" : "92vw"}
+                  className="object-contain"
+                />
+              </div>
+              <Label item={pic.item} credit={archiveCredit} />
+            </>
+          );
+
+        const flow: ReactNode[] = [];
+        let buffer: InstallationArchiveItem[] = [];
+        const flush = () => {
+          for (let i = 0; i < buffer.length; i += 2) {
+            const row = buffer.slice(i, i + 2);
+            flow.push(
+              <ArchiveRow
+                key={row[0].title}
+                row={row}
+                isDesktop={isDesktop}
+                credit={archiveCredit}
+              />,
+            );
+          }
+          buffer = [];
+        };
+        pics.forEach((pic, i) => {
+          const quote = pairedAt.get(i);
+          if (quote) {
+            flush();
+            const right = quoteSide++ % 2 === 1;
+            flow.push(
+              <div
+                key={`qp-${i}`}
+                className="installation-quote-row"
+                data-quote-side={right ? "right" : "left"}
+              >
+                <div className="installation-quote-row__quote">
+                  <VinylQuote quote={quote} />
+                </div>
+                <div className="installation-quote-row__pic">
+                  {renderPic(pic)}
+                </div>
+              </div>,
+            );
+          } else if (pic.kind === "view") {
+            flush();
+            flow.push(
+              <FullImage key={pic.image.src} image={pic.image} isDesktop={isDesktop} />,
+            );
+          } else {
+            buffer.push(pic.item);
+          }
+        });
+        flush();
+        /* Quotes left over once every picture has one stay on their own. */
+        loose.forEach((q, i) =>
+          flow.push(
+            <div
+              key={`loose-${i}`}
+              className="installation-vinyl-group"
+              data-side="left"
+            >
+              <VinylQuote quote={q} />
+            </div>,
+          ),
         );
         if (ch.strip?.length) {
-          rows.push(
+          flow.push(
             <div key="strip">
               <div className="installation-show__strip">
                 <ProjectHorizontalStrip
@@ -233,51 +343,6 @@ export function InstallationChapters({
                   {ch.stripCaption}
                 </p>
               ) : null}
-            </div>,
-          );
-        }
-        const items = ch.archive ?? [];
-        for (let i = 0; i < items.length; i += 2) {
-          const row = items.slice(i, i + 2);
-          rows.push(
-            <ArchiveRow
-              key={row[0].title}
-              row={row}
-              isDesktop={isDesktop}
-              credit={archiveCredit}
-            />,
-          );
-        }
-        /* Quotes fall between the picture rows, spread evenly. */
-        const n = ch.quotes.length;
-        const slotFor = (i: number) =>
-          Math.floor(((i + 1) * rows.length) / (n + 1));
-        const flow: ReactNode[] = [];
-        let q = 0;
-        for (let r = 0; r <= rows.length; r++) {
-          while (q < n && slotFor(q) === r) {
-            const quote = ch.quotes[q];
-            flow.push(
-              <div
-                key={`q-${q}`}
-                className="installation-vinyl-group"
-                data-side={quoteSide++ % 2 ? "right" : "left"}
-              >
-                <VinylQuote quote={quote} />
-              </div>,
-            );
-            q++;
-          }
-          if (r < rows.length) flow.push(rows[r]);
-        }
-        if (ch.closingQuote) {
-          flow.push(
-            <div
-              key="closing"
-              className="installation-vinyl-group"
-              data-side={quoteSide++ % 2 ? "right" : "left"}
-            >
-              <VinylQuote quote={ch.closingQuote} />
             </div>,
           );
         }
