@@ -5,77 +5,148 @@ import type { CSSProperties } from "react";
 
 import { ProjectHorizontalStrip } from "@/components/project/ProjectHorizontalStrip";
 import type {
+  InstallationArchiveItem,
   InstallationChapter,
   InstallationGalleryImage,
   InstallationVinylQuote,
 } from "@/data/installation";
 
 /**
- * Exhibition chapters: wall quotes set as type in the vinyl style (italic
- * Garamont in the show's orange, small sans credit), then installation views
- * and captioned scans laid out like the wall labels.
+ * Exhibition chapters, built from the same pieces as the other installation
+ * pages: body-size type, full-width images, two-up galleries at one shared
+ * height, and one-line Garamont captions. Wall quotes are set in the body
+ * face, in the colour the vinyl had on the wall.
  */
 
-function VinylQuote({
-  quote,
-  closing,
-}: {
-  quote: InstallationVinylQuote;
-  closing?: boolean;
-}) {
+function VinylQuote({ quote }: { quote: InstallationVinylQuote }) {
   return (
     <figure
-      className="installation-chapter__vinyl"
-      data-closing={closing ? "" : undefined}
+      className="installation-vinyl"
       data-tone={quote.tone ?? "orange"}
     >
-      <blockquote className="installation-chapter__vinyl-text">
-        {quote.text}
-      </blockquote>
-      <figcaption className="installation-chapter__vinyl-credit">
-        {quote.credit.map((line) => (
-          <span key={line} className="installation-chapter__vinyl-credit-line">
-            {line}
-          </span>
-        ))}
+      <blockquote className="installation-vinyl__text">{quote.text}</blockquote>
+      <figcaption className="installation-vinyl__credit">
+        {quote.credit.join(". ")}
       </figcaption>
     </figure>
   );
 }
 
-function ChapterImage({
+function FullImage({
   image,
-  sizes,
-  className,
+  isDesktop,
 }: {
   image: InstallationGalleryImage;
-  sizes: string;
-  className?: string;
+  isDesktop: boolean;
 }) {
   return (
     <div
-      className={["installation-chapter__img", className]
-        .filter(Boolean)
-        .join(" ")}
-      style={{ aspectRatio: `${image.width} / ${image.height}` }}
-      data-portrait={image.height > image.width ? "" : undefined}
+      className="installation-show__collage installation-wide"
+      style={{
+        aspectRatio: `${image.width} / ${image.height}`,
+        /* Tall views stop at about one screen high, like the landscape ones. */
+        maxWidth: isDesktop
+          ? `calc((100vh - 160px) * ${image.width / image.height})`
+          : undefined,
+      }}
     >
-      {image.src && !image.placeholder ? (
-        <Image
-          src={image.src}
-          alt={image.alt}
-          fill
-          sizes={sizes}
-          className="object-contain"
-        />
-      ) : (
-        <div
-          className="installation-show__placeholder"
-          role="img"
-          aria-label={image.alt}
-        />
-      )}
+      <Image
+        src={image.src!}
+        alt={image.alt}
+        fill
+        sizes={isDesktop ? "900px" : "92vw"}
+        className="object-contain"
+      />
     </div>
+  );
+}
+
+function captionFor(item: InstallationArchiveItem) {
+  return /undated/i.test(item.date) ? item.title : `${item.title}, ${item.date}`;
+}
+
+/** Scans in pairs, both at one height filling the column, captions beneath. */
+function ArchivePairs({
+  items,
+  isDesktop,
+}: {
+  items: readonly InstallationArchiveItem[];
+  isDesktop: boolean;
+}) {
+  if (!isDesktop) {
+    return (
+      <>
+        {items.map((item) => (
+          <figure key={item.title} className="installation-archive__single">
+            <div
+              className="installation-archive__img"
+              style={{
+                aspectRatio: `${item.image.width} / ${item.image.height}`,
+              }}
+            >
+              <Image
+                src={item.image.src!}
+                alt={item.image.alt}
+                fill
+                sizes="92vw"
+                className="object-contain"
+              />
+            </div>
+            <figcaption className="installation-show__media-caption">
+              {captionFor(item)}
+            </figcaption>
+          </figure>
+        ))}
+      </>
+    );
+  }
+  const rows: InstallationArchiveItem[][] = [];
+  for (let i = 0; i < items.length; i += 2) rows.push(items.slice(i, i + 2));
+  return (
+    <>
+      {rows.map((row) => {
+        const ars = row.map((it) => it.image.width / it.image.height);
+        /* A lone scan takes the width it would have beside a 4:3 partner. */
+        const cols =
+          row.length === 2
+            ? `${ars[0]}fr ${ars[1]}fr`
+            : `${ars[0]}fr ${4 / 3}fr`;
+        return (
+          <div
+            key={row[0].title}
+            className="installation-archive__row"
+            style={{ gridTemplateColumns: cols } as CSSProperties}
+          >
+            {row.map((item) => (
+              <div
+                key={item.title}
+                className="installation-archive__img"
+                style={{
+                  aspectRatio: `${item.image.width} / ${item.image.height}`,
+                }}
+              >
+                <Image
+                  src={item.image.src!}
+                  alt={item.image.alt}
+                  fill
+                  sizes="450px"
+                  className="object-contain"
+                />
+              </div>
+            ))}
+            {row.length === 1 ? <div /> : null}
+            {row.map((item) => (
+              <p
+                key={`${item.title}-cap`}
+                className="installation-show__media-caption"
+              >
+                {captionFor(item)}
+              </p>
+            ))}
+          </div>
+        );
+      })}
+    </>
   );
 }
 
@@ -101,15 +172,10 @@ export function InstallationChapters({
         <section
           key={ch.number}
           className="installation-chapter"
-          aria-labelledby={`chapter-${ch.number}`}
+          aria-label={ch.title}
         >
-          <h2 id={`chapter-${ch.number}`} className="installation-chapter__head">
-            <span className="installation-chapter__num">{ch.number}</span>
-            <span className="installation-chapter__title">{ch.title}</span>
-          </h2>
-
           <div
-            className="installation-chapter__quotes"
+            className="installation-vinyl-group"
             data-count={ch.quotes.length}
           >
             {ch.quotes.map((q) => (
@@ -118,16 +184,11 @@ export function InstallationChapters({
           </div>
 
           {ch.views?.map((v) => (
-            <ChapterImage
-              key={v.src ?? v.alt}
-              image={v}
-              className="installation-chapter__view"
-              sizes={isDesktop ? "660px" : "92vw"}
-            />
+            <FullImage key={v.src} image={v} isDesktop={isDesktop} />
           ))}
 
           {ch.strip?.length ? (
-            <div className="installation-show__strip installation-chapter__strip">
+            <div className="installation-show__strip">
               <ProjectHorizontalStrip
                 items={ch.strip.map((img) => ({
                   src: img.src!,
@@ -148,49 +209,22 @@ export function InstallationChapters({
           ) : null}
 
           {ch.archive?.length ? (
-            <ul className="installation-chapter__archive">
-              {ch.archive.map((item) => (
-                <li key={item.title} className="installation-chapter__item">
-                  <ChapterImage
-                    image={item.image}
-                    className="installation-chapter__scan"
-                    sizes={isDesktop ? "320px" : "92vw"}
-                  />
-                  <div className="installation-chapter__label">
-                    <p className="installation-chapter__label-title">
-                      {item.title}
-                    </p>
-                    <p className="installation-chapter__label-date">
-                      {item.date}
-                    </p>
-                    {item.lines?.map((line, i) => (
-                      <p
-                        key={line}
-                        className={
-                          i === 0
-                            ? "installation-chapter__label-maker"
-                            : "installation-chapter__label-line"
-                        }
-                      >
-                        {line}
-                      </p>
-                    ))}
-                    {archiveCredit ? (
-                      <p className="installation-chapter__label-credit">
-                        {archiveCredit}
-                      </p>
-                    ) : null}
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <ArchivePairs items={ch.archive} isDesktop={isDesktop} />
           ) : null}
 
           {ch.closingQuote ? (
-            <VinylQuote quote={ch.closingQuote} closing />
+            <div className="installation-vinyl-group" data-count={1}>
+              <VinylQuote quote={ch.closingQuote} />
+            </div>
           ) : null}
         </section>
       ))}
+      {archiveCredit ? (
+        <p className="installation-show__media-caption installation-chapters__credit">
+          Photographs {archiveCredit.charAt(0).toLowerCase()}
+          {archiveCredit.slice(1)}.
+        </p>
+      ) : null}
     </div>
   );
 }
