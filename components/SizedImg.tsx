@@ -8,7 +8,7 @@ import type { CSSProperties } from "react";
  * and /dir/v/name-1400.webp; the file itself is the full size. Phones pick a
  * light copy, large retina screens the full one. Nothing is sharpened.
  */
-const STEPS = [800, 1400];
+const STEPS = [800, 1400, 2000];
 
 export function srcSetFor(src: string, width: number) {
   const m = src.match(/^(.*)\/([^/]+)\.webp$/);
@@ -29,6 +29,7 @@ export function SizedImg({
   className,
   style,
   eager,
+  priority,
 }: {
   src: string;
   width: number;
@@ -38,6 +39,8 @@ export function SizedImg({
   className?: string;
   style?: CSSProperties;
   eager?: boolean;
+  /** "high" for the photograph on screen, "low" for ones fetched ahead. */
+  priority?: "high" | "low" | "auto";
 }) {
   return (
     <img
@@ -51,6 +54,7 @@ export function SizedImg({
       style={style}
       loading={eager ? "eager" : "lazy"}
       decoding="async"
+      fetchPriority={priority}
     />
   );
 }

@@ -91,6 +91,7 @@ export function ExhibitionSlideshow({
                 className="exhibition-slideshow__img"
                 style={{ maxWidth: `min(100%, ${img.width}px)`, maxHeight: `min(100%, ${img.height}px)` }}
                 eager
+                priority={i === index ? "high" : "low"}
               />
             ) : null}
           </div>
