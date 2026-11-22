@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { SizedImg } from "@/components/SizedImg";
 import type { InstallationGalleryImage } from "@/data/installation";
 
 /**
@@ -22,9 +22,21 @@ export function ExhibitionSlideshow({
   const thumbsRef = useRef<HTMLDivElement>(null);
   const touchX = useRef<number | null>(null);
   const n = images.length;
+  /* Only photographs you have reached, plus the next and previous, load. */
+  const [seen, setSeen] = useState<Set<number>>(() => new Set([0, 1, 2, n - 1]));
 
   const go = useCallback(
-    (i: number) => setIndex(((i % n) + n) % n),
+    (i: number) => {
+      const k = ((i % n) + n) % n;
+      setIndex(k);
+      setSeen((prev) => {
+        const want = [k, (k + 1) % n, (k - 1 + n) % n, (k + 2) % n];
+        if (want.every((j) => prev.has(j))) return prev;
+        const next = new Set(prev);
+        want.forEach((j) => next.add(j));
+        return next;
+      });
+    },
     [n],
   );
 
@@ -69,17 +81,18 @@ export function ExhibitionSlideshow({
             data-active={i === index ? "" : undefined}
             aria-hidden={i !== index}
           >
-            <Image
-              src={img.src!}
-              alt={img.alt ?? ""}
-              width={img.width}
-              height={img.height}
-              sizes="(min-width: 900px) 70vw, 100vw"
-              className="exhibition-slideshow__img"
-              style={{ maxWidth: `min(100%, ${img.width}px)`, maxHeight: `min(100%, ${img.height}px)` }}
-              priority={i === 0}
-              loading={i === 0 ? undefined : Math.abs(i - index) <= 1 ? "eager" : "lazy"}
-            />
+            {seen.has(i) ? (
+              <SizedImg
+                src={img.src!}
+                width={img.width}
+                height={img.height}
+                alt={img.alt ?? ""}
+                sizes="(min-width: 900px) 80vw, 100vw"
+                className="exhibition-slideshow__img"
+                style={{ maxWidth: `min(100%, ${img.width}px)`, maxHeight: `min(100%, ${img.height}px)` }}
+                eager
+              />
+            ) : null}
           </div>
         ))}
       </div>
@@ -112,11 +125,11 @@ export function ExhibitionSlideshow({
               onClick={() => go(i)}
               style={{ aspectRatio: `${img.width} / ${img.height}` }}
             >
-              <Image
+              <SizedImg
                 src={img.src!}
-                alt=""
                 width={img.width}
                 height={img.height}
+                alt=""
                 sizes="120px"
                 className="exhibition-slideshow__thumb-img"
               />

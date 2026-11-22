@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SizedImg } from "@/components/SizedImg";
 import type { CSSProperties, ReactNode } from "react";
 
 import { ExhibitionSlideshow } from "@/components/ExhibitionSlideshow";
@@ -83,12 +83,13 @@ function FullImage({
           : undefined,
       }}
     >
-      <Image
+      <SizedImg
         src={image.src!}
+        width={image.width}
+        height={image.height}
         alt={image.alt}
-        fill
-        sizes={isDesktop ? "900px" : "92vw"}
-        className="object-contain"
+        sizes="(min-width: 900px) 70vw, 92vw"
+        className="efuru-fill"
       />
     </div>
   );
@@ -157,12 +158,13 @@ function ArchiveRow({
                     : undefined,
               }}
             >
-              <Image
+              <SizedImg
                 src={item.image.src!}
+                width={item.image.width}
+                height={item.image.height}
                 alt={item.image.alt}
-                fill
                 sizes="92vw"
-                className="object-contain"
+                className="efuru-fill"
               />
             </div>
             <figcaption>
@@ -204,12 +206,13 @@ function ArchiveRow({
           className="installation-archive__img"
           style={{ aspectRatio: `${item.image.width} / ${item.image.height}` }}
         >
-          <Image
+          <SizedImg
             src={item.image.src!}
+            width={item.image.width}
+            height={item.image.height}
             alt={item.image.alt}
-            fill
-            sizes="450px"
-            className="object-contain"
+            sizes="(min-width: 900px) 40vw, 92vw"
+            className="efuru-fill"
           />
         </div>
       ))}
@@ -268,12 +271,13 @@ export function InstallationChapters({
                 aspectRatio: `${pic.image.width} / ${pic.image.height}`,
               }}
             >
-              <Image
+              <SizedImg
                 src={pic.image.src!}
+                width={pic.image.width}
+                height={pic.image.height}
                 alt={pic.image.alt}
-                fill
-                sizes={isDesktop ? "450px" : "92vw"}
-                className="object-contain"
+                sizes="(min-width: 900px) 40vw, 92vw"
+                className="efuru-fill"
               />
             </div>
           ) : (
@@ -288,12 +292,13 @@ export function InstallationChapters({
                       : undefined,
                 }}
               >
-                <Image
+                <SizedImg
                   src={pic.item.image.src!}
+                  width={pic.item.image.width}
+                  height={pic.item.image.height}
                   alt={pic.item.image.alt}
-                  fill
-                  sizes={isDesktop ? "450px" : "92vw"}
-                  className="object-contain"
+                  sizes="(min-width: 900px) 40vw, 92vw"
+                  className="efuru-fill"
                 />
               </div>
               <Label item={pic.item} credit={archiveCredit} />

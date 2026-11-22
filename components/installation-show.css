@@ -1326,3 +1326,12 @@
   .exhibition-slideshow__thumb { height: 48px; }
   .exhibition-slideshow__arrow { height: 48px; }
 }
+
+/* Photographs drawn whole inside their sized box. */
+.efuru-fill {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
