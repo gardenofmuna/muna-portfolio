@@ -1204,3 +1204,125 @@
 .installation-show--desktop .project-pane__scroll {
   padding-bottom: 29px;
 }
+
+/* ---- Exhibition slideshow (one photograph at a time, thumbnails below) ---- */
+.exhibition-slideshow {
+  margin-top: 72px;
+  width: 100%;
+  outline: none;
+}
+.exhibition-slideshow__stage {
+  position: relative;
+  width: 100%;
+  height: min(72vh, 820px);
+}
+.exhibition-slideshow__slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 450ms ease;
+  pointer-events: none;
+}
+.exhibition-slideshow__slide[data-active] {
+  opacity: 1;
+  pointer-events: auto;
+}
+/* Whole photograph, fitted inside the frame: never cropped, never enlarged. */
+.exhibition-slideshow__img {
+  display: block;
+  width: auto !important;
+  height: auto !important;
+  object-fit: contain;
+}
+.exhibition-slideshow__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 24px;
+  margin-top: 8px;
+}
+.exhibition-slideshow__caption,
+.exhibition-slideshow__count {
+  margin: 0;
+  font-family: "LTC Garamont Display OT", "Times New Roman", serif;
+  font-size: 22.38px;
+  line-height: 1.35;
+  letter-spacing: -0.04em;
+  color: #000;
+}
+.exhibition-slideshow__count {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+.exhibition-slideshow__nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+.exhibition-slideshow__arrow {
+  flex: none;
+  width: 28px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: #000;
+}
+.exhibition-slideshow__arrow svg {
+  width: 10px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+.exhibition-slideshow__thumbs {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.exhibition-slideshow__thumbs::-webkit-scrollbar {
+  display: none;
+}
+.exhibition-slideshow__thumb {
+  flex: none;
+  height: 64px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  opacity: 0.45;
+  transition: opacity 200ms ease;
+}
+.exhibition-slideshow__thumb:hover,
+.exhibition-slideshow__thumb[data-active] {
+  opacity: 1;
+}
+.exhibition-slideshow__thumb-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+@media (max-width: 899px) {
+  .exhibition-slideshow { margin-top: 48px; }
+  .exhibition-slideshow__stage {
+    height: auto;
+    aspect-ratio: var(--ss-ar, 3 / 2);
+    max-height: 70vh;
+    transition: aspect-ratio 300ms ease;
+  }
+  .exhibition-slideshow__caption,
+  .exhibition-slideshow__count { font-size: 16px; }
+  .exhibition-slideshow__thumb { height: 48px; }
+  .exhibition-slideshow__arrow { height: 48px; }
+}

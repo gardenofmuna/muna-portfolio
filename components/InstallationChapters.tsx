@@ -3,7 +3,7 @@
 import Image from "next/image";
 import type { CSSProperties, ReactNode } from "react";
 
-import { ProjectHorizontalStrip } from "@/components/project/ProjectHorizontalStrip";
+import { ExhibitionSlideshow } from "@/components/ExhibitionSlideshow";
 import type {
   InstallationArchiveItem,
   InstallationChapter,
@@ -359,26 +359,11 @@ export function InstallationChapters({
         );
         if (ch.strip?.length) {
           flow.push(
-            <div key="strip">
-              <div className="installation-show__strip">
-                <ProjectHorizontalStrip
-                  items={ch.strip.map((img) => ({
-                    src: img.src!,
-                    width: img.width,
-                    height: img.height,
-                    alt: img.alt,
-                  }))}
-                  ariaLabel={`${ariaLabel}: ${ch.title}`}
-                  variant="website"
-                  mobileCutAutoplay={!isDesktop}
-                />
-              </div>
-              {ch.stripCaption ? (
-                <p className="installation-show__media-caption">
-                  {ch.stripCaption}
-                </p>
-              ) : null}
-            </div>,
+            <ExhibitionSlideshow
+              key="strip"
+              images={ch.strip}
+              ariaLabel={`${ariaLabel}: photographs of the gallery`}
+            />,
           );
         }
         return (
