@@ -87,7 +87,7 @@ export function ExhibitionSlideshow({
                 width={img.width}
                 height={img.height}
                 alt={img.alt ?? ""}
-                sizes="(min-width: 900px) 80vw, 100vw"
+                sizes={`(min-width: 900px) min(80vw, ${((img.width / img.height) * 72).toFixed(1)}vh, ${Math.round((img.width / img.height) * 820)}px), min(100vw, ${((img.width / img.height) * 70).toFixed(1)}vh)`}
                 className="exhibition-slideshow__img"
                 style={{ maxWidth: `min(100%, ${img.width}px)`, maxHeight: `min(100%, ${img.height}px)` }}
                 eager

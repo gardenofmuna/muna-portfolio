@@ -1,5 +1,10 @@
-/* eslint-disable @next/next/no-img-element */
 import type { CSSProperties } from "react";
+
+import avifNames from "@/data/efuru-avif.json";
+
+/* Photographs that also have AVIF copies: only those where AVIF came out
+   clearly smaller at the same measured quality (SSIMULACRA2). */
+const HAS_AVIF = new Set<string>(avifNames);
 
 /**
  * Serves pre-made sizes of a photograph straight from /public, skipping the
@@ -10,13 +15,19 @@ import type { CSSProperties } from "react";
  */
 const STEPS = [800, 1400, 2000];
 
-export function srcSetFor(src: string, width: number) {
+export function srcSetFor(
+  src: string,
+  width: number,
+  ext: "webp" | "avif" = "webp",
+) {
   const m = src.match(/^(.*)\/([^/]+)\.webp$/);
   if (!m) return `${src} ${width}w`;
   const [, dir, name] = m;
   return [
-    ...STEPS.filter((w) => w < width).map((w) => `${dir}/v/${name}-${w}.webp ${w}w`),
-    `${src} ${width}w`,
+    ...STEPS.filter((w) => w < width).map(
+      (w) => `${dir}/v/${name}-${w}.${ext} ${w}w`,
+    ),
+    `${dir}/${name}.${ext} ${width}w`,
   ].join(", ");
 }
 
@@ -42,19 +53,31 @@ export function SizedImg({
   /** "high" for the photograph on screen, "low" for ones fetched ahead. */
   priority?: "high" | "low" | "auto";
 }) {
+  /* AVIF first (about a third smaller at the same look), WebP for
+     browsers without AVIF. <picture> is display: contents, so layout is
+     exactly as if the <img> stood alone. */
   return (
-    <img
-      src={src}
-      srcSet={srcSetFor(src, width)}
-      sizes={sizes}
-      width={width}
-      height={height}
-      alt={alt}
-      className={className}
-      style={style}
-      loading={eager ? "eager" : "lazy"}
-      decoding="async"
-      fetchPriority={priority}
-    />
+    <picture style={{ display: "contents" }}>
+      {HAS_AVIF.has(src.replace(/^.*\//, "").replace(/\.webp$/, "")) ? (
+        <source
+          type="image/avif"
+          srcSet={srcSetFor(src, width, "avif")}
+          sizes={sizes}
+        />
+      ) : null}
+      <img
+        src={src}
+        srcSet={srcSetFor(src, width)}
+        sizes={sizes}
+        width={width}
+        height={height}
+        alt={alt}
+        className={className}
+        style={style}
+        loading={eager ? "eager" : "lazy"}
+        decoding="async"
+        fetchPriority={priority}
+      />
+    </picture>
   );
 }
