@@ -209,8 +209,8 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
             { image: { src: "/installation/efuru/commissioner-health.webp", width: 1040, height: 794, alt: "Flora Nwapa, as Commissioner for Health, visiting patients at the University of Nigeria Teaching Hospital, Enugu" }, title: "Flora Nwapa, as Commissioner for Health, visiting patients at the University of Nigeria Teaching Hospital, Enugu", date: "Undated", lines: ["Photographer unknown", "Photograph, black and white"] },
           ],
           rows: [
-            { align: "top", cells: [{ ref: "wall-reader-full", col: 1, span: 8 }, { ref: "vinyl-d", col: 9, span: 4 }] },
-            { align: "top", cells: [{ ref: "vinyl-b", col: 1, span: 4 }, { ref: "ekwensi", col: 5, span: 8 }] },
+            { align: "top", cells: [{ ref: "vinyl-d", col: 1, span: 4 }, { ref: "wall-reader-full", col: 5, span: 8 }] },
+            { align: "top", cells: [{ ref: "vinyl-b", col: 9, span: 4 }, { ref: "ekwensi", col: 1, span: 8 }] },
             { align: "bottom", cells: [{ ref: "mbadiwe", col: 1, span: 4 }, { ref: "decoration-1987", col: 5, span: 4 }, { ref: "commissioner-health", col: 9, span: 4 }] },
             { align: "bottom", mobileCols: 2, printHeight: 174, cells: [{ ref: "children-1981", col: 1, span: 3 }, { ref: "sisters", col: 4, span: 3 }, { ref: "iowa", col: 7, span: 3 }, { ref: "amsterdam-1", col: 10, span: 3 }] },
             { align: "bottom", mobileCols: 2, printHeight: 174, cells: [{ ref: "amsterdam-2", col: 1, span: 3 }, { ref: "buchi", col: 4, span: 3 }, { ref: "grave", col: 7, span: 3 }] },
