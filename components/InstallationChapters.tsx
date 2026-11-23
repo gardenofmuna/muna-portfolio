@@ -25,7 +25,7 @@ const PRINT_REF_TYPE_MM = 49;
 /** Smaller quotes stay smaller, but never under 70% of body size, to stay legible. */
 const MIN_RELATIVE_TYPE = 0.7;
 /** The orange vinyls are set a touch larger than body size. */
-const ORANGE_SCALE = 1.15;
+const ORANGE_SCALE = 1.25;
 
 function VinylQuote({ quote }: { quote: InstallationVinylQuote }) {
   if (quote.print) {
