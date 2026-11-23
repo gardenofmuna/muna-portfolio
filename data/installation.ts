@@ -80,10 +80,9 @@ export type InstallationChapter = {
   /** Quote that closes the chapter, after its images. */
   closingQuote?: InstallationVinylQuote;
   /**
-   * Hand-placed rows on the 12-column grid. Cells name a quote ("q0", "q1",
-   * "closing"), a view ("v0", "v1") or an archive item (its file name, e.g.
-   * "pmgs-staff-1953"), plus the first column and how many columns it spans.
-   * "slideshow" places the strip.
+   * Hand-placed rows on the 12-column grid. Cells name any picture or quote
+   * on the page by file name ("pmgs-staff-1953", "wall-making-full",
+   * "vinyl-c") or "slideshow", plus the first column and the columns spanned.
    */
   rows?: readonly InstallationGridRow[];
 };
@@ -95,6 +94,9 @@ export type InstallationGridRow = {
   cells: readonly { ref: string; col: number; span: number }[];
   /** Columns on phones (default 1). */
   mobileCols?: 1 | 2;
+  /** Small prints: show every picture in the row at this one height (px),
+   *  never larger than its file holds up at. */
+  printHeight?: number;
 };
 
 export type InstallationShow = {
@@ -151,9 +153,8 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
             { src: "/installation/efuru/ss-making-pair.webp", width: 1800, height: 2400, alt: "Framed photographs and labels on the Making wall" },
           ],
           rows: [
-            { align: "top", mobileCols: 2, cells: [{ ref: "q0", col: 1, span: 4 }, { ref: "v0", col: 5, span: 4 }, { ref: "v1", col: 9, span: 4 }] },
-            { align: "bottom", cells: [{ ref: "pmgs-staff-1953", col: 1, span: 6 }, { ref: "children-bw", col: 7, span: 6 }] },
-            { align: "bottom", cells: [{ ref: "husband-gogo-nwakuche", col: 1, span: 6 }, { ref: "children-1981", col: 7, span: 4 }, { ref: "sisters", col: 11, span: 2 }] },
+            { align: "top", mobileCols: 2, cells: [{ ref: "vinyl-c", col: 1, span: 4 }, { ref: "wall-making-full", col: 5, span: 4 }, { ref: "ss-making-pair", col: 9, span: 4 }] },
+            { align: "bottom", cells: [{ ref: "pmgs-staff-1953", col: 1, span: 4 }, { ref: "children-bw", col: 5, span: 4 }, { ref: "husband-gogo-nwakuche", col: 9, span: 4 }] },
           ],
           archive: [
             { image: { src: "/installation/efuru/pmgs-staff-1953.webp", width: 1800, height: 1152, alt: "Flora Nwapa with the staff of Priscilla Memorial Grammar School (PMGS), Oguta" }, title: "Flora Nwapa with the staff of Priscilla Memorial Grammar School (PMGS), Oguta", date: "1953", lines: ["Photographer unknown", "Photograph, black and white"] },
@@ -189,7 +190,6 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
             { src: "/installation/efuru/ig-quote-feminist.webp", width: 1800, height: 2400, alt: "“A feminist with a big ‘f’” in orange vinyl" },
           ],
           rows: [
-            { align: "top", cells: [{ ref: "q0", col: 1, span: 4 }] },
             { align: "top", cells: [{ ref: "slideshow", col: 1, span: 12 }] },
           ],
         },
@@ -209,24 +209,28 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
             { image: { src: "/installation/efuru/commissioner-health.webp", width: 1040, height: 794, alt: "Flora Nwapa, as Commissioner for Health, visiting patients at the University of Nigeria Teaching Hospital, Enugu" }, title: "Flora Nwapa, as Commissioner for Health, visiting patients at the University of Nigeria Teaching Hospital, Enugu", date: "Undated", lines: ["Photographer unknown", "Photograph, black and white"] },
           ],
           rows: [
-            { align: "top", cells: [{ ref: "v0", col: 1, span: 8 }, { ref: "q0", col: 9, span: 4 }] },
-            { align: "bottom", mobileCols: 2, cells: [{ ref: "iowa", col: 1, span: 3 }, { ref: "amsterdam-1", col: 4, span: 3 }, { ref: "amsterdam-2", col: 7, span: 3 }, { ref: "buchi", col: 10, span: 3 }] },
-            { align: "top", cells: [{ ref: "q1", col: 1, span: 4 }, { ref: "ekwensi", col: 5, span: 8 }] },
+            { align: "top", cells: [{ ref: "wall-reader-full", col: 1, span: 8 }, { ref: "vinyl-d", col: 9, span: 4 }] },
+            { align: "top", cells: [{ ref: "vinyl-b", col: 1, span: 4 }, { ref: "ekwensi", col: 5, span: 8 }] },
             { align: "bottom", cells: [{ ref: "mbadiwe", col: 1, span: 4 }, { ref: "decoration-1987", col: 5, span: 4 }, { ref: "commissioner-health", col: 9, span: 4 }] },
+            { align: "bottom", mobileCols: 2, printHeight: 174, cells: [{ ref: "children-1981", col: 1, span: 3 }, { ref: "sisters", col: 4, span: 3 }, { ref: "iowa", col: 7, span: 3 }, { ref: "amsterdam-1", col: 10, span: 3 }] },
+            { align: "bottom", mobileCols: 2, printHeight: 174, cells: [{ ref: "amsterdam-2", col: 1, span: 3 }, { ref: "buchi", col: 4, span: 3 }, { ref: "grave", col: 7, span: 3 }] },
           ],
         },
         {
           number: "04",
           title: "Memory",
           quotes: [{ print: { src: "/installation/efuru/vinyl-v3.svg", width: 227.8, height: 260.7, type: 21.6 }, tone: "black", text: "“Have heart, my daughter. You are still young. It is still morning for you. So have heart. We cannot explain the mysteries of life, because we are mere human beings. Only God knows.”", credit: ["Efuru (1966), p. 91"] }, { print: { src: "/installation/efuru/vinyl-v1.svg", width: 216.8, height: 260.3, type: 24.0 }, tone: "black", text: "“She was not meant to suffer at all. Life for her meant living it fully. She did not want merely to exist. She wanted to live and use the world to her advantage.”", credit: ["Efuru (1966), p. 94"] }],
-          views: [{ src: "/installation/efuru/wall-memory-full.webp", width: 2400, height: 1600, alt: "The collage wall of reader responses" }],
+          views: [
+            { src: "/installation/efuru/wall-memory-full.webp", width: 2400, height: 1600, alt: "The collage wall of reader responses" },
+            { src: "/installation/efuru/ss-collage-quote.webp", width: 2400, height: 1600, alt: "Close-up of the collage wall: a quote among reader responses" },
+          ],
           archive: [
             { image: { src: "/installation/efuru/grave.webp", width: 374, height: 268, alt: "Ejine and Amede at Flora Nwapa's grave on the first anniversary of her death" }, title: "Ejine and Amede at Flora Nwapa's grave on the first anniversary of her death", date: "1994", lines: ["Photographer unknown", "Photograph, colour"] },
           ],
           rows: [
-            { align: "top", cells: [{ ref: "v0", col: 1, span: 8 }, { ref: "q0", col: 9, span: 4 }] },
-            { align: "top", cells: [{ ref: "q1", col: 1, span: 4 }, { ref: "grave", col: 5, span: 4 }] },
-            { align: "top", cells: [{ ref: "closing", col: 1, span: 4 }] },
+            { align: "top", cells: [{ ref: "vinyl-v2", col: 1, span: 4 }, { ref: "vinyl-v3", col: 5, span: 4 }, { ref: "vinyl-v1", col: 9, span: 4 }] },
+            { align: "top", cells: [{ ref: "wall-memory-full", col: 1, span: 6 }, { ref: "ss-collage-quote", col: 7, span: 6 }] },
+            { align: "top", cells: [{ ref: "vinyl-a", col: 9, span: 4 }] },
           ],
           closingQuote: { print: { src: "/installation/efuru/vinyl-d.svg", width: 653.2, height: 784.8, type: 49 }, tone: "orange", text: "“She dreamt of the woman of the lake, her beauty, her long hair and her riches. She had lived for ages at the bottom of the lake. She was as old as the lake itself. She was happy, she was wealthy. She was beautiful. She gave women beauty and wealth but she had no child. She had never experienced the joy of motherhood. Why then did the women worship her?”", credit: ["Flora Nwapa, Efuru (London: Heinemann, 1966), 281. The closing lines of the novel."] },
         },

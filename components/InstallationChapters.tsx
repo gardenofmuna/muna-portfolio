@@ -54,10 +54,7 @@ function VinylQuote({ quote }: { quote: InstallationVinylQuote }) {
     );
   }
   return (
-    <figure
-      className="installation-vinyl"
-      data-tone={quote.tone ?? "orange"}
-    >
+    <figure className="installation-vinyl" data-tone={quote.tone ?? "orange"}>
       <blockquote className="installation-vinyl__text">{quote.text}</blockquote>
       <figcaption className="installation-vinyl__credit">
         {quote.credit.join(". ")}
@@ -181,7 +178,9 @@ function ArchiveRow({
   const cols =
     row.length === 2 ? `${ars[0]}fr ${ars[1]}fr` : `${ars[0]}fr ${4 / 3}fr`;
   /* If either scan is low-res, shrink the whole pair to the height it holds up at. */
-  const caps = row.map((it) => capHeight(it.image)).filter((h): h is number => h !== null);
+  const caps = row
+    .map((it) => capHeight(it.image))
+    .filter((h): h is number => h !== null);
   const rowH = caps.length ? Math.min(...caps) : null;
   const rowMaxW =
     rowH !== null
@@ -225,7 +224,6 @@ function ArchiveRow({
   );
 }
 
-
 /* ------------------------------------------------------------------ */
 /* Hand-placed chapters on a 12-column grid                            */
 /* ------------------------------------------------------------------ */
@@ -236,24 +234,31 @@ type Resolved =
   | { kind: "item"; item: InstallationArchiveItem }
   | { kind: "slideshow" };
 
-function resolve(ch: InstallationChapter, ref: string): Resolved | null {
+/**
+ * Finds a cell's content anywhere on the page, so rows can group pictures by
+ * size rather than by chapter. Refs are file names: an archive scan or view
+ * ("pmgs-staff-1953", "wall-memory-full"), a quote's print ("vinyl-a"), or
+ * "slideshow".
+ */
+function resolve(
+  all: readonly InstallationChapter[],
+  ref: string,
+): Resolved | null {
   if (ref === "slideshow") return { kind: "slideshow" };
-  if (ref === "closing")
-    return ch.closingQuote ? { kind: "quote", quote: ch.closingQuote } : null;
-  const q = ref.match(/^q(\d+)$/);
-  if (q) {
-    const quote = ch.quotes[Number(q[1])];
-    return quote ? { kind: "quote", quote } : null;
+  const ends = (src: string | undefined, ext: string) =>
+    !!src && src.endsWith(`/${ref}.${ext}`);
+  for (const ch of all) {
+    const quote = [
+      ...ch.quotes,
+      ...(ch.closingQuote ? [ch.closingQuote] : []),
+    ].find((q) => ends(q.print?.src, "svg"));
+    if (quote) return { kind: "quote", quote };
+    const image = ch.views?.find((v) => ends(v.src, "webp"));
+    if (image) return { kind: "view", image };
+    const item = ch.archive?.find((it) => ends(it.image.src, "webp"));
+    if (item) return { kind: "item", item };
   }
-  const v = ref.match(/^v(\d+)$/);
-  if (v) {
-    const image = ch.views?.[Number(v[1])];
-    return image ? { kind: "view", image } : null;
-  }
-  const item = ch.archive?.find((it) =>
-    it.image.src?.endsWith(`/${ref}.webp`),
-  );
-  return item ? { kind: "item", item } : null;
+  return null;
 }
 
 /** Picture box: fills its columns, except low-res scans, which stop at the
@@ -261,20 +266,32 @@ function resolve(ch: InstallationChapter, ref: string): Resolved | null {
 function PicBox({
   image,
   sizes,
+  printHeight,
 }: {
   image: InstallationGalleryImage;
   sizes: string;
+  /** Small prints: every picture in the row at this one height (px). */
+  printHeight?: number;
 }) {
+  const ar = image.width / image.height;
   return (
     <div
       className="efuru-pic"
-      style={{
-        aspectRatio: `${image.width} / ${image.height}`,
-        maxWidth:
-          image.width < LOW_RES_PX
-            ? `${Math.round(image.width * LOW_RES_SHOW)}px`
-            : undefined,
-      }}
+      style={
+        printHeight
+          ? {
+              aspectRatio: `${image.width} / ${image.height}`,
+              width: `${Math.round(printHeight * ar)}px`,
+              maxWidth: "100%",
+            }
+          : {
+              aspectRatio: `${image.width} / ${image.height}`,
+              maxWidth:
+                image.width < LOW_RES_PX
+                  ? `${Math.round(image.width * LOW_RES_SHOW)}px`
+                  : undefined,
+            }
+      }
     >
       <SizedImg
         src={image.src!}
@@ -289,20 +306,20 @@ function PicBox({
 }
 
 function GridRow({
-  ch,
+  all,
   row,
   isDesktop,
   credit,
   ariaLabel,
 }: {
-  ch: InstallationChapter;
+  all: readonly InstallationChapter[];
   row: InstallationGridRow;
   isDesktop: boolean;
   credit?: string;
   ariaLabel: string;
 }) {
   const cells = row.cells
-    .map((c) => ({ ...c, r: resolve(ch, c.ref) }))
+    .map((c) => ({ ...c, r: resolve(all, c.ref) }))
     .filter((c): c is typeof c & { r: Resolved } => c.r !== null);
   const sizesFor = (span: number) =>
     `(min-width: 900px) ${Math.ceil((span / 12) * 80)}vw, ${
@@ -311,7 +328,7 @@ function GridRow({
   const slideshow = (
     <ExhibitionSlideshow
       key="slideshow"
-      images={ch.strip ?? []}
+      images={all.find((c) => c.strip?.length)?.strip ?? []}
       ariaLabel={`${ariaLabel}: photographs of the gallery`}
     />
   );
@@ -323,31 +340,45 @@ function GridRow({
         className="efuru-row efuru-row--mobile"
         data-cols={row.mobileCols ?? 1}
       >
-        {cells.map(({ ref, r, span }) => {
-          if (r.kind === "slideshow")
+        {/* Quotes always come before the pictures beside them. */}
+        {[...cells]
+          .sort(
+            (a, b) =>
+              Number(b.r.kind === "quote") - Number(a.r.kind === "quote"),
+          )
+          .map(({ ref, r, span }) => {
+            if (r.kind === "slideshow")
+              return (
+                <div key={ref} className="efuru-cell efuru-cell--full">
+                  {slideshow}
+                </div>
+              );
+            if (r.kind === "quote")
+              return (
+                <div key={ref} className="efuru-cell efuru-cell--full">
+                  <VinylQuote quote={r.quote} />
+                </div>
+              );
+            const image = r.kind === "view" ? r.image : r.item.image;
             return (
-              <div key={ref} className="efuru-cell efuru-cell--full">
-                {slideshow}
-              </div>
+              <figure key={ref} className="efuru-cell">
+                <PicBox
+                  image={image}
+                  sizes={sizesFor(span)}
+                  printHeight={
+                    row.printHeight
+                      ? Math.round(row.printHeight * 0.7)
+                      : undefined
+                  }
+                />
+                {r.kind === "item" ? (
+                  <figcaption className="efuru-label">
+                    <Label item={r.item} credit={credit} />
+                  </figcaption>
+                ) : null}
+              </figure>
             );
-          if (r.kind === "quote")
-            return (
-              <div key={ref} className="efuru-cell efuru-cell--full">
-                <VinylQuote quote={r.quote} />
-              </div>
-            );
-          const image = r.kind === "view" ? r.image : r.item.image;
-          return (
-            <figure key={ref} className="efuru-cell">
-              <PicBox image={image} sizes={sizesFor(span)} />
-              {r.kind === "item" ? (
-                <figcaption className="efuru-label">
-                  <Label item={r.item} credit={credit} />
-                </figcaption>
-              ) : null}
-            </figure>
-          );
-        })}
+          })}
       </div>
     );
   }
@@ -381,7 +412,11 @@ function GridRow({
             className="efuru-cell efuru-cell--pic"
             style={{ gridColumn: gc }}
           >
-            <PicBox image={image} sizes={sizesFor(span)} />
+            <PicBox
+              image={image}
+              sizes={sizesFor(span)}
+              printHeight={row.printHeight}
+            />
           </div>
         );
       })}
@@ -432,7 +467,7 @@ export function InstallationChapters({
               {ch.rows.map((row, i) => (
                 <GridRow
                   key={i}
-                  ch={ch}
+                  all={chapters}
                   row={row}
                   isDesktop={isDesktop}
                   credit={archiveCredit}
@@ -446,8 +481,14 @@ export function InstallationChapters({
           | { kind: "view"; image: InstallationGalleryImage }
           | { kind: "item"; item: InstallationArchiveItem };
         const pics: Pic[] = [
-          ...(ch.views ?? []).map((image) => ({ kind: "view" as const, image })),
-          ...(ch.archive ?? []).map((item) => ({ kind: "item" as const, item })),
+          ...(ch.views ?? []).map((image) => ({
+            kind: "view" as const,
+            image,
+          })),
+          ...(ch.archive ?? []).map((item) => ({
+            kind: "item" as const,
+            item,
+          })),
         ];
         const quotes = [
           ...ch.quotes,
@@ -541,7 +582,11 @@ export function InstallationChapters({
           } else if (pic.kind === "view") {
             flush();
             flow.push(
-              <FullImage key={pic.image.src} image={pic.image} isDesktop={isDesktop} />,
+              <FullImage
+                key={pic.image.src}
+                image={pic.image}
+                isDesktop={isDesktop}
+              />,
             );
           } else {
             buffer.push(pic.item);
