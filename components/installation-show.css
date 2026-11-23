@@ -1019,7 +1019,8 @@
 .installation-chapters {
   --is-accent: #f75701;
   width: 100%;
-  margin: 0 0 140px;
+  /* Last picture to Back / Next: 77px, as on the other installation pages. */
+  margin: 0 0 77px;
 }
 
 .installation-vinyl-group {
@@ -1179,7 +1180,8 @@
 
 /* Phone: one image per row, caption under each, quotes stacked. */
 .installation-show--narrow .installation-chapters {
-  margin-bottom: 88px;
+  /* Last picture to Back / Next: 56px, as on the other installation pages. */
+  margin-bottom: 27px;
 }
 
 .installation-show--narrow .installation-vinyl-group {
