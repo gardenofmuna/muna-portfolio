@@ -104,7 +104,8 @@ export type InstallationShow = {
   id: string;
   year: string;
   kind: string;
-  titleLines: readonly [string, string];
+  /** Title as set on the page, line by line (fitted to the column). */
+  titleLines: readonly string[];
   venueLines: readonly string[];
   src: string;
   width: number;
@@ -125,7 +126,7 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
     id: "efuru-2026",
     year: "2026",
     kind: "Curated Exhibition",
-    titleLines: ["Flora Nwapa:", "Efuru at the Threshold"],
+    titleLines: ["Flora Nwapa:", "Efuru at the", "Threshold"],
     venueLines: ["Àrokò Literary Arts at", "DIDI Museum, Lagos"],
     src: "/installation/efuru/hero.webp",
     width: 1440,
