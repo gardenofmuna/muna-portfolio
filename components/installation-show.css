@@ -1490,24 +1490,8 @@
   color: var(--is-caption-grey);
 }
 
-/* Phones, small prints: the quote fills its column beside the print, as tall
-   as the print with its label, kept in the printed proportions. */
+/* Phones, small prints: the quote sits in its column beside the print, at
+   the same size as the other black quotes, top-aligned with the print. */
 .efuru-row--mobile[data-prints] > .efuru-cell--quote {
-  position: relative;
-  align-self: stretch;
-}
-.efuru-row--mobile[data-prints] > .efuru-cell--quote .installation-vinyl--print {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: auto !important;
-  height: min(var(--efuru-m-block, 200px), 100%);
-  max-width: 100%;
-}
-.efuru-row--mobile[data-prints] > .efuru-cell--quote .installation-vinyl__print {
-  width: auto;
-  height: 100%;
-  max-width: 100%;
-  object-fit: contain;
-  object-position: left top;
+  align-self: start;
 }

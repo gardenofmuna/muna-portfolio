@@ -479,28 +479,7 @@ export function InstallationChapters({
     if (!root) return;
     if (!isDesktop) {
       root.classList.remove("efuru-quotes-matched");
-      /* Phones: the quote among the small prints stands as tall as the
-         print beside it with its label. */
-      const fit = () => {
-        root
-          .querySelectorAll<HTMLElement>(
-            ".efuru-row--mobile[data-prints] > .efuru-cell--quote",
-          )
-          .forEach((cell) => {
-            const prev = cell.previousElementSibling as HTMLElement | null;
-            if (prev)
-              cell.style.setProperty(
-                "--efuru-m-block",
-                `${prev.offsetHeight}px`,
-              );
-          });
-      };
-      fit();
-      const ro = new ResizeObserver(fit);
-      root
-        .querySelectorAll(".efuru-row--mobile[data-prints] > .efuru-cell--pic")
-        .forEach((f) => ro.observe(f));
-      return () => ro.disconnect();
+      return;
     }
     const measure = () => {
       const row = [
