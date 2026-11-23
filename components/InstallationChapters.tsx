@@ -1,6 +1,7 @@
 "use client";
 
 import { SizedImg } from "@/components/SizedImg";
+import { useLayoutEffect, useRef } from "react";
 import type { CSSProperties, ReactNode } from "react";
 
 import { ExhibitionSlideshow } from "@/components/ExhibitionSlideshow";
@@ -31,6 +32,7 @@ function VinylQuote({ quote }: { quote: InstallationVinylQuote }) {
       <figure
         className="installation-vinyl installation-vinyl--print"
         data-wide={quote.print.width > 900 ? "" : undefined}
+        data-tone={quote.tone ?? "orange"}
         style={{
           aspectRatio: `${quote.print.width} / ${quote.print.height}`,
           /* One shared scale for every quote, so they keep their printed
@@ -382,7 +384,11 @@ function GridRow({
   /* Desktop: row 1 holds pictures and quotes, row 2 the labels, so every
      label in a row starts on the same line. */
   return (
-    <div className="efuru-row" data-align={row.align}>
+    <div
+      className="efuru-row"
+      data-align={row.align}
+      data-prints={row.printHeight ? "" : undefined}
+    >
       {cells.map(({ ref, r, col, span }) => {
         const gc = `${col} / span ${span}`;
         if (r.kind === "slideshow")
@@ -447,8 +453,57 @@ export function InstallationChapters({
   ariaLabel: string;
 }) {
   let quoteSide = 0;
+  const rootRef = useRef<HTMLDivElement>(null);
+  /* The small black quotes stand as tall as a small print with its label:
+     measured from the top of the prints beside "Efuru was her name" to the
+     bottom of their longest label, and kept in step on resize. */
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    if (!isDesktop) {
+      root.classList.remove("efuru-quotes-matched");
+      return;
+    }
+    const measure = () => {
+      const row = [
+        ...root.querySelectorAll<HTMLElement>(".efuru-row[data-prints]"),
+      ].find((r) => r.querySelector(".efuru-cell--quote"));
+      if (!row) return;
+      const pics = [
+        ...row.querySelectorAll<HTMLElement>(":scope > .efuru-cell--pic"),
+      ];
+      const labels = [
+        ...row.querySelectorAll<HTMLElement>(":scope > .efuru-label"),
+      ];
+      if (!pics.length || !labels.length) return;
+      const top = Math.min(...pics.map((p) => p.getBoundingClientRect().top));
+      const bottom = Math.max(
+        ...labels.map((l) => l.getBoundingClientRect().bottom),
+      );
+      /* The desktop stage is scaled to the window: convert screen pixels
+         back to layout pixels before setting a CSS height. */
+      const scale =
+        row.getBoundingClientRect().height / (row.offsetHeight || 1) || 1;
+      root.style.setProperty(
+        "--efuru-print-block",
+        `${Math.round((bottom - top) / scale)}px`,
+      );
+      root.classList.add("efuru-quotes-matched");
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    root
+      .querySelectorAll(".efuru-row[data-prints] > .efuru-label")
+      .forEach((l) => ro.observe(l));
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [isDesktop]);
   return (
     <div
+      ref={rootRef}
       className="installation-chapters"
       style={{ ["--is-accent" as string]: accent } as CSSProperties}
     >

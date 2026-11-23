@@ -1413,3 +1413,28 @@
 .installation-show--narrow .efuru-chapter:first-child {
   margin-top: 64px;
 }
+
+/* Small black quotes: as tall as a small print with its label (height set
+   from the page, width from the printed proportions). */
+.efuru-quotes-matched .efuru-cell--quote .installation-vinyl--print[data-tone="black"] {
+  width: auto !important;
+  height: var(--efuru-print-block);
+}
+.efuru-quotes-matched .efuru-cell--quote .installation-vinyl--print[data-tone="black"] .installation-vinyl__print {
+  width: auto;
+  height: 100%;
+}
+/* Beside the prints, the quote spans picture and label rows so it never
+   pushes the labels down. */
+.efuru-row[data-prints] > .efuru-cell--quote {
+  grid-row: 1 / span 2;
+  align-self: stretch;
+  position: relative;
+}
+/* Taken out of the row's sizing, so its height can follow the prints
+   without ever changing them. */
+.efuru-row[data-prints] > .efuru-cell--quote > .installation-vinyl {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
