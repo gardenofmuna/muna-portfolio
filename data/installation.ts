@@ -251,7 +251,7 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
     width: 1440,
     height: 813,
     alt: "Mama, in Your Absence installation view",
-    titleColor: ABOUT_BIO_INK.interdisciplinary,
+    titleColor: ABOUT_BIO_INK.toronto,
     caseStudy: {
       paragraphs: [
         "My interactive web documentary Mama, In Your Absence ([mamainyourabsence.com](https://mamainyourabsence.com)) was presented as part of the 17th annual DOC NOW Festival, showcasing student-made film, photography, and installation work from Toronto Metropolitan University's Documentary Media MFA graduates.",
