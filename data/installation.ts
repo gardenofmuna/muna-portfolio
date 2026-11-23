@@ -133,7 +133,7 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
     titleColor: EFURU_ORANGE,
     caseStudy: {
       paragraphs: [
-        "I curated Flora Nwapa: Efuru at the Threshold as the inaugural exhibition of Àrokò Literary Arts, held at DIDI Museum in Lagos from 24 to 31 October 2026 to mark sixty years of Efuru, the first novel by my grandmother, Flora Nwapa.",
+        "I curated Flora Nwapa: Efuru at the Threshold as the inaugural exhibition of Àrokò Literary Arts, held at DIDI Museum in Lagos from 24 to 31 October 2026 to mark sixty years of Efuru, the first novel to be published by an African woman in English, Flora Nwapa.",
         "The exhibition traced the journey of Efuru across four chapters: Making, Object, Reader and Memory. Editions of the novel and the works that followed sat alongside photographs, personal artefacts, moving image, sound and a growing collage of reader responses, bringing the research process into view. From the family archive emerged unpublished manuscripts, diaries and the typescript of Nwapa's final novel. At the heart of the exhibition was my interactive documentary [Mama, in Your Absence](/installation/mama-2025) (2025).",
       ],
       galleryColumns: 2,
