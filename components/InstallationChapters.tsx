@@ -392,7 +392,7 @@ function GridRow({
       data-align={row.align}
       data-prints={row.printHeight ? "" : undefined}
     >
-      {cells.map(({ ref, r, col, span }) => {
+      {cells.map(({ ref, r, col, span, edge }) => {
         const gc = `${col} / span ${span}`;
         if (r.kind === "slideshow")
           return (
@@ -405,6 +405,7 @@ function GridRow({
             <div
               key={ref}
               className="efuru-cell efuru-cell--quote"
+              data-edge={edge}
               style={{ gridColumn: gc }}
             >
               <VinylQuote quote={r.quote} />

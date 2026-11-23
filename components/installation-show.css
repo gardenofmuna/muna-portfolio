@@ -1438,3 +1438,9 @@
   top: 0;
   left: 0;
 }
+
+/* A quote pushed to the right edge of its columns (and of the page). */
+.efuru-cell--quote[data-edge="end"] {
+  display: flex;
+  justify-content: flex-end;
+}
