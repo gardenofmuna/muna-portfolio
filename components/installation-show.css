@@ -1360,6 +1360,10 @@
 .efuru-row[data-align="top"] {
   align-items: start;
 }
+/* Pictures and quotes always share the first row, whatever side they sit on. */
+.efuru-row:not(.efuru-row--mobile) > .efuru-cell {
+  grid-row: 1;
+}
 /* Pictures stand on one line, labels hang from the next. */
 .efuru-row[data-align="bottom"] > .efuru-cell {
   grid-row: 1;
