@@ -94,7 +94,7 @@ export type InstallationGridRow = {
   /** edge "end": a quote sits against the right edge of its columns. */
   cells: readonly { ref: string; col: number; span: number; edge?: "end" }[];
   /** Columns on phones (default 1). */
-  mobileCols?: 1 | 2;
+  mobileCols?: 1 | 2 | 3;
   /** Small prints: show every picture in the row at this one height (px),
    *  never larger than its file holds up at. */
   printHeight?: number;
@@ -177,8 +177,12 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
           views: [
             { src: "/installation/efuru/wall-making-full.webp", width: 1800, height: 2400, alt: "Framed photographs on the Making wall" },
             { src: "/installation/efuru/ss-making-pair.webp", width: 1800, height: 2400, alt: "Framed photographs and labels on the Making wall" },
+            { src: "/installation/efuru/panel-portrait-10.webp", width: 1757, height: 2400, alt: "Portrait of Flora Nwapa, printed panel" },
+            { src: "/installation/efuru/panel-portrait-8.webp", width: 1757, height: 2400, alt: "Portrait of Flora Nwapa in three-quarter view, printed panel" },
+            { src: "/installation/efuru/panel-at-her-desk.webp", width: 1757, height: 2400, alt: "Flora Nwapa on the telephone at her desk, printed panel" },
           ],
           rows: [
+            { align: "top", mobileCols: 3, cells: [{ ref: "panel-portrait-10", col: 1, span: 4 }, { ref: "panel-portrait-8", col: 5, span: 4 }, { ref: "panel-at-her-desk", col: 9, span: 4 }] },
             { align: "top", mobileCols: 2, cells: [{ ref: "vinyl-c", col: 1, span: 4 }, { ref: "wall-making-full", col: 5, span: 4 }, { ref: "ss-making-pair", col: 9, span: 4 }] },
             { align: "bottom", cells: [{ ref: "pmgs-staff-1953", col: 1, span: 4 }, { ref: "children-bw", col: 5, span: 4 }, { ref: "husband-gogo-nwakuche", col: 9, span: 4 }] },
           ],

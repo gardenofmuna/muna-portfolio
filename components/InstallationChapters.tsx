@@ -328,7 +328,7 @@ function GridRow({
     .filter((c): c is typeof c & { r: Resolved } => c.r !== null);
   const sizesFor = (span: number) =>
     `(min-width: 900px) ${Math.ceil((span / 12) * 80)}vw, ${
-      row.mobileCols === 2 ? 46 : 92
+      row.mobileCols === 3 ? 31 : row.mobileCols === 2 ? 46 : 92
     }vw`;
   const slideshow = (
     <ExhibitionSlideshow
