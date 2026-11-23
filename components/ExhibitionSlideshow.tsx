@@ -23,7 +23,9 @@ export function ExhibitionSlideshow({
   const touchX = useRef<number | null>(null);
   const n = images.length;
   /* Only photographs you have reached, plus the next and previous, load. */
-  const [seen, setSeen] = useState<Set<number>>(() => new Set([0, 1, 2, n - 1]));
+  const [seen, setSeen] = useState<Set<number>>(
+    () => new Set([0, 1, 2, n - 1]),
+  );
 
   const go = useCallback(
     (i: number) => {
@@ -65,7 +67,9 @@ export function ExhibitionSlideshow({
     >
       <div
         className="exhibition-slideshow__stage"
-        style={{ ["--ss-ar" as string]: `${current.width} / ${current.height}` }}
+        style={{
+          ["--ss-ar" as string]: `${current.width} / ${current.height}`,
+        }}
         onTouchStart={(e) => (touchX.current = e.touches[0].clientX)}
         onTouchEnd={(e) => {
           if (touchX.current == null) return;
@@ -89,7 +93,10 @@ export function ExhibitionSlideshow({
                 alt={img.alt ?? ""}
                 sizes={`(min-width: 900px) min(80vw, ${((img.width / img.height) * 72).toFixed(1)}vh, ${Math.round((img.width / img.height) * 820)}px), min(100vw, ${((img.width / img.height) * 70).toFixed(1)}vh)`}
                 className="exhibition-slideshow__img"
-                style={{ maxWidth: `min(100%, ${img.width}px)`, maxHeight: `min(100%, ${img.height}px)` }}
+                style={{
+                  maxWidth: `min(100%, ${img.width}px)`,
+                  maxHeight: `min(100%, ${img.height}px)`,
+                }}
                 eager
                 priority={i === index ? "high" : "low"}
               />
@@ -97,13 +104,11 @@ export function ExhibitionSlideshow({
           </div>
         ))}
       </div>
-
-      <div className="exhibition-slideshow__meta">
-        <p className="exhibition-slideshow__caption">{current.alt}</p>
-        <p className="exhibition-slideshow__count" aria-live="polite">
-          {index + 1} / {n}
-        </p>
-      </div>
+      {/* No visible caption or counter; screen readers still hear which
+          photograph is showing. */}
+      <p className="exhibition-slideshow__sr" aria-live="polite">
+        {`Photograph ${index + 1} of ${n}: ${current.alt ?? ""}`}
+      </p>
 
       <div className="exhibition-slideshow__nav">
         <button
@@ -112,7 +117,9 @@ export function ExhibitionSlideshow({
           aria-label="Previous photograph"
           onClick={() => go(index - 1)}
         >
-          <svg viewBox="0 0 12 20" aria-hidden="true"><path d="M10 2 2 10l8 8" /></svg>
+          <svg viewBox="0 0 12 20" aria-hidden="true">
+            <path d="M10 2 2 10l8 8" />
+          </svg>
         </button>
         <div className="exhibition-slideshow__thumbs" ref={thumbsRef}>
           {images.map((img, i) => (
@@ -143,7 +150,9 @@ export function ExhibitionSlideshow({
           aria-label="Next photograph"
           onClick={() => go(index + 1)}
         >
-          <svg viewBox="0 0 12 20" aria-hidden="true"><path d="m2 2 8 8-8 8" /></svg>
+          <svg viewBox="0 0 12 20" aria-hidden="true">
+            <path d="m2 2 8 8-8 8" />
+          </svg>
         </button>
       </div>
     </div>
