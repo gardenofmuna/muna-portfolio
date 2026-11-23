@@ -1498,3 +1498,11 @@
 .efuru-row--mobile[data-prints] > .efuru-cell--quote {
   align-self: start;
 }
+
+/* A caption under a whole row: same gap as other picture captions. */
+.efuru-row > .efuru-row__caption {
+  margin: -4px 0 0;
+}
+.efuru-row--mobile > .efuru-row__caption {
+  margin: -24px 0 0;
+}

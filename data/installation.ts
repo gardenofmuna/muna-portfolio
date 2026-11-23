@@ -95,6 +95,8 @@ export type InstallationGridRow = {
   cells: readonly { ref: string; col: number; span: number; edge?: "end" }[];
   /** Columns on phones (default 1). */
   mobileCols?: 1 | 2 | 3;
+  /** One caption for the whole row, set under it. */
+  caption?: string;
   /** Small prints: show every picture in the row at this one height (px),
    *  never larger than its file holds up at. */
   printHeight?: number;
@@ -182,7 +184,7 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
             { src: "/installation/efuru/panel-at-her-desk.webp", width: 1757, height: 2400, alt: "Flora Nwapa on the telephone at her desk, printed panel" },
           ],
           rows: [
-            { align: "top", mobileCols: 3, cells: [{ ref: "panel-portrait-10", col: 1, span: 4 }, { ref: "panel-at-her-desk", col: 5, span: 4 }, { ref: "panel-portrait-8", col: 9, span: 4 }] },
+            { align: "top", mobileCols: 3, cells: [{ ref: "panel-portrait-10", col: 1, span: 4 }, { ref: "panel-at-her-desk", col: 5, span: 4 }, { ref: "panel-portrait-8", col: 9, span: 4 }], caption: "Portraits of Flora Nwapa. Photographer unknown. Date unknown. Courtesy of Nwapa’s family." },
             { align: "top", mobileCols: 2, cells: [{ ref: "vinyl-c", col: 1, span: 4 }, { ref: "wall-making-full", col: 5, span: 4 }, { ref: "ss-making-pair", col: 9, span: 4 }] },
             { align: "bottom", cells: [{ ref: "pmgs-staff-1953", col: 1, span: 4 }, { ref: "children-bw", col: 5, span: 4 }, { ref: "husband-gogo-nwakuche", col: 9, span: 4 }] },
           ],

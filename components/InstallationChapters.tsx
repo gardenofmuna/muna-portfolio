@@ -393,6 +393,11 @@ function GridRow({
             </figure>
           );
         })}
+        {row.caption ? (
+          <p className="installation-show__media-caption efuru-row__caption efuru-cell--full">
+            {row.caption}
+          </p>
+        ) : null}
       </div>
     );
   }
@@ -452,6 +457,14 @@ function GridRow({
             ) : null,
           )
         : null}
+      {row.caption ? (
+        <p
+          className="installation-show__media-caption efuru-row__caption"
+          style={{ gridColumn: "1 / -1", gridRow: 2 }}
+        >
+          {row.caption}
+        </p>
+      ) : null}
     </div>
   );
 }
