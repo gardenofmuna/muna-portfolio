@@ -8,6 +8,7 @@ import type {
   InstallationArchiveItem,
   InstallationChapter,
   InstallationGalleryImage,
+  InstallationGridRow,
   InstallationVinylQuote,
 } from "@/data/installation";
 
@@ -224,6 +225,183 @@ function ArchiveRow({
   );
 }
 
+
+/* ------------------------------------------------------------------ */
+/* Hand-placed chapters on a 12-column grid                            */
+/* ------------------------------------------------------------------ */
+
+type Resolved =
+  | { kind: "quote"; quote: InstallationVinylQuote }
+  | { kind: "view"; image: InstallationGalleryImage }
+  | { kind: "item"; item: InstallationArchiveItem }
+  | { kind: "slideshow" };
+
+function resolve(ch: InstallationChapter, ref: string): Resolved | null {
+  if (ref === "slideshow") return { kind: "slideshow" };
+  if (ref === "closing")
+    return ch.closingQuote ? { kind: "quote", quote: ch.closingQuote } : null;
+  const q = ref.match(/^q(\d+)$/);
+  if (q) {
+    const quote = ch.quotes[Number(q[1])];
+    return quote ? { kind: "quote", quote } : null;
+  }
+  const v = ref.match(/^v(\d+)$/);
+  if (v) {
+    const image = ch.views?.[Number(v[1])];
+    return image ? { kind: "view", image } : null;
+  }
+  const item = ch.archive?.find((it) =>
+    it.image.src?.endsWith(`/${ref}.webp`),
+  );
+  return item ? { kind: "item", item } : null;
+}
+
+/** Picture box: fills its columns, except low-res scans, which stop at the
+ *  size they hold up at and sit on the column's left edge. */
+function PicBox({
+  image,
+  sizes,
+}: {
+  image: InstallationGalleryImage;
+  sizes: string;
+}) {
+  return (
+    <div
+      className="efuru-pic"
+      style={{
+        aspectRatio: `${image.width} / ${image.height}`,
+        maxWidth:
+          image.width < LOW_RES_PX
+            ? `${Math.round(image.width * LOW_RES_SHOW)}px`
+            : undefined,
+      }}
+    >
+      <SizedImg
+        src={image.src!}
+        width={image.width}
+        height={image.height}
+        alt={image.alt}
+        sizes={sizes}
+        className="efuru-fill"
+      />
+    </div>
+  );
+}
+
+function GridRow({
+  ch,
+  row,
+  isDesktop,
+  credit,
+  ariaLabel,
+}: {
+  ch: InstallationChapter;
+  row: InstallationGridRow;
+  isDesktop: boolean;
+  credit?: string;
+  ariaLabel: string;
+}) {
+  const cells = row.cells
+    .map((c) => ({ ...c, r: resolve(ch, c.ref) }))
+    .filter((c): c is typeof c & { r: Resolved } => c.r !== null);
+  const sizesFor = (span: number) =>
+    `(min-width: 900px) ${Math.ceil((span / 12) * 80)}vw, ${
+      row.mobileCols === 2 ? 46 : 92
+    }vw`;
+  const slideshow = (
+    <ExhibitionSlideshow
+      key="slideshow"
+      images={ch.strip ?? []}
+      ariaLabel={`${ariaLabel}: photographs of the gallery`}
+    />
+  );
+
+  if (!isDesktop) {
+    /* Phones: one column (two for paired pictures); quotes span the row. */
+    return (
+      <div
+        className="efuru-row efuru-row--mobile"
+        data-cols={row.mobileCols ?? 1}
+      >
+        {cells.map(({ ref, r, span }) => {
+          if (r.kind === "slideshow")
+            return (
+              <div key={ref} className="efuru-cell efuru-cell--full">
+                {slideshow}
+              </div>
+            );
+          if (r.kind === "quote")
+            return (
+              <div key={ref} className="efuru-cell efuru-cell--full">
+                <VinylQuote quote={r.quote} />
+              </div>
+            );
+          const image = r.kind === "view" ? r.image : r.item.image;
+          return (
+            <figure key={ref} className="efuru-cell">
+              <PicBox image={image} sizes={sizesFor(span)} />
+              {r.kind === "item" ? (
+                <figcaption className="efuru-label">
+                  <Label item={r.item} credit={credit} />
+                </figcaption>
+              ) : null}
+            </figure>
+          );
+        })}
+      </div>
+    );
+  }
+
+  /* Desktop: row 1 holds pictures and quotes, row 2 the labels, so every
+     label in a row starts on the same line. */
+  return (
+    <div className="efuru-row" data-align={row.align}>
+      {cells.map(({ ref, r, col, span }) => {
+        const gc = `${col} / span ${span}`;
+        if (r.kind === "slideshow")
+          return (
+            <div key={ref} className="efuru-cell" style={{ gridColumn: gc }}>
+              {slideshow}
+            </div>
+          );
+        if (r.kind === "quote")
+          return (
+            <div
+              key={ref}
+              className="efuru-cell efuru-cell--quote"
+              style={{ gridColumn: gc }}
+            >
+              <VinylQuote quote={r.quote} />
+            </div>
+          );
+        const image = r.kind === "view" ? r.image : r.item.image;
+        return (
+          <div
+            key={ref}
+            className="efuru-cell efuru-cell--pic"
+            style={{ gridColumn: gc }}
+          >
+            <PicBox image={image} sizes={sizesFor(span)} />
+          </div>
+        );
+      })}
+      {cells.some(({ r }) => r.kind === "item")
+        ? cells.map(({ ref, r, col, span }) =>
+            r.kind === "item" ? (
+              <div
+                key={`${ref}-label`}
+                className="efuru-label"
+                style={{ gridColumn: `${col} / span ${span}`, gridRow: 2 }}
+              >
+                <Label item={r.item} credit={credit} />
+              </div>
+            ) : null,
+          )
+        : null}
+    </div>
+  );
+}
+
 export function InstallationChapters({
   chapters,
   archiveCredit,
@@ -244,6 +422,26 @@ export function InstallationChapters({
       style={{ ["--is-accent" as string]: accent } as CSSProperties}
     >
       {chapters.map((ch) => {
+        if (ch.rows?.length) {
+          return (
+            <section
+              key={ch.number}
+              className="installation-chapter efuru-chapter"
+              aria-label={ch.title}
+            >
+              {ch.rows.map((row, i) => (
+                <GridRow
+                  key={i}
+                  ch={ch}
+                  row={row}
+                  isDesktop={isDesktop}
+                  credit={archiveCredit}
+                  ariaLabel={ariaLabel}
+                />
+              ))}
+            </section>
+          );
+        }
         type Pic =
           | { kind: "view"; image: InstallationGalleryImage }
           | { kind: "item"; item: InstallationArchiveItem };

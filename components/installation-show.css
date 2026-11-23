@@ -1335,3 +1335,77 @@
   height: 100%;
   object-fit: contain;
 }
+
+/* ---- Efuru chapters on a 12-column grid --------------------------------
+   One gutter (24px) and one vertical scale built from it:
+   12 picture to label, 72 between rows, 144 between chapters.
+   Every picture, quote and label starts on a column edge. */
+.efuru-chapter {
+  --efuru-gutter: 24px;
+  --efuru-row-gap: 72px;
+  margin-top: 144px;
+}
+.efuru-chapter:first-child {
+  margin-top: 96px;
+}
+.efuru-row {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--efuru-gutter);
+  row-gap: 12px;
+}
+.efuru-row + .efuru-row {
+  margin-top: var(--efuru-row-gap);
+}
+.efuru-row[data-align="top"] {
+  align-items: start;
+}
+/* Pictures stand on one line, labels hang from the next. */
+.efuru-row[data-align="bottom"] > .efuru-cell {
+  grid-row: 1;
+  align-self: end;
+}
+.efuru-row > .efuru-label {
+  align-self: start;
+}
+.efuru-cell {
+  min-width: 0;
+  margin: 0;
+}
+.efuru-cell--quote .installation-vinyl {
+  margin: 0;
+}
+.efuru-pic {
+  position: relative;
+  width: 100%;
+}
+.efuru-label {
+  margin: 0;
+  min-width: 0;
+}
+.efuru-cell .exhibition-slideshow {
+  margin-top: 0;
+}
+
+/* Phones: one column, or two for paired pictures. */
+.efuru-row--mobile {
+  grid-template-columns: minmax(0, 1fr);
+  column-gap: 12px;
+  row-gap: 32px;
+}
+.efuru-row--mobile[data-cols="2"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.efuru-row--mobile .efuru-cell--full {
+  grid-column: 1 / -1;
+}
+.efuru-row--mobile .efuru-label {
+  margin-top: 10px;
+}
+.installation-show--narrow .efuru-chapter {
+  --efuru-row-gap: 48px;
+  margin-top: 96px;
+}
+.installation-show--narrow .efuru-chapter:first-child {
+  margin-top: 64px;
+}

@@ -79,6 +79,22 @@ export type InstallationChapter = {
   stripCaption?: string;
   /** Quote that closes the chapter, after its images. */
   closingQuote?: InstallationVinylQuote;
+  /**
+   * Hand-placed rows on the 12-column grid. Cells name a quote ("q0", "q1",
+   * "closing"), a view ("v0", "v1") or an archive item (its file name, e.g.
+   * "pmgs-staff-1953"), plus the first column and how many columns it spans.
+   * "slideshow" places the strip.
+   */
+  rows?: readonly InstallationGridRow[];
+};
+
+export type InstallationGridRow = {
+  /** "top": tops line up (quote beside a picture). "bottom": pictures stand
+   *  on one line so their labels start together. */
+  align: "top" | "bottom";
+  cells: readonly { ref: string; col: number; span: number }[];
+  /** Columns on phones (default 1). */
+  mobileCols?: 1 | 2;
 };
 
 export type InstallationShow = {
@@ -130,7 +146,15 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
           number: "01",
           title: "Making",
           quotes: [{ print: { src: "/installation/efuru/vinyl-c.svg", width: 670.3, height: 855.0, type: 49 }, tone: "orange", text: "“So I went on and on and on and wrote Efuru. I got it typed and thought it wasn’t a bad story, but I didn’t have the courage to give it to anybody, to read. Then I gave it to Chinua Achebe … And once your book is accepted for publication, you become a writer! … The first African woman to have a novel published by Heinemann of London … I made history!”", credit: ["Flora Nwapa, interviewed for NRK television, Norway, 1987", "As quoted in Paula Uimonen, Invoking Flora Nwapa: Nigerian Women Writers, Femininity and Spirituality in World Literature, 2020"] }],
-          views: [{ src: "/installation/efuru/wall-making-full.webp", width: 1800, height: 2400, alt: "Framed photographs on the Making wall" }],
+          views: [
+            { src: "/installation/efuru/wall-making-full.webp", width: 1800, height: 2400, alt: "Framed photographs on the Making wall" },
+            { src: "/installation/efuru/ss-making-pair.webp", width: 1800, height: 2400, alt: "Framed photographs and labels on the Making wall" },
+          ],
+          rows: [
+            { align: "top", mobileCols: 2, cells: [{ ref: "q0", col: 1, span: 4 }, { ref: "v0", col: 5, span: 4 }, { ref: "v1", col: 9, span: 4 }] },
+            { align: "bottom", cells: [{ ref: "pmgs-staff-1953", col: 1, span: 6 }, { ref: "children-bw", col: 7, span: 6 }] },
+            { align: "bottom", cells: [{ ref: "husband-gogo-nwakuche", col: 1, span: 6 }, { ref: "children-1981", col: 7, span: 4 }, { ref: "sisters", col: 11, span: 2 }] },
+          ],
           archive: [
             { image: { src: "/installation/efuru/pmgs-staff-1953.webp", width: 1800, height: 1152, alt: "Flora Nwapa with the staff of Priscilla Memorial Grammar School (PMGS), Oguta" }, title: "Flora Nwapa with the staff of Priscilla Memorial Grammar School (PMGS), Oguta", date: "1953", lines: ["Photographer unknown", "Photograph, black and white"] },
             { image: { src: "/installation/efuru/children-bw.webp", width: 1600, height: 1099, alt: "Flora Nwapa with her children Uzoma and Amede" }, title: "Flora Nwapa with her children Uzoma and Amede", date: "Undated", lines: ["Photographer unknown", "Photograph, black and white"] },
@@ -144,19 +168,29 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
           title: "Object",
           quotes: [{ print: { src: "/installation/efuru/vinyl-v2.svg", width: 215.1, height: 275.8, type: 25.5 }, tone: "black", text: "“Efuru was her name. She was a remarkable woman. It was not only that she came from a distinguished family. She was distinguished herself.”", credit: ["Efuru (1966), p. 1"] }],
           strip: [
-            { src: "/installation/efuru/ss-desk-piano.webp", width: 2400, height: 1600, alt: "The desk and piano, with the Making wall beyond" },
-            { src: "/installation/efuru/ss-vitrine-efuru.webp", width: 1800, height: 2400, alt: "First edition of Efuru in a vitrine" },
-            { src: "/installation/efuru/ss-vitrine-french.webp", width: 1800, height: 2400, alt: "Efuru: roman nigérian, the French translation" },
-            { src: "/installation/efuru/ss-vitrine-mammywater.webp", width: 1350, height: 2400, alt: "Mammywater in a vitrine" },
-            { src: "/installation/efuru/ss-desk-books.webp", width: 2400, height: 1350, alt: "Efuru, Never Again and Wives at War on the desk" },
-            { src: "/installation/efuru/ss-making-pair.webp", width: 1800, height: 2400, alt: "Framed photographs and labels on the Making wall" },
-            { src: "/installation/efuru/ss-family-frames.webp", width: 2400, height: 1627, alt: "Family photographs on the Making wall" },
-            { src: "/installation/efuru/ss-children-frame.webp", width: 2400, height: 1350, alt: "Flora Nwapa with her children Uzoma and Amede, framed" },
-            { src: "/installation/efuru/ss-portrait-wall.webp", width: 2400, height: 1946, alt: "The portrait panel among framed photographs on the Reader wall" },
-            { src: "/installation/efuru/ss-visitor.webp", width: 2400, height: 1350, alt: "A visitor at the Reader wall" },
+            { src: "/installation/efuru/ig-gallery-vitrines.webp", width: 2400, height: 1600, alt: "The orange quote wall between the vitrines" },
+            { src: "/installation/efuru/ig-orange-wall.webp", width: 2400, height: 1600, alt: "Flora Nwapa’s words on the orange quote wall" },
+            { src: "/installation/efuru/ig-gallery-view.webp", width: 2400, height: 1600, alt: "View across the gallery to the desk and the Reader wall" },
             { src: "/installation/efuru/ss-memory-wall.webp", width: 2400, height: 1601, alt: "The closing lines of Efuru beside the desk portrait" },
-            { src: "/installation/efuru/ss-closing-quote.webp", width: 1982, height: 2400, alt: "The closing lines of Efuru in orange vinyl" },
+            { src: "/installation/efuru/ig-quote-made-history.webp", width: 1800, height: 2400, alt: "“I made history!” in orange vinyl" },
+            { src: "/installation/efuru/ss-portrait-wall.webp", width: 2400, height: 1946, alt: "The portrait panel among framed photographs on the Reader wall" },
+            { src: "/installation/efuru/wall-making-full.webp", width: 1800, height: 2400, alt: "Framed photographs on the Making wall" },
+            { src: "/installation/efuru/wall-memory-full.webp", width: 2400, height: 1600, alt: "The collage wall of reader responses" },
             { src: "/installation/efuru/ss-collage-quote.webp", width: 2400, height: 1600, alt: "A collage quote among reader responses on the Memory wall" },
+            { src: "/installation/efuru/ss-desk-piano.webp", width: 2400, height: 1600, alt: "The desk and piano, with the Making wall beyond" },
+            { src: "/installation/efuru/ss-desk-books.webp", width: 2400, height: 1350, alt: "Efuru, Never Again and Wives at War on the desk" },
+            { src: "/installation/efuru/ss-family-frames.webp", width: 2400, height: 1627, alt: "Family photographs on the Making wall" },
+            { src: "/installation/efuru/ss-vitrine-mammywater.webp", width: 1350, height: 2400, alt: "Mammywater in a vitrine" },
+            { src: "/installation/efuru/ss-vitrine-french.webp", width: 1800, height: 2400, alt: "Efuru: roman nigérian, the French translation" },
+            { src: "/installation/efuru/ss-visitor.webp", width: 2400, height: 1350, alt: "A visitor at the Reader wall" },
+            { src: "/installation/efuru/ss-making-pair.webp", width: 1800, height: 2400, alt: "Framed photographs and labels on the Making wall" },
+            { src: "/installation/efuru/wall-reader-full.webp", width: 2400, height: 1350, alt: "The desk portrait panel flanked by framed photographs on the Reader wall" },
+            { src: "/installation/efuru/ss-closing-quote.webp", width: 1982, height: 2400, alt: "The closing lines of Efuru in orange vinyl" },
+            { src: "/installation/efuru/ig-quote-feminist.webp", width: 1800, height: 2400, alt: "“A feminist with a big ‘f’” in orange vinyl" },
+          ],
+          rows: [
+            { align: "top", cells: [{ ref: "q0", col: 1, span: 4 }] },
+            { align: "top", cells: [{ ref: "slideshow", col: 1, span: 12 }] },
           ],
         },
         {
@@ -174,6 +208,12 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
             { image: { src: "/installation/efuru/decoration-1987.webp", width: 1800, height: 1384, alt: "Flora Nwapa receiving a decoration from Amadi Ikwechegh, Governor of Imo State, for the Better Life Programme" }, title: "Flora Nwapa receiving a decoration from Amadi Ikwechegh, Governor of Imo State, for the Better Life Programme", date: "1987", lines: ["Photographer unknown", "Photograph, black and white"] },
             { image: { src: "/installation/efuru/commissioner-health.webp", width: 1040, height: 794, alt: "Flora Nwapa, as Commissioner for Health, visiting patients at the University of Nigeria Teaching Hospital, Enugu" }, title: "Flora Nwapa, as Commissioner for Health, visiting patients at the University of Nigeria Teaching Hospital, Enugu", date: "Undated", lines: ["Photographer unknown", "Photograph, black and white"] },
           ],
+          rows: [
+            { align: "top", cells: [{ ref: "v0", col: 1, span: 8 }, { ref: "q0", col: 9, span: 4 }] },
+            { align: "bottom", mobileCols: 2, cells: [{ ref: "iowa", col: 1, span: 3 }, { ref: "amsterdam-1", col: 4, span: 3 }, { ref: "amsterdam-2", col: 7, span: 3 }, { ref: "buchi", col: 10, span: 3 }] },
+            { align: "top", cells: [{ ref: "q1", col: 1, span: 4 }, { ref: "ekwensi", col: 5, span: 8 }] },
+            { align: "bottom", cells: [{ ref: "mbadiwe", col: 1, span: 4 }, { ref: "decoration-1987", col: 5, span: 4 }, { ref: "commissioner-health", col: 9, span: 4 }] },
+          ],
         },
         {
           number: "04",
@@ -182,6 +222,11 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
           views: [{ src: "/installation/efuru/wall-memory-full.webp", width: 2400, height: 1600, alt: "The collage wall of reader responses" }],
           archive: [
             { image: { src: "/installation/efuru/grave.webp", width: 374, height: 268, alt: "Ejine and Amede at Flora Nwapa's grave on the first anniversary of her death" }, title: "Ejine and Amede at Flora Nwapa's grave on the first anniversary of her death", date: "1994", lines: ["Photographer unknown", "Photograph, colour"] },
+          ],
+          rows: [
+            { align: "top", cells: [{ ref: "v0", col: 1, span: 8 }, { ref: "q0", col: 9, span: 4 }] },
+            { align: "top", cells: [{ ref: "q1", col: 1, span: 4 }, { ref: "grave", col: 5, span: 4 }] },
+            { align: "top", cells: [{ ref: "closing", col: 1, span: 4 }] },
           ],
           closingQuote: { print: { src: "/installation/efuru/vinyl-d.svg", width: 653.2, height: 784.8, type: 49 }, tone: "orange", text: "“She dreamt of the woman of the lake, her beauty, her long hair and her riches. She had lived for ages at the bottom of the lake. She was as old as the lake itself. She was happy, she was wealthy. She was beautiful. She gave women beauty and wealth but she had no child. She had never experienced the joy of motherhood. Why then did the women worship her?”", credit: ["Flora Nwapa, Efuru (London: Heinemann, 1966), 281. The closing lines of the novel."] },
         },
