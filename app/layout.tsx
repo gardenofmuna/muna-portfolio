@@ -1,3 +1,11 @@
+import { JsonLd } from "@/components/JsonLd";
+import {
+  SITE_DESCRIPTION,
+  SITE_IMAGE,
+  SITE_JSON_LD,
+  SITE_NAME,
+  SITE_URL,
+} from "@/lib/seo";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
@@ -26,36 +34,56 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://munanzeribe.xyz"),
-  title: "Muna | Portfolio",
-  description: "Hi! Welcome to my Portfolio!",
+  metadataBase: new URL(SITE_URL),
+  title: `${SITE_NAME} | Designer, Artist and Curator`,
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  authors: [{ name: "Muna Nzeribe", url: SITE_URL }],
+  creator: "Muna Nzeribe",
+  keywords: [
+    "Muna Nzeribe",
+    "Munachiso Nzeribe",
+    "Efuru at the Threshold",
+    "Flora Nwapa",
+    "Efuru",
+    "Àrokò Literary Arts",
+    "DIDI Museum",
+    "Mama, in Your Absence",
+    "designer",
+    "artist",
+    "curator",
+    "Toronto",
+    "Lagos",
+  ],
+  alternates: { canonical: "/" },
+  robots: { index: true, follow: true },
   icons: {
     icon: [{ url: "/site-icon-2026.png", type: "image/png" }],
     apple: [{ url: "/site-icon-2026.png", sizes: "180x180" }],
     shortcut: "/site-icon-2026.png",
   },
   openGraph: {
-    title: "Muna | Portfolio",
-    description: "Hi! Welcome to my Portfolio!",
+    title: `${SITE_NAME} | Designer, Artist and Curator`,
+    description: SITE_DESCRIPTION,
     url: "/",
-    siteName: "Muna | Portfolio",
+    siteName: SITE_NAME,
     locale: "en_US",
     type: "website",
     images: [
       {
-        url: "/preview-image-2.jpg",
-        width: 1024,
-        height: 576,
+        url: SITE_IMAGE.url,
+        width: SITE_IMAGE.size[0],
+        height: SITE_IMAGE.size[1],
         type: "image/jpeg",
-        alt: "Muna — portfolio",
+        alt: "Muna Nzeribe portfolio",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Muna | Portfolio",
-    description: "Hi! Welcome to my Portfolio!",
-    images: ["/preview-image-2.jpg"],
+    title: `${SITE_NAME} | Designer, Artist and Curator`,
+    description: SITE_DESCRIPTION,
+    images: [SITE_IMAGE.url],
   },
 };
 
@@ -88,10 +116,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
+        <JsonLd data={SITE_JSON_LD} />
         <DisablePageZoom />
-        <div id="__next">
-          {children}
-        </div>
+        <div id="__next">{children}</div>
         <Analytics />
       </body>
     </html>

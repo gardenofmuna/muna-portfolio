@@ -114,6 +114,17 @@ export type InstallationShow = {
   titleColor: string;
   /** Full detail page — same layout/logic for every show. */
   caseStudy: InstallationCaseStudy;
+  /** Search result description (defaults to the first paragraph). */
+  seoDescription?: string;
+  /** Facts for search engines (schema.org ExhibitionEvent). */
+  event?: {
+    startDate: string;
+    endDate?: string;
+    venue: string;
+    address?: { locality: string; country: string };
+    organizer?: string;
+    about?: readonly Record<string, unknown>[];
+  };
 };
 
 /**
@@ -133,6 +144,19 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
     height: 813,
     alt: "Flora Nwapa: Efuru at the Threshold, the quote wall between two vitrines at DIDI Museum",
     titleColor: EFURU_ORANGE,
+    seoDescription:
+      "Flora Nwapa: Efuru at the Threshold, curated by Muna Nzeribe for Àrokò Literary Arts at DIDI Museum, Lagos, 24 to 31 October 2026, for sixty years of Efuru.",
+    event: {
+      startDate: "2026-10-24",
+      endDate: "2026-10-31",
+      venue: "DIDI Museum",
+      address: { locality: "Lagos", country: "NG" },
+      organizer: "Àrokò Literary Arts",
+      about: [
+        { "@type": "Person", name: "Flora Nwapa" },
+        { "@type": "Book", name: "Efuru", datePublished: "1966", author: { "@type": "Person", name: "Flora Nwapa" } },
+      ],
+    },
     caseStudy: {
       paragraphs: [
         "I curated Flora Nwapa: Efuru at the Threshold as the inaugural exhibition of Àrokò Literary Arts, held at DIDI Museum in Lagos from 24 to 31 October 2026 to mark sixty years of Efuru, the first novel to be published by an African woman in English, Flora Nwapa.",
@@ -252,6 +276,13 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
     height: 813,
     alt: "Mama, in Your Absence installation view",
     titleColor: ABOUT_BIO_INK.afro,
+    event: {
+      startDate: "2025",
+      venue: "Artspace TMU",
+      address: { locality: "Toronto", country: "CA" },
+      organizer: "DOC NOW Festival 2025",
+      about: [{ "@type": "Person", name: "Flora Nwapa" }],
+    },
     caseStudy: {
       paragraphs: [
         "My interactive web documentary Mama, In Your Absence ([mamainyourabsence.com](https://mamainyourabsence.com)) was presented as part of the 17th annual DOC NOW Festival, showcasing student-made film, photography, and installation work from Toronto Metropolitan University's Documentary Media MFA graduates.",
@@ -366,6 +397,11 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
     height: 813,
     alt: "OGUTA - LAGOS - TORONTO at Artspace TMU",
     titleColor: ABOUT_BIO_INK.blue,
+    event: {
+      startDate: "2025",
+      venue: "Artspace TMU",
+      address: { locality: "Toronto", country: "CA" },
+    },
     caseStudy: {
       paragraphs: [
         "My installation Oguta-Lagos-Toronto was exhibited in Woven Together: Fabrics of Belonging, a group show alongside Mina Keykhaei and Azadeh Monzavi examining textiles' relationship to the spaces we inhabit, both public and personal, through a lens of feminism and social justice.",
@@ -420,6 +456,12 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
     height: 810,
     alt: "Akuabata. Nkiruka. at +234 Art Fair",
     titleColor: ABOUT_BIO_INK.medium,
+    event: {
+      startDate: "2024",
+      venue: "Ecobank Pan-African Centre",
+      address: { locality: "Lagos", country: "NG" },
+      organizer: "+234 Art Fair",
+    },
     caseStudy: {
       paragraphs: [
         "My collage series Akuabata. Nkiruka. and short film Onyemaechi (Who Knows Tomorrow?) were exhibited in Ilé Lawà, the photography pavilion of the +234 Art Fair. The pavilion's title, Yoruba for “we are home, we are safe,” framed its exploration of home through the eyes of contemporary Nigerian artists.",
