@@ -1019,8 +1019,9 @@
 .installation-chapters {
   --is-accent: #f75701;
   width: 100%;
-  /* Last picture to Back / Next: 77px, as on the other installation pages. */
-  margin: 0 0 77px;
+  /* Last picture to Back / Next: 68px, as on the other installation pages
+     (picture, one-line caption, Back / Next). */
+  margin: 0 0 68px;
 }
 
 .installation-vinyl-group {
@@ -1180,8 +1181,8 @@
 
 /* Phone: one image per row, caption under each, quotes stacked. */
 .installation-show--narrow .installation-chapters {
-  /* Last picture to Back / Next: 56px, as on the other installation pages. */
-  margin-bottom: 27px;
+  /* Last picture to Back / Next: 54px, as on the other installation pages. */
+  margin-bottom: 25px;
 }
 
 .installation-show--narrow .installation-vinyl-group {
@@ -1457,4 +1458,34 @@
   clip: rect(0 0 0 0);
   white-space: nowrap;
   border: 0;
+}
+
+/* ---- Captions and labels: quiet grey sans, like museum caption lines ----
+   One caption style for every installation page: Helvetica, regular weight,
+   mid grey. (The site's "Arial" web font is bold only, so the sans here is
+   Helvetica, falling back to the system sans.) Wall labels keep their
+   layout and weights, in the same grey. */
+.installation-show {
+  --is-caption-grey: #6e6e6e;
+  --is-caption-font: Helvetica, "Helvetica Neue", sans-serif;
+}
+.installation-show .installation-show__media-caption,
+.installation-show .installation-show__film-caption,
+.installation-show .installation-show__gallery-note {
+  font-family: var(--is-caption-font);
+  font-weight: 400;
+  font-style: normal;
+  font-size: 14px;
+  line-height: 1.4;
+  letter-spacing: 0;
+  color: var(--is-caption-grey);
+}
+.installation-show.installation-show--narrow .installation-show__media-caption,
+.installation-show.installation-show--narrow .installation-show__film-caption,
+.installation-show.installation-show--narrow .installation-show__gallery-note {
+  font-size: 12px;
+}
+.installation-show .installation-label {
+  font-family: var(--is-caption-font);
+  color: var(--is-caption-grey);
 }
