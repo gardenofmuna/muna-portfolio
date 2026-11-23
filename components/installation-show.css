@@ -1438,3 +1438,8 @@
   top: 0;
   left: 0;
 }
+
+/* Orange quotes: as tall as the picture beside them (width set from the page). */
+.efuru-quotes-matched .efuru-row:not([data-prints]) .installation-vinyl--print[data-tone="orange"] {
+  width: var(--efuru-q-w) !important;
+}

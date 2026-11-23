@@ -389,7 +389,7 @@ function GridRow({
       data-align={row.align}
       data-prints={row.printHeight ? "" : undefined}
     >
-      {cells.map(({ ref, r, col, span }) => {
+      {cells.map(({ ref, r, col, span, match }) => {
         const gc = `${col} / span ${span}`;
         if (r.kind === "slideshow")
           return (
@@ -402,6 +402,7 @@ function GridRow({
             <div
               key={ref}
               className="efuru-cell efuru-cell--quote"
+              data-match={match}
               style={{ gridColumn: gc }}
             >
               <VinylQuote quote={r.quote} />
@@ -412,6 +413,7 @@ function GridRow({
           <div
             key={ref}
             className="efuru-cell efuru-cell--pic"
+            data-ref={ref}
             style={{ gridColumn: gc }}
           >
             <PicBox
@@ -490,15 +492,59 @@ export function InstallationChapters({
       );
       root.classList.add("efuru-quotes-matched");
     };
-    measure();
-    const ro = new ResizeObserver(measure);
+    /* Orange quotes: as tall as the picture beside them (or the one named
+       in data-match), never wider than their own columns. Heights come from
+       offsetHeight, which is in layout pixels, so the stage scale doesn't
+       matter here. */
+    const matchOrange = () => {
+      root
+        .querySelectorAll<HTMLElement>(
+          ".efuru-row:not([data-prints]) > .efuru-cell--quote",
+        )
+        .forEach((cell) => {
+          const fig = cell.querySelector<HTMLElement>(
+            '.installation-vinyl--print[data-tone="orange"]',
+          );
+          const img = fig?.querySelector<HTMLImageElement>("img");
+          if (!fig || !img) return;
+          const pw = Number(img.getAttribute("width"));
+          const ph = Number(img.getAttribute("height"));
+          const ar = pw && ph ? pw / ph : 0;
+          const name = cell.dataset.match;
+          const pics = name
+            ? [
+                ...root.querySelectorAll<HTMLElement>(
+                  `[data-ref="${name}"] .efuru-pic`,
+                ),
+              ]
+            : [
+                ...(cell.parentElement?.querySelectorAll<HTMLElement>(
+                  ":scope > .efuru-cell--pic .efuru-pic",
+                ) ?? []),
+              ];
+          const h = Math.max(0, ...pics.map((p) => p.offsetHeight));
+          if (!ar || !h) return;
+          const w = Math.min(cell.clientWidth, h * ar);
+          fig.style.setProperty("--efuru-q-w", `${Math.floor(w)}px`);
+        });
+      root.classList.add("efuru-quotes-matched");
+    };
+    const both = () => {
+      measure();
+      matchOrange();
+    };
+    both();
+    const ro = new ResizeObserver(both);
+    root
+      .querySelectorAll(".efuru-row:not([data-prints]) .efuru-pic")
+      .forEach((p) => ro.observe(p));
     root
       .querySelectorAll(".efuru-row[data-prints] > .efuru-label")
       .forEach((l) => ro.observe(l));
-    window.addEventListener("resize", measure);
+    window.addEventListener("resize", both);
     return () => {
       ro.disconnect();
-      window.removeEventListener("resize", measure);
+      window.removeEventListener("resize", both);
     };
   }, [isDesktop]);
   return (
