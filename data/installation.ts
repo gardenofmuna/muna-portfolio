@@ -224,13 +224,14 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
           views: [
             { src: "/installation/efuru/wall-memory-full.webp", width: 2400, height: 1600, alt: "The collage wall of reader responses" },
             { src: "/installation/efuru/ss-collage-quote.webp", width: 2400, height: 1600, alt: "Close-up of the collage wall: a quote among reader responses" },
+            { src: "/installation/efuru/memory-visitors.webp", width: 2400, height: 1350, alt: "Visitors reading the collage wall of reader responses" },
           ],
           archive: [
             { image: { src: "/installation/efuru/grave.webp", width: 374, height: 268, alt: "Ejine and Amede at Flora Nwapa's grave on the first anniversary of her death" }, title: "Ejine and Amede at Flora Nwapa's grave on the first anniversary of her death", date: "1994", lines: ["Photographer unknown", "Photograph, colour"] },
           ],
           rows: [
             { align: "top", cells: [{ ref: "vinyl-v3", col: 1, span: 4 }, { ref: "ss-collage-quote", col: 5, span: 8 }] },
-            { align: "top", cells: [{ ref: "vinyl-v1", col: 9, span: 4, edge: "end" }, { ref: "wall-memory-full", col: 1, span: 8 }] },
+            { align: "top", cells: [{ ref: "vinyl-v1", col: 9, span: 4, edge: "end" }, { ref: "memory-visitors", col: 1, span: 8 }] },
             { align: "top", cells: [{ ref: "vinyl-a", col: 9, span: 4 }] },
           ],
           closingQuote: { print: { src: "/installation/efuru/vinyl-d.svg", width: 653.2, height: 784.8, type: 49 }, tone: "orange", text: "“She dreamt of the woman of the lake, her beauty, her long hair and her riches. She had lived for ages at the bottom of the lake. She was as old as the lake itself. She was happy, she was wealthy. She was beautiful. She gave women beauty and wealth but she had no child. She had never experienced the joy of motherhood. Why then did the women worship her?”", credit: ["Flora Nwapa, Efuru (London: Heinemann, 1966), 281. The closing lines of the novel."] },
