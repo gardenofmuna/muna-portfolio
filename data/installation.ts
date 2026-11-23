@@ -213,7 +213,7 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
             { align: "top", cells: [{ ref: "vinyl-b", col: 9, span: 4 }, { ref: "ekwensi", col: 1, span: 8 }] },
             { align: "bottom", cells: [{ ref: "mbadiwe", col: 1, span: 4 }, { ref: "decoration-1987", col: 5, span: 4 }, { ref: "commissioner-health", col: 9, span: 4 }] },
             { align: "bottom", mobileCols: 2, printHeight: 174, cells: [{ ref: "children-1981", col: 1, span: 3 }, { ref: "sisters", col: 4, span: 3 }, { ref: "iowa", col: 7, span: 3 }, { ref: "amsterdam-1", col: 10, span: 3 }] },
-            { align: "bottom", mobileCols: 2, printHeight: 174, cells: [{ ref: "amsterdam-2", col: 1, span: 3 }, { ref: "buchi", col: 4, span: 3 }, { ref: "grave", col: 7, span: 3 }] },
+            { align: "bottom", mobileCols: 2, printHeight: 174, cells: [{ ref: "amsterdam-2", col: 1, span: 3 }, { ref: "buchi", col: 4, span: 3 }, { ref: "vinyl-v2", col: 10, span: 3 }, { ref: "grave", col: 7, span: 3 }] },
           ],
         },
         {
@@ -228,7 +228,7 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
             { image: { src: "/installation/efuru/grave.webp", width: 374, height: 268, alt: "Ejine and Amede at Flora Nwapa's grave on the first anniversary of her death" }, title: "Ejine and Amede at Flora Nwapa's grave on the first anniversary of her death", date: "1994", lines: ["Photographer unknown", "Photograph, colour"] },
           ],
           rows: [
-            { align: "top", cells: [{ ref: "vinyl-v2", col: 1, span: 4 }, { ref: "vinyl-v3", col: 5, span: 4 }, { ref: "vinyl-v1", col: 9, span: 4 }] },
+            { align: "top", cells: [{ ref: "vinyl-v3", col: 1, span: 4 }, { ref: "vinyl-v1", col: 5, span: 4 }] },
             { align: "top", cells: [{ ref: "wall-memory-full", col: 1, span: 6 }, { ref: "ss-collage-quote", col: 7, span: 6 }] },
             { align: "top", cells: [{ ref: "vinyl-a", col: 9, span: 4 }] },
           ],

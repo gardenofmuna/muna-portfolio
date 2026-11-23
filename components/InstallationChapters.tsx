@@ -340,45 +340,41 @@ function GridRow({
         className="efuru-row efuru-row--mobile"
         data-cols={row.mobileCols ?? 1}
       >
-        {/* Quotes always come before the pictures beside them. */}
-        {[...cells]
-          .sort(
-            (a, b) =>
-              Number(b.r.kind === "quote") - Number(a.r.kind === "quote"),
-          )
-          .map(({ ref, r, span }) => {
-            if (r.kind === "slideshow")
-              return (
-                <div key={ref} className="efuru-cell efuru-cell--full">
-                  {slideshow}
-                </div>
-              );
-            if (r.kind === "quote")
-              return (
-                <div key={ref} className="efuru-cell efuru-cell--full">
-                  <VinylQuote quote={r.quote} />
-                </div>
-              );
-            const image = r.kind === "view" ? r.image : r.item.image;
+        {/* Rows list each quote just before the picture it sits beside,
+            so on phones the quote always comes first. */}
+        {cells.map(({ ref, r, span }) => {
+          if (r.kind === "slideshow")
             return (
-              <figure key={ref} className="efuru-cell">
-                <PicBox
-                  image={image}
-                  sizes={sizesFor(span)}
-                  printHeight={
-                    row.printHeight
-                      ? Math.round(row.printHeight * 0.7)
-                      : undefined
-                  }
-                />
-                {r.kind === "item" ? (
-                  <figcaption className="efuru-label">
-                    <Label item={r.item} credit={credit} />
-                  </figcaption>
-                ) : null}
-              </figure>
+              <div key={ref} className="efuru-cell efuru-cell--full">
+                {slideshow}
+              </div>
             );
-          })}
+          if (r.kind === "quote")
+            return (
+              <div key={ref} className="efuru-cell efuru-cell--full">
+                <VinylQuote quote={r.quote} />
+              </div>
+            );
+          const image = r.kind === "view" ? r.image : r.item.image;
+          return (
+            <figure key={ref} className="efuru-cell">
+              <PicBox
+                image={image}
+                sizes={sizesFor(span)}
+                printHeight={
+                  row.printHeight
+                    ? Math.round(row.printHeight * 0.7)
+                    : undefined
+                }
+              />
+              {r.kind === "item" ? (
+                <figcaption className="efuru-label">
+                  <Label item={r.item} credit={credit} />
+                </figcaption>
+              ) : null}
+            </figure>
+          );
+        })}
       </div>
     );
   }
