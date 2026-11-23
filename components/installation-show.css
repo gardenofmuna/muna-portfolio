@@ -1348,8 +1348,10 @@
   --efuru-row-gap: 72px;
   margin-top: 144px;
 }
+/* First row sits under the gallery caption at the same gap as every
+   other row. */
 .efuru-chapter:first-child {
-  margin-top: 96px;
+  margin-top: var(--efuru-row-gap);
 }
 .efuru-row {
   display: grid;
@@ -1417,7 +1419,7 @@
   margin-top: 96px;
 }
 .installation-show--narrow .efuru-chapter:first-child {
-  margin-top: 64px;
+  margin-top: var(--efuru-row-gap);
 }
 
 /* Small black quotes: as tall as a small print with its label (height set
