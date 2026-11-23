@@ -228,8 +228,8 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
             { image: { src: "/installation/efuru/grave.webp", width: 374, height: 268, alt: "Ejine and Amede at Flora Nwapa's grave on the first anniversary of her death" }, title: "Ejine and Amede at Flora Nwapa's grave on the first anniversary of her death", date: "1994", lines: ["Photographer unknown", "Photograph, colour"] },
           ],
           rows: [
-            { align: "top", cells: [{ ref: "vinyl-v3", col: 1, span: 4 }, { ref: "vinyl-v1", col: 5, span: 4 }] },
-            { align: "top", cells: [{ ref: "wall-memory-full", col: 1, span: 6 }, { ref: "ss-collage-quote", col: 7, span: 6 }] },
+            { align: "top", cells: [{ ref: "vinyl-v3", col: 1, span: 4 }, { ref: "ss-collage-quote", col: 5, span: 8 }] },
+            { align: "top", cells: [{ ref: "vinyl-v1", col: 9, span: 4 }, { ref: "wall-memory-full", col: 1, span: 8 }] },
             { align: "top", cells: [{ ref: "vinyl-a", col: 9, span: 4 }] },
           ],
           closingQuote: { print: { src: "/installation/efuru/vinyl-d.svg", width: 653.2, height: 784.8, type: 49 }, tone: "orange", text: "“She dreamt of the woman of the lake, her beauty, her long hair and her riches. She had lived for ages at the bottom of the lake. She was as old as the lake itself. She was happy, she was wealthy. She was beautiful. She gave women beauty and wealth but she had no child. She had never experienced the joy of motherhood. Why then did the women worship her?”", credit: ["Flora Nwapa, Efuru (London: Heinemann, 1966), 281. The closing lines of the novel."] },
