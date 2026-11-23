@@ -173,7 +173,7 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
             { src: "/installation/efuru/ig-orange-wall.webp", width: 2400, height: 1600, alt: "Flora Nwapa’s words on the orange quote wall" },
             { src: "/installation/efuru/ig-gallery-view.webp", width: 2400, height: 1600, alt: "View across the gallery to the desk and the Reader wall" },
             { src: "/installation/efuru/ss-memory-wall.webp", width: 2400, height: 1601, alt: "The closing lines of Efuru beside the desk portrait" },
-            { src: "/installation/efuru/ig-quote-made-history.webp", width: 1800, height: 2400, alt: "“I made history!” in orange vinyl" },
+            { src: "/installation/efuru/ig-quote-made-history.webp", width: 1080, height: 1350, alt: "“I made history!” in orange vinyl" },
             { src: "/installation/efuru/ss-portrait-wall.webp", width: 2400, height: 1946, alt: "The portrait panel among framed photographs on the Reader wall" },
             { src: "/installation/efuru/wall-making-full.webp", width: 1800, height: 2400, alt: "Framed photographs on the Making wall" },
             { src: "/installation/efuru/wall-memory-full.webp", width: 2400, height: 1600, alt: "The collage wall of reader responses" },
@@ -187,7 +187,7 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
             { src: "/installation/efuru/ss-making-pair.webp", width: 1800, height: 2400, alt: "Framed photographs and labels on the Making wall" },
             { src: "/installation/efuru/wall-reader-full.webp", width: 2400, height: 1350, alt: "The desk portrait panel flanked by framed photographs on the Reader wall" },
             { src: "/installation/efuru/ss-closing-quote.webp", width: 1982, height: 2400, alt: "The closing lines of Efuru in orange vinyl" },
-            { src: "/installation/efuru/ig-quote-feminist.webp", width: 1800, height: 2400, alt: "“A feminist with a big ‘f’” in orange vinyl" },
+            { src: "/installation/efuru/ig-quote-feminist.webp", width: 1080, height: 1350, alt: "“A feminist with a big ‘f’” in orange vinyl" },
           ],
           rows: [
             { align: "top", cells: [{ ref: "slideshow", col: 1, span: 12 }] },
