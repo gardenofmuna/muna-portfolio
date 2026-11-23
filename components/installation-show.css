@@ -1418,7 +1418,7 @@
    from the page, width from the printed proportions). */
 .efuru-quotes-matched .efuru-cell--quote .installation-vinyl--print[data-tone="black"] {
   width: auto !important;
-  height: var(--efuru-print-block);
+  height: calc(var(--efuru-print-block) * var(--efuru-black-scale, 0.8));
 }
 .efuru-quotes-matched .efuru-cell--quote .installation-vinyl--print[data-tone="black"] .installation-vinyl__print {
   width: auto;
