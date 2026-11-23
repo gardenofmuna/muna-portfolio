@@ -344,10 +344,16 @@ function GridRow({
       <div
         className="efuru-row efuru-row--mobile"
         data-cols={row.mobileCols ?? 1}
+        data-prints={row.printHeight ? "" : undefined}
       >
         {/* Rows list each quote just before the picture it sits beside,
-            so on phones the quote always comes first. */}
-        {cells.map(({ ref, r, span }) => {
+            so on phones the quote comes first. Among the small prints the
+            two-column grid holds: cells keep their desktop order, and the
+            quote takes one column beside its print. */}
+        {(row.printHeight
+          ? [...cells].sort((a, b) => a.col - b.col)
+          : cells
+        ).map(({ ref, r, span }) => {
           if (r.kind === "slideshow")
             return (
               <div key={ref} className="efuru-cell efuru-cell--full">
@@ -356,13 +362,20 @@ function GridRow({
             );
           if (r.kind === "quote")
             return (
-              <div key={ref} className="efuru-cell efuru-cell--full">
+              <div
+                key={ref}
+                className={
+                  row.printHeight
+                    ? "efuru-cell efuru-cell--quote"
+                    : "efuru-cell efuru-cell--full"
+                }
+              >
                 <VinylQuote quote={r.quote} />
               </div>
             );
           const image = r.kind === "view" ? r.image : r.item.image;
           return (
-            <figure key={ref} className="efuru-cell">
+            <figure key={ref} className="efuru-cell efuru-cell--pic">
               <PicBox
                 image={image}
                 sizes={sizesFor(span)}
@@ -466,7 +479,28 @@ export function InstallationChapters({
     if (!root) return;
     if (!isDesktop) {
       root.classList.remove("efuru-quotes-matched");
-      return;
+      /* Phones: the quote among the small prints stands as tall as the
+         print beside it with its label. */
+      const fit = () => {
+        root
+          .querySelectorAll<HTMLElement>(
+            ".efuru-row--mobile[data-prints] > .efuru-cell--quote",
+          )
+          .forEach((cell) => {
+            const prev = cell.previousElementSibling as HTMLElement | null;
+            if (prev)
+              cell.style.setProperty(
+                "--efuru-m-block",
+                `${prev.offsetHeight}px`,
+              );
+          });
+      };
+      fit();
+      const ro = new ResizeObserver(fit);
+      root
+        .querySelectorAll(".efuru-row--mobile[data-prints] > .efuru-cell--pic")
+        .forEach((f) => ro.observe(f));
+      return () => ro.disconnect();
     }
     const measure = () => {
       const row = [

@@ -1429,14 +1429,14 @@
 }
 /* Beside the prints, the quote spans picture and label rows so it never
    pushes the labels down. */
-.efuru-row[data-prints] > .efuru-cell--quote {
+.efuru-row:not(.efuru-row--mobile)[data-prints] > .efuru-cell--quote {
   grid-row: 1 / span 2;
   align-self: stretch;
   position: relative;
 }
 /* Taken out of the row's sizing, so its height can follow the prints
    without ever changing them. */
-.efuru-row[data-prints] > .efuru-cell--quote > .installation-vinyl {
+.efuru-row:not(.efuru-row--mobile)[data-prints] > .efuru-cell--quote > .installation-vinyl {
   position: absolute;
   top: 0;
   left: 0;
@@ -1488,4 +1488,26 @@
 .installation-show .installation-label {
   font-family: var(--is-caption-font);
   color: var(--is-caption-grey);
+}
+
+/* Phones, small prints: the quote fills its column beside the print, as tall
+   as the print with its label, kept in the printed proportions. */
+.efuru-row--mobile[data-prints] > .efuru-cell--quote {
+  position: relative;
+  align-self: stretch;
+}
+.efuru-row--mobile[data-prints] > .efuru-cell--quote .installation-vinyl--print {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: auto !important;
+  height: min(var(--efuru-m-block, 200px), 100%);
+  max-width: 100%;
+}
+.efuru-row--mobile[data-prints] > .efuru-cell--quote .installation-vinyl__print {
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+  object-position: left top;
 }
