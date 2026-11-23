@@ -182,7 +182,7 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
             { src: "/installation/efuru/panel-at-her-desk.webp", width: 1757, height: 2400, alt: "Flora Nwapa on the telephone at her desk, printed panel" },
           ],
           rows: [
-            { align: "top", mobileCols: 3, cells: [{ ref: "panel-portrait-10", col: 1, span: 4 }, { ref: "panel-portrait-8", col: 5, span: 4 }, { ref: "panel-at-her-desk", col: 9, span: 4 }] },
+            { align: "top", mobileCols: 3, cells: [{ ref: "panel-portrait-10", col: 1, span: 4 }, { ref: "panel-at-her-desk", col: 5, span: 4 }, { ref: "panel-portrait-8", col: 9, span: 4 }] },
             { align: "top", mobileCols: 2, cells: [{ ref: "vinyl-c", col: 1, span: 4 }, { ref: "wall-making-full", col: 5, span: 4 }, { ref: "ss-making-pair", col: 9, span: 4 }] },
             { align: "bottom", cells: [{ ref: "pmgs-staff-1953", col: 1, span: 4 }, { ref: "children-bw", col: 5, span: 4 }, { ref: "husband-gogo-nwakuche", col: 9, span: 4 }] },
           ],
