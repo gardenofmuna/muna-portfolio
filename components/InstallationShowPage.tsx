@@ -1,5 +1,6 @@
 "use client";
 
+import { BookTitles } from "@/components/BookTitles";
 import Image from "next/image";
 import {
   Fragment,
@@ -62,7 +63,7 @@ function LinkedBodyText({ text }: { text: string }) {
     <>
       {parts.map((part, i) => {
         const m = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(part);
-        if (!m) return <Fragment key={i}>{part}</Fragment>;
+        if (!m) return <BookTitles key={i} text={part} />;
         return (
           <a
             key={i}
@@ -71,7 +72,7 @@ function LinkedBodyText({ text }: { text: string }) {
               ? {}
               : { target: "_blank", rel: "noopener noreferrer" })}
           >
-            {m[1]}
+            <BookTitles text={m[1]} />
           </a>
         );
       })}
@@ -902,7 +903,7 @@ export function InstallationShowPage({
       >
         {show.titleLines.map((line) => (
           <span key={line} className="installation-show__title-line">
-            {line}
+            <BookTitles text={line} />
           </span>
         ))}
       </h1>
@@ -1376,7 +1377,7 @@ export function InstallationShowPage({
               >
                 {show.titleLines.map((line) => (
                   <span key={line} className="installation-show__title-line">
-                    {line}
+                    <BookTitles text={line} />
                   </span>
                 ))}
               </p>

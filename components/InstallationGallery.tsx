@@ -1,5 +1,6 @@
 "use client";
 
+import { BookTitles } from "@/components/BookTitles";
 import Image from "next/image";
 import {
   useCallback,
@@ -423,7 +424,7 @@ export function InstallationGallery({
         >
           {active.titleLines.map((line) => (
             <span key={line} className="installation-gallery__title-line">
-              {line}
+              <BookTitles text={line} />
             </span>
           ))}
         </button>

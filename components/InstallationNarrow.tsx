@@ -1,5 +1,6 @@
 "use client";
 
+import { BookTitles } from "@/components/BookTitles";
 import Image from "next/image";
 import {
   useCallback,
@@ -232,7 +233,7 @@ export function InstallationNarrow({
                         key={line}
                         className="installation-narrow__title-line"
                       >
-                        {line}
+                        <BookTitles text={line} />
                       </span>
                     ))}
                   </button>

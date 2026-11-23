@@ -1,5 +1,6 @@
 "use client";
 
+import { BookTitles } from "@/components/BookTitles";
 import {
   memo,
   startTransition,
@@ -1117,15 +1118,15 @@ function CvRow({ entry, copy }: { entry: CvEntry; copy: boolean }) {
               rel="noreferrer"
               tabIndex={copy ? -1 : undefined}
             >
-              {entry.title}
+              <BookTitles text={entry.title} />
             </a>
           ) : (
-            entry.title
+            <BookTitles text={entry.title} />
           )}
         </p>
         {entry.lines.map((line) => (
           <p key={line} className="cv-pane__line project-body-copy">
-            {line}
+            <BookTitles text={line} />
           </p>
         ))}
       </div>

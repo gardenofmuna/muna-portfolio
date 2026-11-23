@@ -1,5 +1,6 @@
 "use client";
 
+import { BookTitles } from "@/components/BookTitles";
 import {
   useCallback,
   useEffect,
@@ -295,15 +296,15 @@ function CvNarrowRow({ entry }: { entry: CvEntry }) {
         <p className="cv-narrow__title">
           {entry.href ? (
             <a href={entry.href} target="_blank" rel="noreferrer">
-              {entry.title}
+              <BookTitles text={entry.title} />
             </a>
           ) : (
-            entry.title
+            <BookTitles text={entry.title} />
           )}
         </p>
         {entry.lines.map((line) => (
           <p key={line} className="cv-narrow__line">
-            {line}
+            <BookTitles text={line} />
           </p>
         ))}
       </div>
