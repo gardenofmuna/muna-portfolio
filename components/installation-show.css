@@ -1541,15 +1541,20 @@
 .installation-show--narrow .installation-chapters:has(+ .ambient-video) {
   margin-bottom: 48px;
 }
+/* Video, one-line caption, Back / Next: the same 68px (phones 54px) from
+   picture to Back / Next as the other installation pages. */
 .ambient-video {
+  width: 100%;
+  margin: 0 0 40px;
+}
+.ambient-video__frame {
   position: relative;
   width: 100%;
-  margin: 0 0 68px;
   background: #f3f2f0;
   overflow: hidden;
 }
 .installation-show--narrow .ambient-video {
-  margin-bottom: 25px;
+  margin-bottom: 0;
 }
 .ambient-video__media {
   display: block;

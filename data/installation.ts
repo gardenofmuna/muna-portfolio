@@ -43,6 +43,7 @@ export type InstallationCaseStudy = {
     width: number;
     height: number;
     label: string;
+    caption?: string;
   };
 };
 
@@ -187,6 +188,7 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
         width: 1916,
         height: 1078,
         label: "The opening of Flora Nwapa: Efuru at the Threshold at DIDI Museum, Lagos",
+        caption: "Video courtesy of Àrokò Literary Arts",
       },
       chapters: [
         {

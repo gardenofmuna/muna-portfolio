@@ -14,6 +14,7 @@ export function AmbientLoopVideo({
   width,
   height,
   label,
+  caption,
 }: {
   src: string;
   srcMobile?: string;
@@ -21,6 +22,7 @@ export function AmbientLoopVideo({
   width: number;
   height: number;
   label: string;
+  caption?: string;
 }) {
   const ref = useRef<HTMLVideoElement>(null);
 
@@ -51,20 +53,30 @@ export function AmbientLoopVideo({
   }, [src, srcMobile]);
 
   return (
-    <figure className="ambient-video" style={{ aspectRatio: `${width} / ${height}` }}>
-      <video
-        ref={ref}
-        className="ambient-video__media"
-        muted
-        loop
-        playsInline
-        autoPlay
-        preload="none"
-        poster={poster}
-        aria-label={label}
-        disablePictureInPicture
-        controls={false}
-      />
+    <figure className="ambient-video">
+      <div
+        className="ambient-video__frame"
+        style={{ aspectRatio: `${width} / ${height}` }}
+      >
+        <video
+          ref={ref}
+          className="ambient-video__media"
+          muted
+          loop
+          playsInline
+          autoPlay
+          preload="none"
+          poster={poster}
+          aria-label={label}
+          disablePictureInPicture
+          controls={false}
+        />
+      </div>
+      {caption ? (
+        <figcaption className="installation-show__media-caption ambient-video__caption">
+          {caption}
+        </figcaption>
+      ) : null}
     </figure>
   );
 }
