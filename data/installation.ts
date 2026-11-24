@@ -102,7 +102,14 @@ export type InstallationGridRow = {
    *  on one line so their labels start together. */
   align: "top" | "bottom";
   /** edge "end": a quote sits against the right edge of its columns. */
-  cells: readonly { ref: string; col: number; span: number; edge?: "end" }[];
+  cells: readonly {
+    ref: string;
+    col: number;
+    span: number;
+    edge?: "end";
+    /** One-line caption under this picture; *text* is set in italics. */
+    caption?: string;
+  }[];
   /** Columns on phones (default 1). */
   mobileCols?: 1 | 2 | 3;
   /** One caption for the whole row, set under it. */
@@ -283,7 +290,7 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
           ],
           rows: [
             { align: "top", cells: [{ ref: "vinyl-v3", col: 1, span: 4 }, { ref: "ss-collage-quote", col: 5, span: 8 }] },
-            { align: "top", cells: [{ ref: "vinyl-v1", col: 9, span: 4, edge: "end" }, { ref: "memory-visitors", col: 1, span: 8 }] },
+            { align: "top", cells: [{ ref: "vinyl-v1", col: 9, span: 4, edge: "end" }, { ref: "memory-visitors", col: 1, span: 8, caption: "*In the Margins*, 2026. Collage: archival photographs, printed scholarship, highlighted research" }] },
             { align: "top", cells: [{ ref: "vinyl-a", col: 1, span: 4 }, { ref: "ss-desk-piano", col: 5, span: 8 }] },
           ],
           closingQuote: { print: { src: "/installation/efuru/vinyl-d.svg", width: 653.2, height: 784.8, type: 49 }, tone: "orange", text: "“She dreamt of the woman of the lake, her beauty, her long hair and her riches. She had lived for ages at the bottom of the lake. She was as old as the lake itself. She was happy, she was wealthy. She was beautiful. She gave women beauty and wealth but she had no child. She had never experienced the joy of motherhood. Why then did the women worship her?”", credit: ["Flora Nwapa, Efuru (London: Heinemann, 1966), 281. The closing lines of the novel."] },

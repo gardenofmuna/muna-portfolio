@@ -1,5 +1,6 @@
 "use client";
 
+import { BookTitles } from "@/components/BookTitles";
 import { SizedImg } from "@/components/SizedImg";
 import { useLayoutEffect, useRef } from "react";
 import type { CSSProperties, ReactNode } from "react";
@@ -239,6 +240,23 @@ function ArchiveRow({
   );
 }
 
+/** Caption text with *italic* titles. */
+function CaptionText({ text }: { text: string }) {
+  return (
+    <>
+      {text
+        .split(/(\*[^*]+\*)/)
+        .map((part, i) =>
+          part.startsWith("*") && part.endsWith("*") ? (
+            <i key={i}>{part.slice(1, -1)}</i>
+          ) : (
+            <BookTitles key={i} text={part} />
+          ),
+        )}
+    </>
+  );
+}
+
 /* ------------------------------------------------------------------ */
 /* Hand-placed chapters on a 12-column grid                            */
 /* ------------------------------------------------------------------ */
@@ -363,7 +381,7 @@ function GridRow({
         {(row.printHeight
           ? [...cells].sort((a, b) => a.col - b.col)
           : cells
-        ).map(({ ref, r, span }) => {
+        ).map(({ ref, r, span, caption }) => {
           if (r.kind === "slideshow")
             return (
               <div key={ref} className="efuru-cell efuru-cell--full">
@@ -398,6 +416,10 @@ function GridRow({
               {r.kind === "item" ? (
                 <figcaption className="efuru-label">
                   <Label item={r.item} credit={credit} />
+                </figcaption>
+              ) : caption ? (
+                <figcaption className="installation-show__media-caption efuru-cell__caption">
+                  <CaptionText text={caption} />
                 </figcaption>
               ) : null}
             </figure>
@@ -467,6 +489,17 @@ function GridRow({
             ) : null,
           )
         : null}
+      {cells.map(({ ref, r, col, span, caption }) =>
+        caption && r.kind !== "quote" ? (
+          <p
+            key={`${ref}-caption`}
+            className="installation-show__media-caption efuru-cell__caption"
+            style={{ gridColumn: `${col} / span ${span}`, gridRow: 2 }}
+          >
+            <CaptionText text={caption} />
+          </p>
+        ) : null,
+      )}
       {row.caption ? (
         <p
           className="installation-show__media-caption efuru-row__caption"

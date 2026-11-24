@@ -1563,3 +1563,15 @@
   object-fit: cover;
   pointer-events: none;
 }
+
+/* One-line caption under a single picture, like the other picture captions. */
+.efuru-row > .efuru-cell__caption {
+  margin: -4px 0 0;
+  align-self: start;
+}
+.efuru-row--mobile .efuru-cell__caption {
+  margin: 8px 0 0;
+}
+.efuru-cell__caption i {
+  font-style: italic;
+}
