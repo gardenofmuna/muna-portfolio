@@ -215,6 +215,7 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
             { src: "/installation/efuru/ss-family-frames.webp", width: 2400, height: 1627, alt: "Family photographs on the Making wall" },
             { src: "/installation/efuru/ss-vitrine-mammywater.webp", width: 1350, height: 2400, alt: "Mammywater in a vitrine" },
             { src: "/installation/efuru/ss-vitrine-french.webp", width: 1800, height: 2400, alt: "Efuru: roman nigérian, the French translation" },
+            { src: "/installation/efuru/ss-vitrine-efuru.webp", width: 1800, height: 2400, alt: "The first edition of Efuru (Heinemann, 1966) in a vitrine, with the typescript of Nkuma is Captain below" },
             { src: "/installation/efuru/ss-visitor.webp", width: 2400, height: 1350, alt: "A visitor at the Reader wall" },
             { src: "/installation/efuru/ss-making-pair.webp", width: 1800, height: 2400, alt: "Framed photographs and labels on the Making wall" },
             { src: "/installation/efuru/wall-reader-full.webp", width: 2400, height: 1350, alt: "The desk portrait panel flanked by framed photographs on the Reader wall" },
