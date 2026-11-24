@@ -47,14 +47,24 @@ function VinylQuote({ quote }: { quote: InstallationVinylQuote }) {
           ).toFixed(3)})`,
         }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={quote.print.src}
-          alt={`${quote.text} ${quote.credit.join(". ")}`}
-          width={quote.print.width}
-          height={quote.print.height}
-          className="installation-vinyl__print"
-        />
+        {/* Phones get a pre-rendered image of the print: the vector outlines
+            are heavy (up to ~900 KB each) and slow to redraw while scrolling,
+            which made the quotes blank or flicker. Desktop keeps the vector. */}
+        <picture style={{ display: "contents" }}>
+          <source
+            media="(max-width: 899px)"
+            type="image/webp"
+            srcSet={quote.print.src.replace(/\.svg$/, "-m.webp")}
+          />
+          <img
+            src={quote.print.src}
+            alt={`${quote.text} ${quote.credit.join(". ")}`}
+            width={quote.print.width}
+            height={quote.print.height}
+            className="installation-vinyl__print"
+            decoding="async"
+          />
+        </picture>
       </figure>
     );
   }

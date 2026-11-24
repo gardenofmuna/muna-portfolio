@@ -1509,3 +1509,25 @@
 .efuru-row--mobile > .efuru-row__caption {
   margin: -24px 0 0;
 }
+
+/* ---- Calm loading on phones and slow connections ----------------------
+   A photograph that is not ready yet shows a very light tone instead of
+   bare white, and fades in once it has loaded, rather than popping in. */
+.efuru-pic {
+  background: #f3f2f0;
+}
+.efuru-pic img,
+.exhibition-slideshow__img {
+  opacity: 0;
+  transition: opacity 260ms ease-out;
+}
+.efuru-pic img[data-loaded],
+.exhibition-slideshow__img[data-loaded] {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .efuru-pic img,
+  .exhibition-slideshow__img {
+    transition: none;
+  }
+}

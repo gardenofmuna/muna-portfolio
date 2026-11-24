@@ -215,6 +215,14 @@ export function InstallationNarrow({
                       sizes="(max-width: 700px) calc(100vw - 40px), calc(100vw - 104px)"
                       /* Same files as the desktop carousel (`INSTALLATION_SHOWS`). */
                       unoptimized
+                      /* Fade in once loaded (cached photos are marked straight away). */
+                      ref={(el) => {
+                        if (el && el.complete && el.naturalWidth)
+                          el.dataset.loaded = "";
+                      }}
+                      onLoad={(e) => {
+                        e.currentTarget.dataset.loaded = "";
+                      }}
                     />
                   ) : null}
                 </button>

@@ -1,3 +1,5 @@
+"use client";
+
 import type { CSSProperties } from "react";
 
 import avifNames from "@/data/efuru-avif.json";
@@ -77,6 +79,15 @@ export function SizedImg({
         loading={eager ? "eager" : "lazy"}
         decoding="async"
         fetchPriority={priority}
+        /* Marks the photo as loaded so it can fade in (see .efuru-pic img).
+           Photos already in the cache finish before scripts run, so the ref
+           checks for those too. */
+        ref={(el) => {
+          if (el && el.complete && el.naturalWidth) el.dataset.loaded = "";
+        }}
+        onLoad={(e) => {
+          e.currentTarget.dataset.loaded = "";
+        }}
       />
     </picture>
   );

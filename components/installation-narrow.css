@@ -128,6 +128,24 @@
   pointer-events: none;
 }
 
+/* A picture that is not drawn yet shows a light tone, not a white blink. */
+.installation-narrow__frame {
+  background-color: #f3f2f0;
+}
+
+.installation-narrow__image {
+  opacity: 0;
+  transition: opacity 260ms ease-out;
+}
+.installation-narrow__image[data-loaded] {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .installation-narrow__image {
+    transition: none;
+  }
+}
+
 .installation-narrow__image {
   display: block;
   width: 100%;

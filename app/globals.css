@@ -181,3 +181,23 @@ html[data-page-scroll] .project-narrow-shell {
   50% { transform: scale(1); filter: blur(0); opacity: 0.95; }
   75% { transform: scale(1.02) scaleX(0.985); filter: blur(0.4px); opacity: 1; }
 }
+
+/* Phones keep the other pages mounted (hidden, inert) so the menu opens them
+   instantly. Skip drawing them entirely while hidden: frees memory on iPhones,
+   where hidden full-screen layers full of photographs could make the visible
+   page's images blank out and redraw while scrolling. Their content and
+   loaded images are kept, so opening one is still instant. */
+.narrow-landing[inert],
+.about-narrow[inert],
+.photos-narrow[inert],
+.cv-narrow[inert],
+.installation-narrow[inert] {
+  content-visibility: hidden;
+}
+.narrow-landing[inert] *,
+.about-narrow[inert] *,
+.photos-narrow[inert] *,
+.cv-narrow[inert] *,
+.installation-narrow[inert] * {
+  animation-play-state: paused !important;
+}
