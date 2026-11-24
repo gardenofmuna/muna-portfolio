@@ -35,6 +35,15 @@ export type InstallationCaseStudy = {
   chapters?: readonly InstallationChapter[];
   /** Shared credit printed under every archive caption. */
   archiveCredit?: string;
+  /** Silent looping video at the end of the page. */
+  closingLoop?: {
+    src: string;
+    srcMobile?: string;
+    poster?: string;
+    width: number;
+    height: number;
+    label: string;
+  };
 };
 
 /** A wall quote set as type in the exhibition's vinyl style (no photo of the vinyl). */
@@ -171,6 +180,14 @@ export const INSTALLATION_SHOWS: readonly InstallationShow[] = [
         { src: "/installation/efuru/room-2.webp", width: 1920, height: 1280, alt: "View across the gallery to the desk and the Reader wall" },
       ],
       archiveCredit: "Courtesy of the family of Flora Nwapa",
+      closingLoop: {
+        src: "https://vz-67d4e9fb-0bc.b-cdn.net/ac81f7cb-e88c-4afa-ac7a-d276f5886de3/play_1080p.mp4",
+        srcMobile: "https://vz-67d4e9fb-0bc.b-cdn.net/ac81f7cb-e88c-4afa-ac7a-d276f5886de3/play_720p.mp4",
+        poster: "https://vz-67d4e9fb-0bc.b-cdn.net/ac81f7cb-e88c-4afa-ac7a-d276f5886de3/thumbnail.jpg",
+        width: 1916,
+        height: 1078,
+        label: "The opening of Flora Nwapa: Efuru at the Threshold at DIDI Museum, Lagos",
+      },
       chapters: [
         {
           number: "01",

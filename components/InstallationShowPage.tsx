@@ -1,5 +1,6 @@
 "use client";
 
+import { AmbientLoopVideo } from "@/components/AmbientLoopVideo";
 import { BookTitles } from "@/components/BookTitles";
 import Image from "next/image";
 import {
@@ -1193,6 +1194,9 @@ export function InstallationShowPage({
                   isDesktop={isDesktop}
                   ariaLabel={show.titleLines.join(" ")}
                 />
+              ) : null}
+              {revealStep >= chaptersStep && caseStudy.closingLoop ? (
+                <AmbientLoopVideo {...caseStudy.closingLoop} />
               ) : null}
             </div>
           ) : null}
